@@ -1,0 +1,53 @@
+/* src/style.css */
+:root {
+  --primary-color: #007bff; /* 主色：藍色 */
+  --secondary-color: #28a745; /* 輔助色：綠色 */
+  --background-color: #f5f7fa; /* 背景色 */
+  --text-color: #2c3e50; /* 主要文字顏色 */
+  --muted-color: #6c757d; /* 次要文字顏色 */
+  --white: #fff; /* 白色 */
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 陰影 */
+  --border-radius: 8px; /* 圓角 */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+button {
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+input {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  width: 100%;
+  transition: border-color 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}

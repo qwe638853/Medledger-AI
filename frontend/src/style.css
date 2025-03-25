@@ -28,13 +28,49 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
+.role-selection-container {
+  background-color: var(--white);
+  padding: 40px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.role-selection-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
 button {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease;
+  min-width: 200px;
+  padding: 12px 24px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px;
+  border-radius: var(--border-radius);
+  border: none;
+  font-size: 16px;
+  background-color: var(--primary-color);
+  color: var(--white);
 }
 
 button:hover {
   transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.role-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 20px 0;
 }
 
 input {

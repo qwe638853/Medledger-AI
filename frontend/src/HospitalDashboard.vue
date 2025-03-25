@@ -1,74 +1,61 @@
+<script setup>
+import { ref } from 'vue';
+
+const id_number = ref('');
+const file = ref(null);
+const message = ref('');
+const emit = defineEmits(['upload', 'logout']);
+
+const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!id_number.value) {
+        message.value = '請輸入病患身分證號';
+        return;
+    }
+
+    if (!file.value) {
+        message.value = '請選擇一個檔案';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file.value);
+
+    emit('upload', { id_number: id_number.value, formData });
+    id_number.value = '';
+    file.value = null;
+    message.value = '';
+};
+</script>
+
 <template>
     <div class="dashboard-container">
-      <header class="dashboard-header">
-        <h2>🏥 醫院儀表板</h2>
-        <p>歡迎，{{ username }}！請上傳健康檢查數據</p>
-        <button class="logout-btn" @click="$emit('logout')">登出</button>
-      </header>
-      <section class="upload-section card">
-        <UploadData />
-      </section>
+        <h2>🏥 醫院員工儀表板</h2>
+        <p>歡迎，{{ username }}</p>
+        <form id="upload-form" @submit="handleSubmit">
+            <div class="form-group">
+                <label>病患身分證號</label>
+                <input v-model="id_number" type="text" placeholder="輸入病患身分證號" />
+            </div>
+            <div class="form-group">
+                <label>上傳健康檢查檔案</label>
+                <input type="file" @change="e => file = e.target.files[0]" />
+            </div>
+            <button type="submit">上傳</button>
+        </form>
+        <p v-if="message" :class="{ 'success': message.includes('成功'), 'error': message.includes('失敗') }">
+            {{ message }}
+        </p>
+        <button @click="$emit('logout')">登出</button>
     </div>
-  </template>
-  
-  <script setup>
-  import UploadData from './components/UploadData.vue';
-  
-  defineProps({
-    username: {
-      type: String,
-      default: '醫院員工'
-    }
-  });
-  
-  defineEmits(['logout']);
-  </script>
-  
-  <style scoped>
-  .dashboard-container {
-    max-width: 1200px; /* 適合桌面端 */
-    margin: 40px auto;
-    padding: 20px;
-  }
-  
-  .dashboard-header {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  
-  .dashboard-header h2 {
-    font-size: 32px;
-    margin-bottom: 10px;
-  }
-  
-  .dashboard-header p {
-    color: var(--muted-color);
-    font-size: 18px;
-  }
-  
-  .logout-btn {
-    margin-top: 15px;
-    padding: 10px 20px;
-    background-color: #dc3545;
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 16px;
-  }
-  
-  .card {
-    background: var(--white);
-    padding: 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    transition: transform 0.3s ease;
-  }
-  
-  .card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .upload-section {
-    text-align: center;
-  }
-  </style>
+</template>
+
+<style scoped>
+.dashboard-container { padding: 20px; }
+h2 { font-size: 28px; margin-bottom: 20px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.success { color: green; }
+.error { color: red; }
+</style>

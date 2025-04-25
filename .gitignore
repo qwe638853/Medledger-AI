@@ -13,4 +13,3 @@ IssuerRevocationPrivateKey
 *.key
 server.crt
 
-./hyperledger/fabric-samples

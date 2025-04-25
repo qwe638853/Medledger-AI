@@ -14,7 +14,7 @@ services:     # 定義服務的層級
       - ./tls/ca:/tmp/hyperledger/fabric-ca
     networks:
       fabric-net:
-            ipv4_address: 172.20.0.5
+        ipv4_address: "172.20.0.8"
     ports:
       - 7052:7052
 
@@ -57,8 +57,8 @@ services:     # 定義服務的層級
       - 7055:7055
 
     networks:
-        fabric-net:
-            ipv4_address: 172.20.0.4
+      fabric-net:
+        ipv4_address: "172.20.0.2"
 
 
   peer2-org1:
@@ -101,8 +101,8 @@ services:     # 定義服務的層級
       - 9445:9445
       - 7056:7056
     networks:
-        fabric-net:
-            ipv4_address: 172.20.0.3
+      fabric-net:
+        ipv4_address: "172.20.0.3"
 
   orderer1-org1:
     container_name: orderer1-org1
@@ -141,13 +141,10 @@ services:     # 定義服務的層級
       - "7050:7050"
       - "9443:9443" 
     networks:
-        fabric-net:
-            ipv4_address: 172.20.0.2
+      fabric-net:
+        ipv4_address: "172.20.0.4"
 
 
 networks:     # 定義網路
   fabric-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+    external: true    

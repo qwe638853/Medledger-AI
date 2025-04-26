@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package health;
+
+service HealthService {
+  rpc UploadReport(UploadReportRequest) returns (UploadReportResponse);
+  rpc ClaimReport(ClaimReportRequest) returns (ClaimReportResponse);
+  rpc ReadReport(ReadReportRequest) returns (ReadReportResponse);
+}
+
+option go_package = "sdk_test/test"; 
+
+message UploadReportRequest {
+  string report_id = 1;
+  string patient_hash = 2;
+  string test_results_json = 3;
+}
+
+message UploadReportResponse {
+  string message = 1;
+}
+
+message ClaimReportRequest {
+  string report_id = 1;
+}
+
+message ClaimReportResponse {
+  string message = 1;
+}
+
+message ReadReportRequest {
+  string report_id = 1;
+}
+
+message ReadReportResponse {
+  string report_content = 1;
+}

@@ -4,7 +4,7 @@
 // 	protoc        v6.30.2
 // source: data.proto
 
-package test
+package health
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -83,7 +83,8 @@ func (x *UploadReportRequest) GetTestResultsJson() string {
 
 type UploadReportResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -116,6 +117,13 @@ func (x *UploadReportResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UploadReportResponse.ProtoReflect.Descriptor instead.
 func (*UploadReportResponse) Descriptor() ([]byte, []int) {
 	return file_data_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UploadReportResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 func (x *UploadReportResponse) GetMessage() string {
@@ -171,7 +179,8 @@ func (x *ClaimReportRequest) GetReportId() string {
 
 type ClaimReportResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -204,6 +213,13 @@ func (x *ClaimReportResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ClaimReportResponse.ProtoReflect.Descriptor instead.
 func (*ClaimReportResponse) Descriptor() ([]byte, []int) {
 	return file_data_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ClaimReportResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 func (x *ClaimReportResponse) GetMessage() string {
@@ -259,7 +275,8 @@ func (x *ReadReportRequest) GetReportId() string {
 
 type ReadReportResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportContent string                 `protobuf:"bytes,1,opt,name=report_content,json=reportContent,proto3" json:"report_content,omitempty"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	ReportContent string                 `protobuf:"bytes,2,opt,name=report_content,json=reportContent,proto3" json:"report_content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -294,9 +311,224 @@ func (*ReadReportResponse) Descriptor() ([]byte, []int) {
 	return file_data_proto_rawDescGZIP(), []int{5}
 }
 
+func (x *ReadReportResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 func (x *ReadReportResponse) GetReportContent() string {
 	if x != nil {
 		return x.ReportContent
+	}
+	return ""
+}
+
+type LoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginRequest) Reset() {
+	*x = LoginRequest{}
+	mi := &file_data_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginRequest) ProtoMessage() {}
+
+func (x *LoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_data_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
+func (*LoginRequest) Descriptor() ([]byte, []int) {
+	return file_data_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LoginRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *LoginRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type LoginResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoginResponse) Reset() {
+	*x = LoginResponse{}
+	mi := &file_data_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoginResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoginResponse) ProtoMessage() {}
+
+func (x *LoginResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_data_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
+func (*LoginResponse) Descriptor() ([]byte, []int) {
+	return file_data_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LoginResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *LoginResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type RegisterRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterRequest) Reset() {
+	*x = RegisterRequest{}
+	mi := &file_data_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterRequest) ProtoMessage() {}
+
+func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_data_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
+func (*RegisterRequest) Descriptor() ([]byte, []int) {
+	return file_data_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RegisterRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *RegisterRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type RegisterResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterResponse) Reset() {
+	*x = RegisterResponse{}
+	mi := &file_data_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterResponse) ProtoMessage() {}
+
+func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_data_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
+func (*RegisterResponse) Descriptor() ([]byte, []int) {
+	return file_data_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *RegisterResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RegisterResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
 	}
 	return ""
 }
@@ -310,22 +542,40 @@ const file_data_proto_rawDesc = "" +
 	"\x13UploadReportRequest\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\x12!\n" +
 	"\fpatient_hash\x18\x02 \x01(\tR\vpatientHash\x12*\n" +
-	"\x11test_results_json\x18\x03 \x01(\tR\x0ftestResultsJson\"0\n" +
+	"\x11test_results_json\x18\x03 \x01(\tR\x0ftestResultsJson\"J\n" +
 	"\x14UploadReportResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"1\n" +
 	"\x12ClaimReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\"/\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\"I\n" +
 	"\x13ClaimReportResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"0\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"0\n" +
 	"\x11ReadReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\";\n" +
-	"\x12ReadReportResponse\x12%\n" +
-	"\x0ereport_content\x18\x01 \x01(\tR\rreportContent2\xe7\x01\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\"U\n" +
+	"\x12ReadReportResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12%\n" +
+	"\x0ereport_content\x18\x02 \x01(\tR\rreportContent\"F\n" +
+	"\fLoginRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"C\n" +
+	"\rLoginResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"I\n" +
+	"\x0fRegisterRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"F\n" +
+	"\x10RegisterResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xe0\x02\n" +
 	"\rHealthService\x12I\n" +
 	"\fUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\x12F\n" +
 	"\vClaimReport\x12\x1a.health.ClaimReportRequest\x1a\x1b.health.ClaimReportResponse\x12C\n" +
 	"\n" +
-	"ReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponseB\x0fZ\rsdk_test/testb\x06proto3"
+	"ReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponse\x124\n" +
+	"\x05Login\x12\x14.health.LoginRequest\x1a\x15.health.LoginResponse\x12A\n" +
+	"\bRegister\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponseB\n" +
+	"Z\b.;healthb\x06proto3"
 
 var (
 	file_data_proto_rawDescOnce sync.Once
@@ -339,7 +589,7 @@ func file_data_proto_rawDescGZIP() []byte {
 	return file_data_proto_rawDescData
 }
 
-var file_data_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_data_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_data_proto_goTypes = []any{
 	(*UploadReportRequest)(nil),  // 0: health.UploadReportRequest
 	(*UploadReportResponse)(nil), // 1: health.UploadReportResponse
@@ -347,16 +597,24 @@ var file_data_proto_goTypes = []any{
 	(*ClaimReportResponse)(nil),  // 3: health.ClaimReportResponse
 	(*ReadReportRequest)(nil),    // 4: health.ReadReportRequest
 	(*ReadReportResponse)(nil),   // 5: health.ReadReportResponse
+	(*LoginRequest)(nil),         // 6: health.LoginRequest
+	(*LoginResponse)(nil),        // 7: health.LoginResponse
+	(*RegisterRequest)(nil),      // 8: health.RegisterRequest
+	(*RegisterResponse)(nil),     // 9: health.RegisterResponse
 }
 var file_data_proto_depIdxs = []int32{
 	0, // 0: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
 	2, // 1: health.HealthService.ClaimReport:input_type -> health.ClaimReportRequest
 	4, // 2: health.HealthService.ReadReport:input_type -> health.ReadReportRequest
-	1, // 3: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
-	3, // 4: health.HealthService.ClaimReport:output_type -> health.ClaimReportResponse
-	5, // 5: health.HealthService.ReadReport:output_type -> health.ReadReportResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	6, // 3: health.HealthService.Login:input_type -> health.LoginRequest
+	4, // 4: health.HealthService.Register:input_type -> health.ReadReportRequest
+	1, // 5: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
+	3, // 6: health.HealthService.ClaimReport:output_type -> health.ClaimReportResponse
+	5, // 7: health.HealthService.ReadReport:output_type -> health.ReadReportResponse
+	7, // 8: health.HealthService.Login:output_type -> health.LoginResponse
+	5, // 9: health.HealthService.Register:output_type -> health.ReadReportResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -373,7 +631,7 @@ func file_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_data_proto_rawDesc), len(file_data_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

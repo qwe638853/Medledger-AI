@@ -4,7 +4,7 @@
 // - protoc             v6.30.2
 // source: data.proto
 
-package test
+package health
 
 import (
 	context "context"
@@ -22,6 +22,8 @@ const (
 	HealthService_UploadReport_FullMethodName = "/health.HealthService/UploadReport"
 	HealthService_ClaimReport_FullMethodName  = "/health.HealthService/ClaimReport"
 	HealthService_ReadReport_FullMethodName   = "/health.HealthService/ReadReport"
+	HealthService_Login_FullMethodName        = "/health.HealthService/Login"
+	HealthService_Register_FullMethodName     = "/health.HealthService/Register"
 )
 
 // HealthServiceClient is the client API for HealthService service.
@@ -31,6 +33,8 @@ type HealthServiceClient interface {
 	UploadReport(ctx context.Context, in *UploadReportRequest, opts ...grpc.CallOption) (*UploadReportResponse, error)
 	ClaimReport(ctx context.Context, in *ClaimReportRequest, opts ...grpc.CallOption) (*ClaimReportResponse, error)
 	ReadReport(ctx context.Context, in *ReadReportRequest, opts ...grpc.CallOption) (*ReadReportResponse, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	Register(ctx context.Context, in *ReadReportRequest, opts ...grpc.CallOption) (*ReadReportResponse, error)
 }
 
 type healthServiceClient struct {
@@ -71,6 +75,26 @@ func (c *healthServiceClient) ReadReport(ctx context.Context, in *ReadReportRequ
 	return out, nil
 }
 
+func (c *healthServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, HealthService_Login_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *healthServiceClient) Register(ctx context.Context, in *ReadReportRequest, opts ...grpc.CallOption) (*ReadReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadReportResponse)
+	err := c.cc.Invoke(ctx, HealthService_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HealthServiceServer is the server API for HealthService service.
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type HealthServiceServer interface {
 	UploadReport(context.Context, *UploadReportRequest) (*UploadReportResponse, error)
 	ClaimReport(context.Context, *ClaimReportRequest) (*ClaimReportResponse, error)
 	ReadReport(context.Context, *ReadReportRequest) (*ReadReportResponse, error)
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	Register(context.Context, *ReadReportRequest) (*ReadReportResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedHealthServiceServer) ClaimReport(context.Context, *ClaimRepor
 }
 func (UnimplementedHealthServiceServer) ReadReport(context.Context, *ReadReportRequest) (*ReadReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadReport not implemented")
+}
+func (UnimplementedHealthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedHealthServiceServer) Register(context.Context, *ReadReportRequest) (*ReadReportResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
 func (UnimplementedHealthServiceServer) testEmbeddedByValue()                       {}
@@ -172,6 +204,42 @@ func _HealthService_ReadReport_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HealthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_Login_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HealthService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).Register(ctx, req.(*ReadReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HealthService_ServiceDesc is the grpc.ServiceDesc for HealthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadReport",
 			Handler:    _HealthService_ReadReport_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _HealthService_Login_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _HealthService_Register_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

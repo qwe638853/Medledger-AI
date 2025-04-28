@@ -2,13 +2,15 @@ syntax = "proto3";
 
 package health;
 
+option go_package = ".;health"; 
+
 service HealthService {
   rpc UploadReport(UploadReportRequest) returns (UploadReportResponse);
   rpc ClaimReport(ClaimReportRequest) returns (ClaimReportResponse);
   rpc ReadReport(ReadReportRequest) returns (ReadReportResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Register(ReadReportRequest) returns (ReadReportResponse);
 }
-
-option go_package = "sdk_test/test"; 
 
 message UploadReportRequest {
   string report_id = 1;
@@ -16,8 +18,10 @@ message UploadReportRequest {
   string test_results_json = 3;
 }
 
+
 message UploadReportResponse {
-  string message = 1;
+    bool success = 1;
+    string message = 2;
 }
 
 message ClaimReportRequest {
@@ -25,7 +29,8 @@ message ClaimReportRequest {
 }
 
 message ClaimReportResponse {
-  string message = 1;
+  bool success = 1;
+  string message = 2;
 }
 
 message ReadReportRequest {
@@ -33,5 +38,27 @@ message ReadReportRequest {
 }
 
 message ReadReportResponse {
-  string report_content = 1;
+  bool success = 1;
+  string report_content = 2;
+}
+
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2;
 }

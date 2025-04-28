@@ -1,6 +1,7 @@
 package main
 
 import (
+	grpc "sdk_test/grpc"
 	"crypto/x509"
     "encoding/json"
     "fmt"
@@ -32,6 +33,8 @@ const (
 
 
 func main() {
+	go grpc.StartGrpcServer()
+	/*
     os.Setenv("FABRIC_LOGGING_SPEC", "DEBUG")
 	// 建立grpc連線
 	grpcConn := newGrpcConnection()
@@ -62,6 +65,7 @@ func main() {
 
     //測試
     testUploadClaimRead(contract)
+	*/
 }
 
 func newGrpcConnection() *grpc.ClientConn {

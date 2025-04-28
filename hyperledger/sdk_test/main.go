@@ -1,14 +1,14 @@
 package main
 
 import (
-	grpc "sdk_test/grpc"
+	mygrpc "sdk_test/grpc"
 	"crypto/x509"
     "encoding/json"
     "fmt"
     "io/ioutil"
     "log"
     "os"
-    "time"
+    //"time"
     "context"
     "errors"
 	"google.golang.org/grpc"
@@ -33,7 +33,8 @@ const (
 
 
 func main() {
-	go grpc.StartGrpcServer()
+	log.Println("X")
+	mygrpc.StartGrpcServer()
 	/*
     os.Setenv("FABRIC_LOGGING_SPEC", "DEBUG")
 	// 建立grpc連線

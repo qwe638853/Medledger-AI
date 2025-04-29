@@ -1,4 +1,5 @@
 /* src/style.css */
+/* 全局樣式文件 */
 :root {
   --primary-color: #007bff; /* 主色：藍色 */
   --secondary-color: #28a745; /* 輔助色：綠色 */
@@ -10,12 +11,14 @@
   --border-radius: 8px; /* 圓角 */
 }
 
+/* 重置所有元素的默認樣式 */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* 設置頁面基本樣式 */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--background-color);
@@ -23,11 +26,13 @@ body {
   line-height: 1.6;
 }
 
+/* 設置標題樣式 */
 h1, h2, h3 {
   color: var(--text-color);
   font-weight: 600;
 }
 
+/* 角色選擇容器的樣式 */
 .role-selection-container {
   background-color: var(--white);
   padding: 40px;
@@ -37,12 +42,14 @@ h1, h2, h3 {
   margin: 40px auto;
 }
 
+/* 角色選擇容器標題樣式 */
 .role-selection-container h2 {
   text-align: center;
   margin-bottom: 30px;
   font-size: 24px;
 }
 
+/* 按鈕基本樣式 */
 button {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease;
@@ -60,11 +67,13 @@ button {
   color: var(--white);
 }
 
+/* 按鈕懸停效果 */
 button:hover {
   transform: translateY(-2px);
   opacity: 0.9;
 }
 
+/* 角色按鈕容器樣式 */
 .role-buttons-container {
   display: flex;
   justify-content: center;
@@ -73,6 +82,7 @@ button:hover {
   margin: 20px 0;
 }
 
+/* 輸入框基本樣式 */
 input {
   padding: 10px;
   border: 1px solid #d1d5db;
@@ -82,6 +92,7 @@ input {
   transition: border-color 0.3s ease;
 }
 
+/* 輸入框聚焦效果 */
 input:focus {
   outline: none;
   border-color: var(--primary-color);

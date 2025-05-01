@@ -8,12 +8,17 @@ import (
 	"net"
 	"net/http"
 
-	fc "sdk_test/fabricclient"
-	pb "sdk_test/proto"
+	fc "sdk_test/fabric"
+	pb "sdk_test/proto/myhealth"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	
+	
+	
 )
 
 type server struct {
@@ -67,6 +72,28 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 }
 
 func main() {
+	sdk, err := fc.NewSDK("../configtx.yaml")
+    if err != nil {
+        log.Fatalf("❌ 初始化 SDK 失敗: %v", err)
+    }
+    defer sdk.Close()
+	log.Println("✅ SDK initialized",sdk)
+
+	
+	//創建 admin 上下文
+	rcp := sdk.Context(fabsdk.WithUser("Admin"), fabsdk.WithOrg("Org1"))
+	log.Println("✅ Admin context created", rcp)
+	//創建 msp client
+	
+
+	err = fc.RegisterNewUser(rcp, "User877", "pw123", "org1.department1")
+    if err != nil {
+        log.Fatalf("❌ 註冊用戶失敗: %v", err)
+    }
+
+
+	
+
 	fabric := fc.NewFabricContract()
 	defer fabric.Gateway.Close()
 
@@ -80,7 +107,7 @@ func startGrpcServer() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-
+	
 	grpcServer := grpc.NewServer()
 	pb.RegisterHealthServiceServer(grpcServer, &server{})
 
@@ -101,7 +128,7 @@ func allowCORS(h http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 
-		// 如果是預檢請求 (OPTIONS)，直接返回 200
+		// 如果是預檢請求 (OPTIONS)，直接返回 200，不然請求會被擋
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return

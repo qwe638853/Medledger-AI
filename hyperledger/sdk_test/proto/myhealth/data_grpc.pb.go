@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.21.12
-// source: data.proto
+// source: myhealth/data.proto
 
-package health
+package myhealth
 
 import (
 	context "context"
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HealthService_UploadReport_FullMethodName = "/health.HealthService/UploadReport"
-	HealthService_ClaimReport_FullMethodName  = "/health.HealthService/ClaimReport"
-	HealthService_ReadReport_FullMethodName   = "/health.HealthService/ReadReport"
-	HealthService_Login_FullMethodName        = "/health.HealthService/Login"
-	HealthService_Register_FullMethodName     = "/health.HealthService/Register"
+	HealthService_UploadReport_FullMethodName = "/myhealth.HealthService/UploadReport"
+	HealthService_ClaimReport_FullMethodName  = "/myhealth.HealthService/ClaimReport"
+	HealthService_ReadReport_FullMethodName   = "/myhealth.HealthService/ReadReport"
+	HealthService_Login_FullMethodName        = "/myhealth.HealthService/Login"
+	HealthService_Register_FullMethodName     = "/myhealth.HealthService/Register"
 )
 
 // HealthServiceClient is the client API for HealthService service.
@@ -244,7 +244,7 @@ func _HealthService_Register_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HealthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "health.HealthService",
+	ServiceName: "myhealth.HealthService",
 	HandlerType: (*HealthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -269,5 +269,5 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "data.proto",
+	Metadata: "myhealth/data.proto",
 }

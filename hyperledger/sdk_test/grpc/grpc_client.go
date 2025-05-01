@@ -6,7 +6,7 @@ import (
     "time"
 
     "google.golang.org/grpc"
-    pb "sdk_test/proto"  // 改成你的 package 名，通常跟proto package health對應
+    pb "sdk_test/myhealth/proto"  // 改成你的 package 名，通常跟proto package health對應
 )
 
 func main() {

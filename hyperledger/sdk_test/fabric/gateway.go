@@ -1,4 +1,4 @@
-package fabricclient
+package fabric
 
 import (
 	"context"

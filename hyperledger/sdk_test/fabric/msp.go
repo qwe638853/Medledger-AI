@@ -1,54 +1,84 @@
 package fabric
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"log"
-
-	// fabric sdk
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/msp"
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-
-	// 補上 contextAPI 別名
-	contextAPI "github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
+	"io/ioutil"
+	"net/http"
 )
 
-// 註冊並 Enroll 用戶
-func RegisterNewUser(adminContextProvider contextAPI.ClientProvider, username, secret, affiliation string) error {
-	mspClient, err := msp.New(adminContextProvider)
-	if err != nil {
-		return fmt.Errorf("❌ 建立 MSP client 失敗: %w", err)
-	}
+type RegisterRequest struct {
+	ID          string `json:"id"`
+	Secret      string `json:"secret"`
+	Affiliation string `json:"affiliation"`
+	Type        string `json:"type"` // usually "client"
+}
 
-	_, err = mspClient.Register(&msp.RegistrationRequest{
-		Name:        username,
-		Affiliation: affiliation,
-		Secret:     secret,
-	})
-	if err != nil {
-		return fmt.Errorf("❌ 註冊失敗: %w", err)
-	}
+type EnrollRequest struct {
+	Username string
+	Password string
+}
 
-	err = mspClient.Enroll(username, msp.WithSecret(secret))
-	if err != nil {
-		return fmt.Errorf("❌ Enroll 失敗: %w", err)
+func RegisterUser(caURL, adminUser, adminPass string, req RegisterRequest) error {
+	body := map[string]interface{}{
+		"id":              req.ID,
+		"secret":          req.Secret,
+		"affiliation":     req.Affiliation,
+		"type":            req.Type,
+		"max_enrollments": -1,
 	}
+	b, _ := json.Marshal(body)
 
-	log.Printf("✅ 用戶 %s 註冊與 Enroll 成功", username)
+	httpReq, _ := http.NewRequest("POST", caURL+"/api/v1/register", bytes.NewReader(b))
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Basic "+basicAuth(adminUser, adminPass))
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 && resp.StatusCode != 200 {
+		data, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("❌ Register failed: %s", string(data))
+	}
 	return nil
 }
 
-// 建立 MSP client
-func NewMspClient(sdk *fabsdk.FabricSDK, orgName string) (*msp.Client, error) {
-	ctxProvider := sdk.Context(fabsdk.WithOrg(orgName))
-	return msp.New(ctxProvider)
+func EnrollUser(caURL string, req EnrollRequest) ([]byte, []byte, error) {
+	body := map[string]interface{}{
+		"certificate_request": "", // 讓 server 自動產生
+	}
+	b, _ := json.Marshal(body)
+
+	httpReq, _ := http.NewRequest("POST", caURL+"/api/v1/enroll", bytes.NewReader(b))
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.SetBasicAuth(req.Username, req.Password)
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		data, _ := ioutil.ReadAll(resp.Body)
+		return nil, nil, fmt.Errorf("❌ Enroll failed: %s", string(data))
+	}
+
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	cert := result["result"].(map[string]interface{})["Cert"].(string)
+	key := result["result"].(map[string]interface{})["ServerInfo"].(map[string]interface{})["CAName"].(string)
+
+	return []byte(cert), []byte(key), nil // Enroll 預設只會給 Cert，Key 需自己產生或 CSR 模式
 }
 
-// 初始化 Fabric SDK
-func NewSDK(configPath string) (*fabsdk.FabricSDK, error) {
-	sdk, err := fabsdk.New(config.FromFile(configPath))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Fabric SDK: %w", err)
-	}
-	return sdk, nil
+func basicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }

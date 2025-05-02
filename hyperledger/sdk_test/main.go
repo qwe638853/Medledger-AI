@@ -10,15 +10,11 @@ import (
 
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto/myhealth"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	
-	
-	
 )
 
 type server struct {
@@ -72,34 +68,31 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 }
 
 func main() {
-	sdk, err := fc.NewSDK("../configtx.yaml")
-    if err != nil {
-        log.Fatalf("❌ 初始化 SDK 失敗: %v", err)
-    }
-    defer sdk.Close()
-	log.Println("✅ SDK initialized",sdk)
+	err := fc.RegisterUser("http://localhost:7054", "admin", "adminpw", fc.RegisterRequest{
+		ID:          "User877",
+		Secret:      "pw123",
+		Affiliation: "org1.department1",
+		Type:        "client",
+	})
+	if err != nil {
+		log.Fatalf("❌ 註冊失敗: %v", err)
+	}
+	log.Println("✅ 用戶註冊成功")
 
-	
-	//創建 admin 上下文
-	rcp := sdk.Context(fabsdk.WithUser("Admin"), fabsdk.WithOrg("Org1"))
-	log.Println("✅ Admin context created", rcp)
-	//創建 msp client
-	
-
-	err = fc.RegisterNewUser(rcp, "User877", "pw123", "org1.department1")
-    if err != nil {
-        log.Fatalf("❌ 註冊用戶失敗: %v", err)
-    }
-
-
-	
+	cert, key, err := fc.EnrollUser("http://localhost:7054", fc.EnrollRequest{
+		Username: "User877",
+		Password: "pw123",
+	})
+	if err != nil {
+		log.Fatalf("❌ Enroll 失敗: %v", err)
+	}
+	log.Printf("✅ Enroll 成功:\nCert:\n%s\nKey:\n%s", cert, key)
 
 	fabric := fc.NewFabricContract()
 	defer fabric.Gateway.Close()
 
-
-	go startGrpcServer()      // 開 gRPC server
-	startHttpGatewayServer()        // 開 gRPC-Gateway server (HTTP server)
+	go startGrpcServer()     // 開 gRPC server
+	startHttpGatewayServer() // 開 gRPC-Gateway server (HTTP server)
 }
 
 func startGrpcServer() {
@@ -107,7 +100,7 @@ func startGrpcServer() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	
+
 	grpcServer := grpc.NewServer()
 	pb.RegisterHealthServiceServer(grpcServer, &server{})
 
@@ -137,7 +130,6 @@ func allowCORS(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
-
 
 func startHttpGatewayServer() {
 	ctx := context.Background()

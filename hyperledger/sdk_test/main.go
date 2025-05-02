@@ -68,7 +68,8 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 }
 
 func main() {
-	err := fc.RegisterUser("http://localhost:7054", "admin", "adminpw", fc.RegisterRequest{
+	
+	err := fc.RegisterUser("http://localhost:7054", "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem", "../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key", fc.RegisterRequest{
 		ID:          "User877",
 		Secret:      "pw123",
 		Affiliation: "org1.department1",
@@ -78,7 +79,7 @@ func main() {
 		log.Fatalf("❌ 註冊失敗: %v", err)
 	}
 	log.Println("✅ 用戶註冊成功")
-
+	/*
 	cert, key, err := fc.EnrollUser("http://localhost:7054", fc.EnrollRequest{
 		Username: "User877",
 		Password: "pw123",
@@ -87,10 +88,10 @@ func main() {
 		log.Fatalf("❌ Enroll 失敗: %v", err)
 	}
 	log.Printf("✅ Enroll 成功:\nCert:\n%s\nKey:\n%s", cert, key)
-
+*/
 	fabric := fc.NewFabricContract()
 	defer fabric.Gateway.Close()
-
+	
 	go startGrpcServer()     // 開 gRPC server
 	startHttpGatewayServer() // 開 gRPC-Gateway server (HTTP server)
 }

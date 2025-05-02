@@ -11,7 +11,7 @@ import (
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto/myhealth"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-
+	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"google.golang.org/grpc"

@@ -67,10 +67,18 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	}, nil
 }
 
+
 func main() {
+	userID := "User20"
+	// 1. 產生私鑰 & CSR
+	privKey, csrPEM, err := fc.GenerateCSR(userID)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("✅ 私鑰 & CSR 產生成功", privKey, csrPEM)
 	
-	err := fc.RegisterUser("http://localhost:7054", "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem", "../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key", fc.RegisterRequest{
-		ID:          "User877",
+	err = fc.RegisterUser("http://localhost:7054", "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem", "../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key", fc.RegisterRequest{
+		ID:          userID,
 		Secret:      "pw123",
 		Affiliation: "org1.department1",
 		Type:        "client",
@@ -79,6 +87,17 @@ func main() {
 		log.Fatalf("❌ 註冊失敗: %v", err)
 	}
 	log.Println("✅ 用戶註冊成功")
+
+	err = fc.EnrollUser("http://localhost:7054",userID, "pw123", fc.EnrollRequest{
+		Certificate_request: string(csrPEM),
+		Profile: "",
+	})
+	if err != nil {
+		log.Fatalf("❌ 登入失敗: %v", err)
+	}
+	log.Println("✅ 用戶登入成功")
+	
+
 	/*
 	cert, key, err := fc.EnrollUser("http://localhost:7054", fc.EnrollRequest{
 		Username: "User877",
@@ -187,3 +206,4 @@ func testUploadClaimRead(contract *client.Contract) {
 	fmt.Println("📄 Report:")
 	fmt.Println(string(result))
 }
+

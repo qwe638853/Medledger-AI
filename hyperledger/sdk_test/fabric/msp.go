@@ -10,6 +10,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
 
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/factory"
@@ -115,4 +120,98 @@ func RegisterUser(caURL, certPath, keyPath string, req RegisterRequest) error {
 
 	fmt.Printf("✅ Register success: %s\n", respBody)
 	return nil
+}
+
+type EnrollRequest struct{
+	Profile string `json:"profile,omitempty"`	
+	Certificate_request string `json:"certificate_request,omitempty"`
+ }
+
+func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollRequest) error {
+
+	bodyBytes, err := json.Marshal(enrollRequest)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to marshal empty body: %w", err)
+	}
+
+
+
+	// Basic Auth header: base64("id:secret")
+	authStr := base64.StdEncoding.EncodeToString([]byte(enrollID + ":" + enrollSecret))
+
+	httpReq, err := http.NewRequest("POST", caURL+"/api/v1/enroll", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("❌ Failed to create enroll request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Basic "+authStr)
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to send enroll request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+		return fmt.Errorf("❌ Enroll failed (%d): %s", resp.StatusCode, respBody)
+	}
+
+	fmt.Printf("✅ Enroll success: %s\n", respBody)
+
+	var result struct {
+		Result struct {
+			Cert       string `json:"Cert"`
+			PrivateKey struct {
+				Type  string `json:"Type"`
+				Bytes string `json:"Bytes"`
+			} `json:"PrivateKey"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return fmt.Errorf("❌ Failed to parse response JSON: %w", err)
+	}
+	
+	// 寫入憑證
+	err = os.WriteFile("cert.pem", []byte(result.Result.Cert), 0644)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to write cert.pem: %w", err)
+	}
+	
+	// 寫入私鑰
+	keyBytes, err := base64.StdEncoding.DecodeString(result.Result.PrivateKey.Bytes)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to decode private key: %w", err)
+	}
+	pemKey := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes})
+	err = os.WriteFile("key.pem", pemKey, 0600)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to write key.pem: %w", err)
+	}
+	
+	fmt.Println("📁 Saved cert.pem and key.pem")
+	return nil
+}
+
+
+
+func GenerateCSR(commonName string) (*ecdsa.PrivateKey, []byte, error) {
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	template := x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName: commonName,
+		},
+	}
+
+	csrDER, err := x509.CreateCertificateRequest(rand.Reader, &template, priv)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER})
+	return priv, csrPEM, nil
 }

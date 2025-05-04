@@ -97,7 +97,7 @@ const login = async (data) => {
     }
 };
 
-// 定義忘記密碼處理函數
+// 定義忘記密碼處理函數 
 const forgotPassword = async (data) => {
     try {
         // 發送忘記密碼請求
@@ -116,15 +116,20 @@ const forgotPassword = async (data) => {
 const register = async (data) => {
     try {
         // 發送註冊請求
-        const response = await axios.post('/v1/register', {
+          const response = await axios.post('/v1/register', {
             id_number: data.id_number,
             password: data.password,
+            name: data.name,
+            date: data.date,
+            email: data.email,
+            phone: data.phone,
         }, {
             headers: {
                 'Content-Type': 'application/json'
             }
         });
         alert(response.data || '註冊成功，請登入');
+        console.log('註冊成功:', response.data);
     } catch (error) {
         const errorMessage = error.response?.data?.detail || error.message;
         alert(`註冊失敗：${errorMessage}`);

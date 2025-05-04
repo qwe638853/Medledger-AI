@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package myhealth;
+package health;
 
-option go_package = "sdk_test/proto/myhealth;myhealth"; 
+option go_package = "sdk_test/proto;health"; 
 
 import "google/api/annotations.proto";
 
@@ -84,6 +84,10 @@ message LoginResponse {
 message RegisterRequest {
   string username = 1;
   string password = 2;
+  string name = 3;
+  string date = 4;
+  string email = 5;
+  string phone = 6;
 }
 
 message RegisterResponse {

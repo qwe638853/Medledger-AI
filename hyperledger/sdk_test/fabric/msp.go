@@ -159,37 +159,6 @@ func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollReques
 
 	fmt.Printf("✅ Enroll success: %s\n", respBody)
 
-	var result struct {
-		Result struct {
-			Cert       string `json:"Cert"`
-			PrivateKey struct {
-				Type  string `json:"Type"`
-				Bytes string `json:"Bytes"`
-			} `json:"PrivateKey"`
-		} `json:"result"`
-	}
-	if err := json.Unmarshal(respBody, &result); err != nil {
-		return fmt.Errorf("❌ Failed to parse response JSON: %w", err)
-	}
-	
-	// 寫入憑證
-	err = os.WriteFile("cert.pem", []byte(result.Result.Cert), 0644)
-	if err != nil {
-		return fmt.Errorf("❌ Failed to write cert.pem: %w", err)
-	}
-	
-	// 寫入私鑰
-	keyBytes, err := base64.StdEncoding.DecodeString(result.Result.PrivateKey.Bytes)
-	if err != nil {
-		return fmt.Errorf("❌ Failed to decode private key: %w", err)
-	}
-	pemKey := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes})
-	err = os.WriteFile("key.pem", pemKey, 0600)
-	if err != nil {
-		return fmt.Errorf("❌ Failed to write key.pem: %w", err)
-	}
-	
-	fmt.Println("📁 Saved cert.pem and key.pem")
 	return nil
 }
 
@@ -214,4 +183,26 @@ func GenerateCSR(commonName string) (*ecdsa.PrivateKey, []byte, error) {
 
 	csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER})
 	return priv, csrPEM, nil
+}
+
+func SavePrivateKeyToFile(key *ecdsa.PrivateKey, filename string) error {
+	keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return err
+	}
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+	err = ioutil.WriteFile(filename, keyPEM, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SaveCSRToFile(csrPEM []byte, filename string) error {
+	err := ioutil.WriteFile(filename, csrPEM, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
 }

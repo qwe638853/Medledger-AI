@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect

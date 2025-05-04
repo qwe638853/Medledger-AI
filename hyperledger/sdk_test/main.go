@@ -69,7 +69,7 @@ func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 
 
 func main() {
-	userID := "User20"
+	userID := "User20000"
 	// 1. 產生私鑰 & CSR
 	privKey, csrPEM, err := fc.GenerateCSR(userID)
 	if err != nil {
@@ -77,6 +77,19 @@ func main() {
 	}
 	log.Println("✅ 私鑰 & CSR 產生成功", privKey, csrPEM)
 	
+	err = fc.SaveCSRToFile(csrPEM,"csr.pem")
+	if err != nil {
+		log.Fatalf("❌ 寫入CSR失敗: %v", err)
+	}
+	log.Println("📁 寫入CSR成功")
+
+	err = fc.SavePrivateKeyToFile(privKey,"server.key")
+	if err != nil {
+		log.Fatalf("❌ 寫入私鑰失敗: %v", err)
+	}
+	log.Println("📁 寫入私鑰成功")
+
+
 	err = fc.RegisterUser("http://localhost:7054", "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem", "../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key", fc.RegisterRequest{
 		ID:          userID,
 		Secret:      "pw123",

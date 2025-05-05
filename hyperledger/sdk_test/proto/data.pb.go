@@ -328,7 +328,7 @@ func (x *ReadReportResponse) GetReportContent() string {
 
 type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -364,9 +364,9 @@ func (*LoginRequest) Descriptor() ([]byte, []int) {
 	return file_proto_data_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *LoginRequest) GetUsername() string {
+func (x *LoginRequest) GetUserId() string {
 	if x != nil {
-		return x.Username
+		return x.UserId
 	}
 	return ""
 }
@@ -432,7 +432,7 @@ func (x *LoginResponse) GetMessage() string {
 
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Date          string                 `protobuf:"bytes,4,opt,name=date,proto3" json:"date,omitempty"`
@@ -472,9 +472,9 @@ func (*RegisterRequest) Descriptor() ([]byte, []int) {
 	return file_proto_data_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *RegisterRequest) GetUsername() string {
+func (x *RegisterRequest) GetUserId() string {
 	if x != nil {
-		return x.Username
+		return x.UserId
 	}
 	return ""
 }
@@ -587,15 +587,15 @@ const file_proto_data_proto_rawDesc = "" +
 	"\treport_id\x18\x01 \x01(\tR\breportId\"U\n" +
 	"\x12ReadReportResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12%\n" +
-	"\x0ereport_content\x18\x02 \x01(\tR\rreportContent\"F\n" +
-	"\fLoginRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\x0ereport_content\x18\x02 \x01(\tR\rreportContent\"C\n" +
+	"\fLoginRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"C\n" +
 	"\rLoginResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x9d\x01\n" +
-	"\x0fRegisterRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x9a\x01\n" +
+	"\x0fRegisterRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
 	"\x04date\x18\x04 \x01(\tR\x04date\x12\x14\n" +

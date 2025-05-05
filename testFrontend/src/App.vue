@@ -116,13 +116,14 @@ const forgotPassword = async (data) => {
 const register = async (data) => {
     try {
         // 發送註冊請求
-          const response = await axios.post('/v1/register', {
-            id_number: data.id_number,
+        console.log('註冊請求數據:', data);
+        const response = await axios.post('/v1/register', {
+            user_id: data.id_number,
             password: data.password,
-            name: data.name,
-            date: data.date,
+            name: data.full_name,
+            date: data.birth_date,
             email: data.email,
-            phone: data.phone,
+            phone: data.phone_number,
         }, {
             headers: {
                 'Content-Type': 'application/json'

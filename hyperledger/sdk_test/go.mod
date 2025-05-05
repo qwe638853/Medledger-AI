@@ -7,6 +7,7 @@ require (
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-gateway v1.7.1
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.4
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pkg/errors v0.9.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect

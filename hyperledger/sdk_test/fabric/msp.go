@@ -133,9 +133,6 @@ func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollReques
 	if err != nil {
 		return fmt.Errorf("❌ Failed to marshal empty body: %w", err)
 	}
-
-
-
 	// Basic Auth header: base64("id:secret")
 	authStr := base64.StdEncoding.EncodeToString([]byte(enrollID + ":" + enrollSecret))
 

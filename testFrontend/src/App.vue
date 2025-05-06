@@ -44,21 +44,18 @@ const login = async (data) => {
     try {
         // 發送登入請求到後端
         const response = await axios.post('/v1/login', {
-            username: data.username,
+            user_id: data.username,
             password: data.password,
         }, {
             headers: {
                 'Content-Type': 'application/json'
             },
-            // 轉換請求數據格式
-            transformRequest: [(data) => {
-                const params = new URLSearchParams();
-                for (const key in data) {
-                    params.append(key, data[key]);
-                }
-                return params.toString();
-            }]
         });
+        console.log('登入請求數據:', data);
+        console.log('登入響應數據:', response.data);
+        
+
+        // 獲取登入成功後的數據
         // 保存登入成功後的數據
         token.value = response.data.access_token;
         localStorage.setItem('token', token.value);

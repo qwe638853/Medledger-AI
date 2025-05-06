@@ -53,11 +53,7 @@ func (s *server) ReadReport(ctx context.Context, req *pb.ReadReportRequest) (*pb
 
 // Login
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	log.Printf("Received Login: %v", req)
-	return &pb.LoginResponse{
-		Success: true,
-		Message: "Login successful",
-	}, nil
+	return sc.HandleLogin(ctx, req)
 }
 
 // Register
@@ -71,59 +67,6 @@ func main() {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
 
-	/*
-		userID := "User20000"
-		// 1. 產生私鑰 & CSR
-		privKey, csrPEM, err := fc.GenerateCSR(userID)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("✅ 私鑰 & CSR 產生成功", privKey, csrPEM)
-
-		err = fc.SaveCSRToFile(csrPEM,"csr.pem")
-		if err != nil {
-			log.Fatalf("❌ 寫入CSR失敗: %v", err)
-		}
-		log.Println("📁 寫入CSR成功")
-
-		err = fc.SavePrivateKeyToFile(privKey,"server.key")
-		if err != nil {
-			log.Fatalf("❌ 寫入私鑰失敗: %v", err)
-		}
-		log.Println("📁 寫入私鑰成功")
-
-
-		err = fc.RegisterUser("http://localhost:7054", "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem", "../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key", fc.RegisterRequest{
-			ID:          userID,
-			Secret:      "pw123",
-			Affiliation: "org1.department1",
-			Type:        "client",
-		})
-		if err != nil {
-			log.Fatalf("❌ 註冊失敗: %v", err)
-		}
-		log.Println("✅ 用戶註冊成功")
-
-		err = fc.EnrollUser("http://localhost:7054",userID, "pw123", fc.EnrollRequest{
-			Certificate_request: string(csrPEM),
-			Profile: "",
-		})
-		if err != nil {
-			log.Fatalf("❌ 登入失敗: %v", err)
-		}
-		log.Println("✅ 用戶登入成功")
-
-
-
-		cert, key, err := fc.EnrollUser("http://localhost:7054", fc.EnrollRequest{
-			Username: "User877",
-			Password: "pw123",
-		})
-		if err != nil {
-			log.Fatalf("❌ Enroll 失敗: %v", err)
-		}
-		log.Printf("✅ Enroll 成功:\nCert:\n%s\nKey:\n%s", cert, key)
-	*/
 	fabric := fc.NewFabricContract()
 	defer fabric.Gateway.Close()
 

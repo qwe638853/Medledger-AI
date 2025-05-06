@@ -102,3 +102,60 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterR
 
 	return &pb.RegisterResponse{Success: true, Message: "註冊成功"}, nil
 }
+
+func HandleLogin(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+
+	log.Printf("Received Login: %v", req)
+
+	// ✅ 基本欄位驗證
+	if req.UserId == "" || req.Password == "" {
+		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
+	}
+
+	// ✅ SQLite 查詢使用者
+	exists, err := database.IsUserExists(req.UserId)
+	if err != nil {
+		return &pb.LoginResponse{Success: false, Message: "查詢使用者時出錯"}, nil
+	}
+	if !exists {
+		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
+	}
+	privKey, csrPEM, err := fc.GenerateCSR(req.UserId)
+	if err != nil {
+		log.Printf("❌ 產生私鑰或 CSR 失敗: %v", err)
+		return &pb.LoginResponse{Success: false, Message: "無法產生憑證"}, nil
+	}
+	// ✅ 儲存 CSR
+
+	baseDir := filepath.Join("msp-data", "users", req.UserId)
+
+	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
+	err = fc.SaveCSRToFile(csrPEM, csrPath)
+	if err != nil {
+		log.Printf("❌ 寫入 CSR 失敗: %v", err)
+		return &pb.LoginResponse{Success: false, Message: "儲存 CSR 失敗"}, nil
+	}
+
+	// ✅ 儲存私鑰
+	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
+	err = fc.SavePrivateKeyToFile(privKey, keyPath)
+	if err != nil {
+		log.Printf("❌ 寫入私鑰失敗: %v", err)
+		return &pb.LoginResponse{Success: false, Message: "儲存私鑰失敗"}, nil
+	}
+
+	// ✅ Enroll 產生證書
+	err = fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, fc.EnrollRequest{
+		Certificate_request: string(csrPEM),
+		Profile:             "",
+	})
+	if err != nil {
+		log.Printf("❌ Enroll 失敗: %v", err)
+		return &pb.LoginResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
+	}
+
+	return &pb.LoginResponse{Success: true, Message: "登入成功"}, nil
+
+}
+
+// func HandleLogin(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {

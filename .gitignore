@@ -1,1 +1,15 @@
 .vscode
+
+fabric-ca-server.db
+fabric-ca-server-config.yaml
+fabric-ca-client-config.yaml
+IssuerPublicKey
+IssuerSecretKey
+IssuerRevocationPublicKey
+IssuerRevocationPrivateKey
+*_sk
+*.pem
+*.crt
+*.key
+server.crt
+

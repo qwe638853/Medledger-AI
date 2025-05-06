@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package health;
+
+option go_package = "sdk_test/proto;health"; 
+
+import "google/api/annotations.proto";
+
+service HealthService {
+  rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
+    option (google.api.http) = {
+      post: "/v1/upload"
+      body: "*"
+    };
+  }
+  rpc ClaimReport(ClaimReportRequest) returns (ClaimReportResponse) {
+    option (google.api.http) = {
+      post: "/v1/claim"
+      body: "*"
+    };
+  }
+
+  rpc ReadReport(ReadReportRequest) returns (ReadReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/report/{report_id}"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register"
+      body: "*"
+    };
+  }
+}
+
+message UploadReportRequest {
+  string report_id = 1;
+  string patient_hash = 2;
+  string test_results_json = 3;
+}
+
+
+message UploadReportResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ClaimReportRequest {
+  string report_id = 1;
+}
+
+message ClaimReportResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ReadReportRequest {
+  string report_id = 1;
+}
+
+message ReadReportResponse {
+  bool success = 1;
+  string report_content = 2;
+}
+
+
+message LoginRequest {
+  string user_id = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message RegisterRequest {
+  string user_id = 1;
+  string password = 2;
+  string name = 3;
+  string date = 4;
+  string email = 5;
+  string phone = 6;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2;
+}

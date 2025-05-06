@@ -1,99 +1,79 @@
 <script setup>
-import { ref } from 'vue';
-import LoginForm from './components/LoginForm.vue';
-import UserDashboard from './UserDashboard.vue';
-import HospitalDashboard from './HospitalDashboard.vue';
+import { onMounted } from 'vue';
+import axios from 'axios';
+import Home from './views/Home.vue';
+import { useAuth } from './composables/useAuth';
+import { useUser } from './composables/useUser';
+import { useNavigation } from './composables/useNavigation';
 
-const userRole = ref(null); // 'hospital' or 'patient'
-const isLoggedIn = ref(false);
-const currentUser = ref('');
+// 設置 axios 基礎 URL（目前為空）
+axios.defaults.baseURL = '';
 
-const login = (data) => {
-  userRole.value = data.role;
-  currentUser.value = data.username;
-  isLoggedIn.value = true;
+// 使用 composables
+const { 
+    userRole, 
+    isLoggedIn, 
+    currentUser, 
+    token, 
+    showLoginForm, 
+    initAuth, 
+    login, 
+    logout 
+} = useAuth();
+
+const { forgotPassword, register, fetchData } = useUser(token, currentUser);
+const { showFooter, menuItems, goToHome } = useNavigation();
+
+// 在組件掛載時初始化認證狀態
+onMounted(() => {
+    initAuth();
+});
+
+// 處理登入表單顯示切換
+const toggleLoginForm = () => {
+    showLoginForm.value = !showLoginForm.value;
 };
 
-const logout = () => {
-  userRole.value = null;
-  currentUser.value = '';
-  isLoggedIn.value = false;
+// 處理頁腳顯示切換
+const toggleFooter = () => {
+    showFooter.value = !showFooter.value;
 };
 </script>
 
 <template>
-  <div class="app-container">
-    <!-- 封面圖片區塊 -->
-    <div class="cover-container">
-      <div class="cover-overlay">
-        <h1>健康檢查數據平台</h1>
-        <p>安全管理您的健康數據</p>
-      </div>
-    </div>
-
-    <!-- 主要內容 -->
-    <div class="content-container">
-      <LoginForm v-if="!isLoggedIn" @login="login" />
-      <UserDashboard 
-        v-if="isLoggedIn && userRole === 'patient'" 
-        :username="currentUser" 
+    <Home
+        :user-role="userRole"
+        :is-logged-in="isLoggedIn"
+        :current-user="currentUser"
+        :show-login-form="showLoginForm"
+        :show-footer="showFooter"
+        :menu-items="menuItems"
+        @login="login"
         @logout="logout"
-      />
-      <HospitalDashboard 
-        v-if="isLoggedIn && userRole === 'hospital'" 
-        :username="currentUser" 
-        @logout="logout"
-      />
-    </div>
-  </div>
+        @forgot-password="forgotPassword"
+        @register="register"
+        @go-home="() => goToHome(showLoginForm)"
+        @toggle-login-form="toggleLoginForm"
+        @toggle-footer="toggleFooter"
+    />
 </template>
 
-<style scoped>
-.app-container {
-  min-height: 100vh;
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-.cover-container {
-  position: relative;
-  background: url('https://i.pinimg.com/736x/25/3c/11/253c118ba1720173da5cb8e010eed930.jpg') 
-    no-repeat center center;
-  background-size: cover;
-  height: 450px; /* 適合桌面端的高度 */
-  width: 100%;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
-.cover-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(149, 169, 190, 0.6); /* 使用藍色半透明遮罩 */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: var(--white);
-  text-align: center;
-  padding: 30px;
+.v-application {
+  font-family: 'Noto Sans TC', sans-serif !important;
 }
 
-.cover-overlay h1 {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 15px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.cover-overlay p {
-  font-size: 22px;
-  font-weight: 300;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.content-container {
-  max-width: 1200px; /* 適合桌面端的寬度 */
-  margin: 0 auto;
-  padding: 40px 20px;
+.v-footer {
+  transition: all 0.3s ease;
 }
 </style>

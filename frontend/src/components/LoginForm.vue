@@ -1,160 +1,184 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import Home from './views/Home.vue'
+import LoginForm from './components/LoginForm.vue'
+import { useAuth } from './composables/useAuth'
 
-const username = ref('');
+const username = ref('');  // 實際上是 id_number
 const password = ref('');
+const confirmPassword = ref('');  // 新增密碼確認字段
+const showPassword = ref(false);  // 新增密碼顯示控制
+const showConfirmPassword = ref(false);  // 新增確認密碼顯示控制
+const fullName = ref('');
+const gender = ref('');
+const birthDate = ref('');
+const phoneNumber = ref('');
+const email = ref('');
 const errorMessage = ref('');
+const showError = ref(false);  // 新增控制 snackbar 顯示的變數
 const roleSelected = ref(false);
 const selectedRole = ref('');
+const showForgotPassword = ref(false);
+const showRegister = ref(false);
+const loading = ref(false);
+const formData = ref({
+    username: '',
+    password: '',
+    role: ''
+});
 
-const emit = defineEmits(['login']);
+const emit = defineEmits(['login', 'forgot-password', 'register', 'go-home', 'show-register', 'show-login']);
+
+const roles = [
+    { text: '一般用戶', value: 'user' },
+    { text: '醫療機構', value: 'health_center' },
+    { text: '其他機構', value: 'other' }
+];
+
+const { login, register } = useAuth()
 
 const selectRole = (role) => {
-  selectedRole.value = role;
-  roleSelected.value = true;
+    selectedRole.value = role;
+    roleSelected.value = true;
 };
 
 const goBack = () => {
-  roleSelected.value = false;
-  selectedRole.value = '';
-  username.value = '';
-  password.value = '';
-  errorMessage.value = '';
-};
-
-const login = () => {
-  if (username.value === 'admin' && password.value === '123456') {
-    emit('login', { username: username.value, role: selectedRole.value });
     roleSelected.value = false;
     selectedRole.value = '';
     username.value = '';
     password.value = '';
+    confirmPassword.value = '';
+    fullName.value = '';
+    gender.value = '';
+    birthDate.value = '';
+    phoneNumber.value = '';
+    email.value = '';
     errorMessage.value = '';
-  } else {
-    errorMessage.value = '帳號或密碼錯誤，請再試一次';
-  }
+    showForgotPassword.value = false;
+    showRegister.value = false;
 };
+
+const handleSubmit = async () => {
+    loading.value = true;
+    try {
+        await emit('login', formData.value);
+    } catch (error) {
+        console.error('Login error:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const forgotPassword = () => {
+    if (!username.value) {
+        errorMessage.value = '請輸入身分證號/員工編號';
+        return;
+    }
+    if (!selectedRole.value) {
+        errorMessage.value = '請選擇角色';
+        return;
+    }
+    emit('forgot-password', {
+        id_number: username.value,
+        role: selectedRole.value
+    });
+    username.value = '';
+    errorMessage.value = '';
+};
+
+const handleRegister = () => {
+    if (!username.value || !password.value || !confirmPassword.value || !fullName.value || !gender.value || !birthDate.value || !phoneNumber.value || !email.value) {
+        errorMessage.value = '請填寫所有必填字段';
+        return;
+    }
+    if (password.value !== confirmPassword.value) {
+        errorMessage.value = '兩次輸入的密碼不一致';
+        return;
+    }
+    if (!selectedRole.value) {
+        errorMessage.value = '請選擇角色';
+        return;
+    }
+    emit('register', {
+        id_number: username.value,
+        password: password.value,
+        full_name: fullName.value,
+        gender: gender.value,
+        birth_date: birthDate.value,
+        phone_number: phoneNumber.value,
+        email: email.value,
+        role: selectedRole.value
+    });
+    username.value = '';
+    password.value = '';
+    confirmPassword.value = '';  // 清空確認密碼
+    fullName.value = '';
+    gender.value = '';
+    birthDate.value = '';
+    phoneNumber.value = '';
+    email.value = '';
+    errorMessage.value = '';
+};
+
+// 監聽 errorMessage 的變化
+watch(errorMessage, (newValue) => {
+    if (newValue) {
+        showError.value = true;
+    }
+});
+
+const showLoginForm = ref(false)
+const showRegisterForm = ref(false)
+
+const openLogin = () => {
+  showLoginForm.value = true
+  showRegisterForm.value = false
+}
+const openRegister = () => {
+  showRegisterForm.value = true
+  showLoginForm.value = false
+}
+const closeAll = () => {
+  showLoginForm.value = false
+  showRegisterForm.value = false
+}
 </script>
 
 <template>
-  <div class="login-container">
-    <!-- 角色選擇區域 -->
-    <div v-if="!roleSelected" class="card role-selection">
-      <h2>請選擇您的角色</h2>
-      <div class="role-buttons">
-        <button class="role-btn hospital-btn" @click="selectRole('hospital')">
-          <span>🏥</span> 醫院員工
-        </button>
-        <button class="role-btn patient-btn" @click="selectRole('patient')">
-          <span>👤</span> 使用者
-        </button>
-      </div>
-    </div>
-
-    <!-- 登入表單區域 -->
-    <div v-if="roleSelected" class="card login-form">
-      <h2>{{ selectedRole === 'hospital' ? '🏥 醫院員工登入' : '👤 使用者登入' }}</h2>
-      <div class="form-group">
-        <input v-model="username" type="text" placeholder="帳號" />
-      </div>
-      <div class="form-group">
-        <input v-model="password" type="password" placeholder="密碼" />
-      </div>
-      <div class="button-group">
-        <button class="login-btn" @click="login">登入</button>
-        <button class="back-btn" @click="goBack">返回選擇角色</button>
-      </div>
-      <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-    </div>
-  </div>
+  <Home
+    @show-login="openLogin"
+    @show-register="openRegister"
+  />
+  <LoginForm
+    v-if="showLoginForm"
+    @close="closeAll"
+    @go-register="openRegister"
+    @login="login"
+  />
+  <RegisterForm
+    v-if="showRegisterForm"
+    @close="closeAll"
+    @go-login="openLogin"
+    @register="handleRegister"
+  />
 </template>
 
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
+.fill-height {
+    min-height: calc(100vh - 64px);
 }
 
-.card {
-  background: var(--white);
-  padding: 40px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  width: 100%;
-  max-width: 500px; /* 適合桌面端的寬度 */
-  text-align: center;
-  transition: transform 0.3s ease;
+.v-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-.card:hover {
-  transform: translateY(-5px);
+.v-btn {
+    text-transform: none;
+    letter-spacing: 0;
 }
 
-h2 {
-  font-size: 28px;
-  margin-bottom: 20px;
-}
-
-.role-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.role-btn {
-  padding: 12px 24px;
-  font-size: 16px;
-  border: none;
-  border-radius: var(--border-radius);
-  color: var(--white);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hospital-btn {
-  background: var(--primary-color);
-}
-
-.patient-btn {
-  background: var(--secondary-color);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.button-group {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.login-btn {
-  background: var(--primary-color);
-  color: var(--white);
-  padding: 12px 24px;
-  border: none;
-  border-radius: var(--border-radius);
-  font-size: 16px;
-}
-
-.back-btn {
-  background: #6c757d;
-  color: var(--white);
-  padding: 12px 24px;
-  border: none;
-  border-radius: var(--border-radius);
-  font-size: 16px;
-}
-
-.error {
-  color: #dc3545;
-  margin-top: 15px;
-  font-size: 14px;
+.flex-grow-1 {
+    flex-grow: 1;
 }
 </style>

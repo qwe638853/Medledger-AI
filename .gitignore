@@ -21,29 +21,22 @@ venv/
 *.zip
 *.rar
 *.7z
-*.pickle
 *.h5
 *.pt
 *.pth
 
-# JSON 與 QA Data
+# 忽略 Chroma DB 中的大檔案
+chroma_db/chroma.sqlite3
+chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/data_level0.bin
+chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/link_lists.bin
+chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/index_metadata.pickle
+chroma_db/3636de2c-ee44-4ba8-a2bd-be706f1ef5e3/data_level0.bin
+chroma_db/3636de2c-ee44-4ba8-a2bd-be706f1ef5e3/index_metadata.pickle
+
+# JSON 與 QA Data（大檔案）
 huatuo_medical_qa_sharegpt_traditional.json
 huatuo_medical_qa_sharegpt.json
 medical_dialogue_traditional.json
-
-# Hyperledger Fabric 憑證與私鑰
-fabric-ca-server.db
-fabric-ca-server-config.yaml
-fabric-ca-client-config.yaml
-IssuerPublicKey
-IssuerSecretKey
-IssuerRevocationPublicKey
-IssuerRevocationPrivateKey
-*_sk
-*.pem
-*.crt
-*.key
-server.crt
 
 # Node.js 前端相關
 node_modules/
@@ -51,10 +44,6 @@ frontend/node_modules/
 testFrontend/node_modules/
 dist/
 build/
-
-# 資料庫與 cache
-*.db
-chroma_db/*
 
 # Mac 和 Windows 系統檔案
 .DS_Store

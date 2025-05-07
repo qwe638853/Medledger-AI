@@ -352,13 +352,18 @@ def retrieve_health_data(db_config: Dict[str, Any], id_number: str, start_date: 
         raise Exception(f"檢索健康檢查數據時發生錯誤: {str(e)}")
 
 # 初始化 LLM
-llm = OllamaLLM(model="llama3:8b", base_url="http://localhost:11434", temperature=0.3)
+llm = OllamaLLM(
+    model="llama3:8b",
+    base_url="http://localhost:11434",
+    temperature=0.3,
+    system_prompt="你是一位醫療助理，專門為台灣用戶提供服務。請始終使用繁體中文回答，並確保回答專業且易於理解。"
+)
 
 # 定義分析提示模板
 analysis_prompt_template = PromptTemplate(
     input_variables=["health_data", "retrieved_context"],
     template="""
-    你是一位專業的醫療助理，根據以下健康檢查數據和醫療知識，提供詳細的健康分析和建議。請使用繁體中文回答，並確保建議專業且易於理解。
+    你是一位專業的醫療助理，專門為台灣用戶提供服務。請使用繁體中文回答，並確保建議專業且易於理解。即使檢索到的醫療知識或健康數據可能包含英文或其他語言，你必須將回答轉換為繁體中文。
 
     ### 健康檢查數據
     {health_data}
@@ -367,7 +372,7 @@ analysis_prompt_template = PromptTemplate(
     {retrieved_context}
 
     ### 分析與建議
-    請分析上述健康檢查數據，並結合醫療知識，提供具體的健康建議。如果數據不足以進行分析，請說明需要哪些額外的資訊。
+    請分析上述健康檢查數據，並結合醫療知識，提供具體的健康建議。如果數據不足以進行分析，請說明需要哪些額外的資訊。回答必須使用繁體中文。
     """
 )
 
@@ -375,7 +380,7 @@ analysis_prompt_template = PromptTemplate(
 interactive_prompt_template = PromptTemplate(
     input_variables=["query", "retrieved_context"],
     template="""
-    你是一位專業的醫療助理，根據用戶的查詢和以下檢索到的醫療知識，提供準確且易於理解的回答。請使用繁體中文回答，並確保建議專業。
+    你是一位專業的醫療助理，專門為台灣用戶提供服務。請使用繁體中文回答，並確保建議專業且易於理解。即使用戶查詢或檢索到的醫療知識可能包含英文或其他語言，你必須將回答轉換為繁體中文。
 
     ### 用戶查詢
     {query}
@@ -384,7 +389,7 @@ interactive_prompt_template = PromptTemplate(
     {retrieved_context}
 
     ### 回答
-    請根據用戶的查詢和醫療知識，提供具體的回答。如果無法回答，請說明原因並建議如何獲取更多資訊。
+    請根據用戶的查詢和醫療知識，提供具體的回答。如果無法回答，請說明原因並建議如何獲取更多資訊。回答必須使用繁體中文。
     """
 )
 

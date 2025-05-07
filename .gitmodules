@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+
 [submodule "hyperledger/fabric-samples"]
 	path = hyperledger/fabric-samples
 	url = https://github.com/hyperledger/fabric-samples.git
+[submodule "Chinese-medical-dialogue-data"]
+	path = Chinese-medical-dialogue-data
+	url = https://github.com/Toyhom/Chinese-medical-dialogue-data.git
+=======
+[submodule "hyperledger/fabric-samples"]
+	path = hyperledger/fabric-samples
+	url = https://github.com/hyperledger/fabric-samples.git
+>>>>>>> 90706cc2f9d48eb8cc8161bd344d1239092712d8

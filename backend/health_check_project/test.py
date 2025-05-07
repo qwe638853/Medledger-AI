@@ -12,7 +12,6 @@ class HealthServiceServicer(data_pb2_grpc.HealthServiceServicer):
         print(f"🔒 Patient Hash: {request.patient_hash}")
         print(f"🧪 Test Results: {request.test_results_json}")
         #接test_results_json，把它做分析
-        
         return data_pb2.UploadReportResponse(message="Upload successful!")
 
     def ClaimReport(self, request, context):

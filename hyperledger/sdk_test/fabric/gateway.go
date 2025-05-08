@@ -3,35 +3,33 @@ package fabric
 import (
 	"context"
 	"crypto/x509"
-	"errors" 
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
-	"google.golang.org/grpc/status"      
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
-	"google.golang.org/grpc"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-
+	"google.golang.org/grpc"
 )
 
-//宣告全域變數
+// 宣告全域變數
 const (
-	peerEndpoint      = "localhost:7051"
-    peerHostOverride  = "peer1.org1.example.com"
-    tlsCertPath       = "../orgs/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt"
-    mspID             = "Org1MSP"
-    certPath          = "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem"
-    keyPath           = "../orgs/org1.example.com/users/org1-admin/msp/keystore/"
-    channelName       = "channel1"
-    chaincodeName     = "health"
+	peerEndpoint     = "localhost:7051"
+	peerHostOverride = "peer1.org1.example.com"
+	tlsCertPath      = "../orgs/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt"
+	mspID            = "Org1MSP"
+	//certPath          = "../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem"
+	//keyPath       = "../orgs/org1.example.com/users/org1-admin/msp/keystore/"
+	channelName   = "channel1"
+	chaincodeName = "health"
 )
-
 
 type FabricContract struct {
 	Gateway  *client.Gateway
@@ -43,7 +41,6 @@ func NewFabricContract() *FabricContract {
 	// 建立grpc連線
 	grpcConn := newGrpcConnection()
 
-
 	// 建立身分
 	id := newIdentity()
 	sign := newSigner()
@@ -54,105 +51,103 @@ func NewFabricContract() *FabricContract {
 		client.WithSign(sign),
 		client.WithEvaluateTimeout(5*time.Second),
 		client.WithEndorseTimeout(15*time.Second),
-        client.WithSubmitTimeout(5*time.Second),
-        client.WithCommitStatusTimeout(1*time.Minute),
-        client.WithClientConnection(grpcConn),
+		client.WithSubmitTimeout(5*time.Second),
+		client.WithCommitStatusTimeout(1*time.Minute),
+		client.WithClientConnection(grpcConn),
 	)
 	if err != nil {
 		log.Fatalf("failed to create gateway connection: %v", err)
 	}
 
-
-    channel := gw.GetNetwork(channelName)
-    contract := channel.GetContract(chaincodeName)
+	channel := gw.GetNetwork(channelName)
+	contract := channel.GetContract(chaincodeName)
 
 	return &FabricContract{
 		Gateway:  gw,
 		Contract: contract,
 	}
-    
+
 }
 
 func newGrpcConnection() *grpc.ClientConn {
-	
+
 	//讀取TLS憑證
-    certificatePEM, err := os.ReadFile(tlsCertPath)
-    if err != nil {
-        panic(fmt.Errorf("failed to read TLS certificate file: %w", err))
-    }
+	certificatePEM, err := os.ReadFile(tlsCertPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read TLS certificate file: %w", err))
+	}
 
 	//解析TLS憑證
-    certificate, err := identity.CertificateFromPEM(certificatePEM)
-    if err != nil {
-        panic(err)
-    }
+	certificate, err := identity.CertificateFromPEM(certificatePEM)
+	if err != nil {
+		panic(err)
+	}
 
 	//建立憑證池
-    certPool := x509.NewCertPool()
+	certPool := x509.NewCertPool()
 	//將憑證加入憑證池
-    certPool.AddCert(certificate)
+	certPool.AddCert(certificate)
 	//建立TLS憑證物件(等等grpc連線會用到)
-    transportCredentials := credentials.NewClientTLSFromCert(certPool, peerHostOverride)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, peerHostOverride)
 	//建立grpc連線
-    connection, err := grpc.NewClient(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
-    if err != nil {
-        panic(fmt.Errorf("failed to create gRPC connection: %w", err))
-    }
+	connection, err := grpc.NewClient(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
+	if err != nil {
+		panic(fmt.Errorf("failed to create gRPC connection: %w", err))
+	}
 
-    return connection
+	return connection
 }
 
-
 // 載入使用者身份憑證（X.509）
-func newIdentity() *identity.X509Identity {
+func newIdentity(certPath string) *identity.X509Identity {
 	//讀取身分憑證
-    certPEM, err := os.ReadFile(certPath)
-    if err != nil {
-        panic(fmt.Errorf("failed to read cert file: %w", err))
-    }
-    //解碼PEM
-    certificate, err := identity.CertificateFromPEM(certPEM)
-    if err != nil {
-        panic(err)
-    }
+	certPEM, err := os.ReadFile(certPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to read cert file: %w", err))
+	}
+	//解碼PEM
+	certificate, err := identity.CertificateFromPEM(certPEM)
+	if err != nil {
+		panic(err)
+	}
 
 	//建立X509Identity物件(表示身分)
-    id, err := identity.NewX509Identity(mspID, certificate)
-    if err != nil {
-        panic(fmt.Errorf("failed to create identity: %w", err))
-    }
+	id, err := identity.NewX509Identity(mspID, certificate)
+	if err != nil {
+		panic(fmt.Errorf("failed to create identity: %w", err))
+	}
 
-    return id
+	return id
 }
 
 // 載入私鑰並建立簽章者
-func newSigner() identity.Sign {
-    // keystore 資料夾中只有一個檔案（預設）
-    files, err := ioutil.ReadDir(keyPath)
-    if err != nil || len(files) == 0 {
-        panic(fmt.Errorf("failed to read private key folder: %w", err))
-    }
+func newSigner(keyPath string) identity.Sign {
+	// keystore 資料夾中只有一個檔案（預設）
+	files, err := ioutil.ReadDir(keyPath)
+	if err != nil || len(files) == 0 {
+		panic(fmt.Errorf("failed to read private key folder: %w", err))
+	}
 
-    // 拼出 keystore 資料夾內唯一的檔案路徑
-    keyFile := keyPath + "/" + files[0].Name()
+	// 拼出 keystore 資料夾內唯一的檔案路徑
+	keyFile := keyPath + "/" + files[0].Name()
 
-    // 讀取私鑰檔案內容
-    keyPEM, err := os.ReadFile(keyFile)
-    if err != nil {
-        panic(fmt.Errorf("failed to read private key: %w", err))
-    }
+	// 讀取私鑰檔案內容
+	keyPEM, err := os.ReadFile(keyFile)
+	if err != nil {
+		panic(fmt.Errorf("failed to read private key: %w", err))
+	}
 
-    privateKey, err := identity.PrivateKeyFromPEM(keyPEM)
-    if err != nil {
-        panic(err)
-    }
+	privateKey, err := identity.PrivateKeyFromPEM(keyPEM)
+	if err != nil {
+		panic(err)
+	}
 
-    sign, err := identity.NewPrivateKeySign(privateKey)
-    if err != nil {
-        panic(err)
-    }
+	sign, err := identity.NewPrivateKeySign(privateKey)
+	if err != nil {
+		panic(err)
+	}
 
-    return sign
+	return sign
 }
 
 // 顯示 Gateway 錯誤詳細資訊

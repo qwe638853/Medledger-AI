@@ -1,65 +1,65 @@
-// 引入 Vue 的核心功能
-import { createApp } from 'vue'
-// 引入 Pinia 狀態管理庫
-import { createPinia } from 'pinia'
-// 引入 Vue Router 相關功能
-import { createRouter, createWebHistory } from 'vue-router'
-// 引入根組件
-import App from './App.vue'
-// 引入 Vuetify 的基礎樣式
-import 'vuetify/styles'
-// 引入 Vuetify 的創建函數
-import { createVuetify } from 'vuetify'
-// 引入 Vuetify 的所有組件
-import * as components from 'vuetify/components'
-// 引入 Vuetify 的所有指令
-import * as directives from 'vuetify/directives'
-// 引入 Material Design Icons 字體
-import '@mdi/font/css/materialdesignicons.css'
-// 引入自定義樣式
-import './style.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import { createRouter, createWebHistory } from 'vue-router';
+import App from './App.vue';
+import 'vuetify/styles';
+import { createVuetify } from 'vuetify';
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+import '@mdi/font/css/materialdesignicons.css';
+import './style.css';
+import { useAuth } from './composables/useAuth';
 
-// 創建 Vuetify 實例，配置主題和組件
 const vuetify = createVuetify({
   components,
   directives,
   theme: {
-    defaultTheme: 'light' // 設置默認主題為亮色
+    defaultTheme: 'light'
   }
-})
+});
 
-// 創建路由實例，配置路由規則
 const router = createRouter({
-  history: createWebHistory(), // 使用 HTML5 History 模式
+  history: createWebHistory(),
   routes: [
     {
-      path: '/', // 首頁路由
+      path: '/',
       name: 'Home',
-      component: () => import('./views/Home.vue') // 懶加載首頁組件
+      component: () => import('./views/Home.vue'),
+      meta: { requiresAuth: false }
     },
     {
-      path: '/blog', // 部落格頁面路由
-      name: 'Blog',
-      component: () => import('./views/Blog.vue') // 懶加載部落格組件
+      path: '/login',
+      name: 'Login',
+      component: () => import('./components/LoginForm.vue'),
+      meta: { requiresAuth: false }
     },
     {
-      path: '/contact', // 聯絡我們頁面路由
-      name: 'Contact',
-      component: () => import('./views/Contact.vue') // 懶加載聯絡我們組件
+      path: '/:pathMatch(.*)*', // 404 路由
+      redirect: '/'
     }
   ]
-})
+});
 
-// 創建 Vue 應用實例
-const app = createApp(App)
-// 使用 Pinia 進行狀態管理
-app.use(createPinia())
-// 使用路由
-app.use(router)
-// 使用 Vuetify
-app.use(vuetify)
-// 掛載應用到 DOM
-app.mount('#app')
+router.beforeEach((to, from, next) => {
+  const { isLoggedIn } = useAuth();
+  if (to.meta.requiresAuth && !isLoggedIn.value) {
+    next('/login');
+  } else {
+    next();
+  }
+});
 
+const app = createApp(App);
+app.use(createPinia());
+app.use(router);
+app.use(vuetify);
 
+// 移除 alert，改為靜默記錄並觸發 snackbar
+app.config.errorHandler = (err, vm, info) => {
+  console.error('Vue error:', err, info);
+  document.dispatchEvent(new CustomEvent('show-snackbar', {
+    detail: { message: '應用程式發生錯誤，請稍後再試或聯繫管理員。', color: 'error' }
+  }));
+};
 
+app.mount('#app');

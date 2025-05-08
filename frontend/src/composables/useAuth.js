@@ -1,18 +1,31 @@
 import { ref } from 'vue';
 import axios from 'axios';
-//處理所有認證相關的邏輯
-//包含登入、登出、token 管理等功能
-export function useAuth() {
-    const userRole = ref(null);
-    const isLoggedIn = ref(false);
-    const currentUser = ref('');
-    const token = ref('');
-    const showLoginForm = ref(false);
+import { useRouter } from 'vue-router';
 
-    // 初始化認證狀態
+// 處理所有認證相關的邏輯
+export function useAuth() {
+    const userRole = ref(null);         // 儲存當前使用者的角色
+    const isLoggedIn = ref(false);      // 標記是否已登入
+    const currentUser = ref('');        // 儲存當前使用者的身分證號/員工編號
+    const token = ref('');              // 儲存認證 token
+    const showLoginForm = ref(false);   // 控制登入表單顯示
+    const loading = ref(false);         // 標記載入狀態
+    const router = useRouter();         // 引入路由實例
+
+    // 錯誤訊息通知事件
+    const emitError = (message) => {
+        document.dispatchEvent(new CustomEvent('show-snackbar', { detail: { message, color: 'error' } }));
+    };
+
+    const emitSuccess = (message) => {
+        document.dispatchEvent(new CustomEvent('show-snackbar', { detail: { message, color: 'success' } }));
+    };
+
+    // 初始化認證狀態，從 localStorage 載入
     const initAuth = () => {
-        if (localStorage.getItem('token')) {
-            token.value = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            token.value = storedToken;
             userRole.value = localStorage.getItem('role');
             currentUser.value = localStorage.getItem('id_number');
             isLoggedIn.value = true;
@@ -22,15 +35,14 @@ export function useAuth() {
 
     // 登入處理
     const login = async (data) => {
+        loading.value = true;
         try {
             const response = await axios.post('/default/login', {
                 username: data.username,
                 password: data.password,
                 scope: `role:${data.role}`
             }, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 transformRequest: [(data) => {
                     const params = new URLSearchParams();
                     for (const key in data) {
@@ -39,7 +51,6 @@ export function useAuth() {
                     return params.toString();
                 }]
             });
-            
             token.value = response.data.access_token;
             localStorage.setItem('token', token.value);
             localStorage.setItem('role', data.role);
@@ -49,8 +60,38 @@ export function useAuth() {
             isLoggedIn.value = true;
             showLoginForm.value = false;
             axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
+            emitSuccess('登入成功！');
+            router.push('/');
         } catch (error) {
-            handleLoginError(error);
+            handleAuthError(error, 'login');
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    // 註冊處理
+    const register = async (data) => {
+        loading.value = true;
+        try {
+            const response = await axios.post('/default/register', {
+                id_number: data.id_number,
+                password: data.password,
+                full_name: data.full_name,
+                gender: data.gender,
+                birth_date: data.birth_date,
+                phone_number: data.phone_number,
+                email: data.email,
+                role: data.role
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            emitSuccess('註冊成功，請登入！');
+            showLoginForm.value = true;
+            router.push('/login');
+        } catch (error) {
+            handleAuthError(error, 'register');
+        } finally {
+            loading.value = false;
         }
     };
 
@@ -64,33 +105,40 @@ export function useAuth() {
         localStorage.removeItem('id_number');
         isLoggedIn.value = false;
         delete axios.defaults.headers.common['Authorization'];
+        emitSuccess('登出成功！');
+        router.push('/');
     };
 
-    // 錯誤處理
-    const handleLoginError = (error) => {
-        console.error('Login failed:', error);
+    // 統一處理認證錯誤
+    const handleAuthError = (error, action) => {
+        console.error(`${action} failed:`, error);
         const errorMessage = error.response?.data?.detail || error.message;
-        if (error.response?.status === 400) {
-            if (errorMessage.includes("未提供角色")) {
-                alert('請選擇角色');
-            } else if (errorMessage.includes("身分證字號格式不正確")) {
-                alert('身分證號/員工編號格式錯誤，請檢查輸入');
-            } else {
-                alert('請求格式錯誤，請檢查輸入的身分證號/員工編號、密碼和角色');
+        const status = error.response?.status;
+
+        const errorMap = {
+            400: {
+                '未提供角色': '請選擇角色',
+                '身分證字號格式不正確': '身分證號/員工編號格式錯誤，請檢查輸入',
+                default: '請求格式錯誤，請檢查輸入'
+            },
+            404: '找不到端點，請確認後端服務是否正常運行',
+            422: '請求數據格式錯誤，請檢查輸入',
+            default: {
+                '密碼錯誤': '密碼錯誤，請重新輸入',
+                '帳號不存在': '帳號不存在，請確認身分證號/員工編號',
+                '角色不匹配': '角色不匹配，請確認選擇的角色',
+                default: `${action === 'login' ? '登入' : '註冊'}失敗：${errorMessage}`
             }
-        } else if (error.response?.status === 404) {
-            alert('找不到登入端點，請確認後端服務是否正常運行');
-        } else if (error.response?.status === 422) {
-            alert('請求數據格式錯誤，請檢查輸入的身分證號/員工編號和密碼');
-        } else if (errorMessage === '密碼錯誤') {
-            alert('密碼錯誤，請重新輸入');
-        } else if (errorMessage === '帳號不存在') {
-            alert('帳號不存在，請確認身分證號/員工編號是否正確');
-        } else if (errorMessage === '角色不匹配') {
-            alert('角色不匹配，請確認選擇的角色是否正確');
-        } else {
-            alert(`登入失敗：${errorMessage}`);
-        }
+        };
+
+        const getMessage = (status, message) => {
+            if (status && errorMap[status]) {
+                return errorMap[status][message] || errorMap[status].default || errorMap.default.default;
+            }
+            return errorMap.default[message] || errorMap.default.default;
+        };
+
+        emitError(getMessage(status, errorMessage));
     };
 
     return {
@@ -99,8 +147,11 @@ export function useAuth() {
         currentUser,
         token,
         showLoginForm,
+        loading,
         initAuth,
         login,
-        logout
+        register,
+        logout,
+        handleAuthError
     };
-} 
+}

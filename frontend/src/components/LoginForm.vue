@@ -1,184 +1,132 @@
+<template>
+  <v-container class="fill-height">
+    <v-row align="center" justify="center">
+      <v-col cols="12" sm="8" md="4">
+        <v-card class="elevation-12">
+          <v-toolbar color="primary" dark flat>
+            <v-toolbar-title>登入</v-toolbar-title>
+          </v-toolbar>
+          <v-card-text>
+            <v-form @submit.prevent="handleSubmit">
+              <v-select
+                v-model="selectedRole"
+                :items="roles"
+                item-title="text"
+                item-value="value"
+                label="選擇角色"
+                outlined
+                :rules="[v => !!v || '請選擇角色']"
+                prepend-icon="mdi-account-group"
+                @update:model-value="selectRole"
+              />
+              <v-text-field
+                v-model="username"
+                label="身分證號/員工編號"
+                prepend-icon="mdi-account"
+                type="text"
+                outlined
+                :rules="[v => !!v || '請輸入身分證號/員工編號']"
+                class="mb-2"
+              />
+              <v-text-field
+                v-model="password"
+                label="密碼"
+                prepend-icon="mdi-lock"
+                :type="showPassword ? 'text' : 'password'"
+                :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append="showPassword = !showPassword"
+                outlined
+                :rules="[v => !!v || '請輸入密碼']"
+                class="mb-2"
+              />
+              <v-btn
+                :loading="loading"
+                color="primary"
+                block
+                type="submit"
+                class="mb-4"
+              >
+                登入
+              </v-btn>
+              <v-btn
+                text
+                @click="emit('go-home')"
+                class="mr-4"
+              >
+                返回首頁
+              </v-btn>
+              <v-btn
+                text
+                @click="emit('forgot-password')"
+              >
+                忘記密碼？
+              </v-btn>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
 <script setup>
-import { ref, watch } from 'vue';
-import Home from './views/Home.vue'
-import LoginForm from './components/LoginForm.vue'
-import { useAuth } from './composables/useAuth'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuth } from '../composables/useAuth';
 
-const username = ref('');  // 實際上是 id_number
-const password = ref('');
-const confirmPassword = ref('');  // 新增密碼確認字段
-const showPassword = ref(false);  // 新增密碼顯示控制
-const showConfirmPassword = ref(false);  // 新增確認密碼顯示控制
-const fullName = ref('');
-const gender = ref('');
-const birthDate = ref('');
-const phoneNumber = ref('');
-const email = ref('');
-const errorMessage = ref('');
-const showError = ref(false);  // 新增控制 snackbar 顯示的變數
-const roleSelected = ref(false);
+const emit = defineEmits(['login', 'logout', 'forgot-password', 'go-home']);
+
+const { login, loading } = useAuth();
+const router = useRouter();
+
 const selectedRole = ref('');
-const showForgotPassword = ref(false);
-const showRegister = ref(false);
-const loading = ref(false);
-const formData = ref({
-    username: '',
-    password: '',
-    role: ''
-});
-
-const emit = defineEmits(['login', 'forgot-password', 'register', 'go-home', 'show-register', 'show-login']);
-
+const username = ref('');
+const password = ref('');
+const showPassword = ref(false);
 const roles = [
-    { text: '一般用戶', value: 'user' },
-    { text: '醫療機構', value: 'health_center' },
-    { text: '其他機構', value: 'other' }
+  { text: '一般用戶', value: 'general' },
+  { text: '醫療機構', value: 'medical' },
+  { text: '其他用戶', value: 'other' }
 ];
 
-const { login, register } = useAuth()
-
-const selectRole = (role) => {
-    selectedRole.value = role;
-    roleSelected.value = true;
-};
-
-const goBack = () => {
-    roleSelected.value = false;
-    selectedRole.value = '';
-    username.value = '';
-    password.value = '';
-    confirmPassword.value = '';
-    fullName.value = '';
-    gender.value = '';
-    birthDate.value = '';
-    phoneNumber.value = '';
-    email.value = '';
-    errorMessage.value = '';
-    showForgotPassword.value = false;
-    showRegister.value = false;
+const selectRole = (value) => {
+  selectedRole.value = value;
 };
 
 const handleSubmit = async () => {
-    loading.value = true;
-    try {
-        await emit('login', formData.value);
-    } catch (error) {
-        console.error('Login error:', error);
-    } finally {
-        loading.value = false;
-    }
-};
-
-const forgotPassword = () => {
-    if (!username.value) {
-        errorMessage.value = '請輸入身分證號/員工編號';
-        return;
-    }
-    if (!selectedRole.value) {
-        errorMessage.value = '請選擇角色';
-        return;
-    }
-    emit('forgot-password', {
-        id_number: username.value,
-        role: selectedRole.value
+  if (!selectedRole.value || !username.value || !password.value) {
+    return;
+  }
+  try {
+    await login({
+      username: username.value,
+      password: password.value,
+      role: selectedRole.value
     });
-    username.value = '';
-    errorMessage.value = '';
+    router.push('/');
+  } catch (error) {
+    console.error('Login error:', error);
+  }
 };
-
-const handleRegister = () => {
-    if (!username.value || !password.value || !confirmPassword.value || !fullName.value || !gender.value || !birthDate.value || !phoneNumber.value || !email.value) {
-        errorMessage.value = '請填寫所有必填字段';
-        return;
-    }
-    if (password.value !== confirmPassword.value) {
-        errorMessage.value = '兩次輸入的密碼不一致';
-        return;
-    }
-    if (!selectedRole.value) {
-        errorMessage.value = '請選擇角色';
-        return;
-    }
-    emit('register', {
-        id_number: username.value,
-        password: password.value,
-        full_name: fullName.value,
-        gender: gender.value,
-        birth_date: birthDate.value,
-        phone_number: phoneNumber.value,
-        email: email.value,
-        role: selectedRole.value
-    });
-    username.value = '';
-    password.value = '';
-    confirmPassword.value = '';  // 清空確認密碼
-    fullName.value = '';
-    gender.value = '';
-    birthDate.value = '';
-    phoneNumber.value = '';
-    email.value = '';
-    errorMessage.value = '';
-};
-
-// 監聽 errorMessage 的變化
-watch(errorMessage, (newValue) => {
-    if (newValue) {
-        showError.value = true;
-    }
-});
-
-const showLoginForm = ref(false)
-const showRegisterForm = ref(false)
-
-const openLogin = () => {
-  showLoginForm.value = true
-  showRegisterForm.value = false
-}
-const openRegister = () => {
-  showRegisterForm.value = true
-  showLoginForm.value = false
-}
-const closeAll = () => {
-  showLoginForm.value = false
-  showRegisterForm.value = false
-}
 </script>
-
-<template>
-  <Home
-    @show-login="openLogin"
-    @show-register="openRegister"
-  />
-  <LoginForm
-    v-if="showLoginForm"
-    @close="closeAll"
-    @go-register="openRegister"
-    @login="login"
-  />
-  <RegisterForm
-    v-if="showRegisterForm"
-    @close="closeAll"
-    @go-login="openLogin"
-    @register="handleRegister"
-  />
-</template>
 
 <style scoped>
 .fill-height {
-    min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 64px);
 }
 
 .v-card {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
 .v-btn {
-    text-transform: none;
-    letter-spacing: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  transition: transform 0.2s ease;
 }
 
-.flex-grow-1 {
-    flex-grow: 1;
+.v-btn:hover {
+  transform: scale(1.05);
 }
 </style>

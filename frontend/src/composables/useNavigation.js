@@ -1,21 +1,26 @@
 import { ref } from 'vue';
-//處理頁面導航相關的邏輯
-//包含頁腳顯示、菜單項目等
+import { useRouter } from 'vue-router';
+import { useAuth } from './useAuth';
+
 export function useNavigation() {
-    const showFooter = ref(false);
-    const menuItems = ref([
-        { title: '首頁', path: '/' },
-        { title: '健康紀錄', path: '/records' },
-        { title: '聯絡我們', path: '/contact' }
-    ]);
+  const router = useRouter();
+  const { userRole } = useAuth();
+  const showFooter = ref(false);
+  const menuItems = ref([
+    { title: '首頁', path: '/' },
+    { title: '登入', path: '/login' }
+  ]);
 
-    const goToHome = (showLoginForm) => {
-        showLoginForm.value = false;
-    };
+  const goToHome = (showLoginForm) => {
+    if (showLoginForm && typeof showLoginForm.value !== 'undefined') {
+      showLoginForm.value = false;
+    }
+    router.push('/');
+  };
 
-    return {
-        showFooter,
-        menuItems,
-        goToHome
-    };
-} 
+  return {
+    showFooter,
+    menuItems,
+    goToHome
+  };
+}

@@ -12,25 +12,25 @@ import (
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
 	sc "sdk_test/service"
+	"sdk_test/wallet"
+	wl "sdk_test/wallet"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type server struct {
 	pb.UnimplementedHealthServiceServer
-	Contract fc.FabricContract
+	Wallet  *wl.Wallet // ← 注入
+	Builder fc.GWBuilder
 }
 
 // UploadReport
 func (s *server) UploadReport(ctx context.Context, req *pb.UploadReportRequest) (*pb.UploadReportResponse, error) {
-	log.Printf("Received UploadReport: %v", req)
-	return &pb.UploadReportResponse{
-		Success: true,
-		Message: "Report Uploaded Successfully",
-	}, nil
+	return sc.HandleUploadReport(ctx, req, s.Wallet, s.Builder)
 }
 
 // ClaimReport
@@ -58,7 +58,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 
 // Register
 func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	return sc.HandleRegister(ctx, req)
+	return sc.HandleRegister(ctx, req, s.Wallet)
 }
 
 func main() {
@@ -67,21 +67,38 @@ func main() {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
 
-	fabric := fc.NewFabricContract()
-	defer fabric.Gateway.Close()
+	w := wallet.New()
 
-	go startGrpcServer()     // 開 gRPC server
-	startHttpGatewayServer() // 開 gRPC-Gateway server (HTTP server)
+	// ③ 建 PeerConnector (只做一次)
+	peer, err := fc.NewPeer(
+		"localhost:7051",
+		"../orgs/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt",
+		"peer1.org1.example.com",
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// ④ 建 Gateway Builder
+	builder := fc.GWBuilder{
+		Peer:    peer,
+		Channel: "channel1",
+		CCName:  "health",
+	}
+
+	go startGrpcServer(w, builder) // 開 gRPC server
+	startHttpGatewayServer()       // 開 gRPC-Gateway server (HTTP server)
 }
 
-func startGrpcServer() {
+func startGrpcServer(wallet *wl.Wallet, builder fc.GWBuilder) {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterHealthServiceServer(grpcServer, &server{})
+	pb.RegisterHealthServiceServer(grpcServer, &server{Wallet: wallet, Builder: builder})
 
 	log.Println("gRPC server is running at :50051")
 	if err := grpcServer.Serve(lis); err != nil {

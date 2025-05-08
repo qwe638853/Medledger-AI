@@ -3,21 +3,44 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // HealthReport 定義每一筆健檢報告的結構
 // TestResults 用 JSON 字串統一保存所有健檢數據
 // 這樣新增欄位時，不需要改 Chaincode
 
+// 全域變數
+const (
+	docHealth = "HealthRecord" // 報告檔案標籤
+	docAuth   = "AuthTicket"   // 授權票標籤
+
+	keyReportNS = "REPORT" // CompositeKey namespace
+	keyAuthNS   = "AUTH"
+)
+
 type HealthReport struct {
-	ReportID     string `json:"reportID"`      // 報告唯一編號
-	PatientHash  string `json:"patientHash"`   // 病患健保卡號 Hash
-	AccessList   []string `json:"accessList"`   // 有權限讀取此報告的 CN 名單
-	Timestamp    string `json:"timestamp"`      // 上傳時間
-	TestResults  string `json:"testResults"`    // 🆕 存所有健檢項目的 JSON 字串
+	DocType    string `json:"docType"`     // 固定 "HealthRecord"
+	ReportID   string `json:"reportId"`    // 主鍵，由診所自訂
+	PatientH   string `json:"patientHash"` // 患者 username 雜湊
+	ClinicID   string `json:"clinicId"`    // 產生報告的診所 ID
+	ResultJSON string `json:"resultJson"`  // 測試結果
+	CreatedAt  int64  `json:"createdAt"`   // Unix 秒
+}
+
+type AuthTicket struct {
+	DocType   string `json:"docType"` // 固定 "AuthTicket"
+	PatientH  string `json:"patientHash"`
+	TargetH   string `json:"TargetHash"`
+	ReportID  string `json:"reportId"`
+	GrantedAt int64  `json:"grantedAt"`
+	Expiry    int64  `json:"expiry"` // Unix 秒
 }
 
 // HealthCheckContract 實作 Chaincode
@@ -26,186 +49,168 @@ type HealthCheckContract struct {
 	contractapi.Contract
 }
 
-// UploadReport 上傳一份健檢報告
-func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInterface, reportID, patientHash, testResultsJson string) error {
-	exists, err := ctx.GetStub().GetState(reportID)
-	if err != nil {
-		return err
+func getCaller(ctx contractapi.TransactionContextInterface) (unameHash, role string, err error) {
+	id, _ := cid.New(ctx.GetStub())
+	unameHash, ok1, _ := id.GetAttributeValue("username")
+	role, ok2, _ := id.GetAttributeValue("role")
+	if !ok1 || !ok2 {
+		err = fmt.Errorf("missing username or role attribute in cert")
 	}
-	if exists != nil {
-		return fmt.Errorf("report %s already exists", reportID)
-	}
-
-	// 檢查 testResultsJson 是否是合法 JSON（可選）
-	var test map[string]interface{}
-	err = json.Unmarshal([]byte(testResultsJson), &test)
-	if err != nil {
-		return fmt.Errorf("invalid testResults JSON: %v", err)
-	}
-
-	report := HealthReport{
-		ReportID:      reportID,
-		PatientHash:   patientHash,
-		AccessList:    []string{},
-		Timestamp:     time.Now().Format(time.RFC3339),
-		TestResults:   testResultsJson,
-	}
-
-	reportBytes, err := json.Marshal(report)
-	if err != nil {
-		return err
-	}
-
-	return ctx.GetStub().PutState(reportID, reportBytes)
+	return
 }
 
-// ClaimReport 使用者認領自己的報告，將自己加入 AccessList
-func (h *HealthCheckContract) ClaimReport(ctx contractapi.TransactionContextInterface, reportID string) error {
-	reportBytes, err := ctx.GetStub().GetState(reportID)
-	if err != nil || reportBytes == nil {
-		return fmt.Errorf("report %s not found", reportID)
+func getClinicID(ctx contractapi.TransactionContextInterface) string {
+	id, _ := cid.New(ctx.GetStub())
+	clinic, _, _ := id.GetAttributeValue("clinicId")
+	return clinic
+}
+
+func recPatientHash(raw []byte) string {
+	var t struct {
+		PatientH string `json:"patientHash"`
+	}
+	_ = json.Unmarshal(raw, &t)
+	return t.PatientH
+}
+
+func nowSec() int64 { return time.Now().Unix() }
+
+// UploadReport 上傳一份健檢報告
+func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInterface, reportID, patientHash, resultJSON string) peer.Response {
+
+	// (A) 僅診所（role=clinic）可呼叫
+	if err := cid.AssertAttributeValue(ctx.GetStub(), "role", "clinic"); err != nil {
+		return shim.Error("only clinic can upload report")
 	}
 
-	var report HealthReport
-	_ = json.Unmarshal(reportBytes, &report)
-
-	cert, err := ctx.GetClientIdentity().GetX509Certificate()
-	if err != nil {
-		return fmt.Errorf("failed to get client certificate: %v", err)
-	}
-	callerCN := cert.Subject.CommonName
-
-	for _, cn := range report.AccessList {
-		if cn == callerCN {
-			return fmt.Errorf("identity %s already authorized", callerCN)
-		}
+	// (B) 不允許重複報告 ID
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	if b, _ := ctx.GetStub().GetState(repKey); b != nil {
+		return shim.Error("reportID already exists")
 	}
 
-	report.AccessList = append(report.AccessList, callerCN)
-
-	updatedBytes, err := json.Marshal(report)
-	if err != nil {
-		return err
+	// (C) 組裝並寫入
+	rec := HealthReport{
+		DocType: docHealth, ReportID: reportID, PatientH: patientHash,
+		ClinicID: getClinicID(ctx), ResultJSON: resultJSON, CreatedAt: nowSec(),
 	}
+	bytes, _ := json.Marshal(rec)
+	if err := ctx.GetStub().PutState(repKey, bytes); err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(nil)
 
-	return ctx.GetStub().PutState(reportID, updatedBytes)
 }
 
 // ReadReport 查詢報告內容（需要在 AccessList 中）
-func (h *HealthCheckContract) ReadReport(ctx contractapi.TransactionContextInterface, reportID string) (*HealthReport, error) {
-	reportBytes, err := ctx.GetStub().GetState(reportID)
-	if err != nil || reportBytes == nil {
-		return nil, fmt.Errorf("report %s not found", reportID)
-	}
+func (h *HealthCheckContract) ReadReport(ctx contractapi.TransactionContextInterface,
+	reportID string) peer.Response {
 
-	var report HealthReport
-	_ = json.Unmarshal(reportBytes, &report)
-
-	cert, err := ctx.GetClientIdentity().GetX509Certificate()
+	unameHash, role, err := getCaller(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get client certificate: %v", err)
+		return shim.Error(err.Error())
 	}
-	callerCN := cert.Subject.CommonName
 
-	authorized := false
-	for _, cn := range report.AccessList {
-		if cn == callerCN {
-			authorized = true
-			break
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	rb, err := ctx.GetStub().GetState(repKey)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("failed to get report state: %v", err))
+	}
+	if rb == nil {
+		return shim.Error(fmt.Sprintf("report with ID '%s' not found", reportID))
+	}
+
+	//  將報告數據 Unmarshal 到 HealthReport 結構體
+	var report HealthReport
+	if err := json.Unmarshal(rb, &report); err != nil {
+		return shim.Error(fmt.Sprintf("failed to unmarshal report data for ID '%s': %v", reportID, err))
+	}
+
+	switch role {
+	case "clinic":
+		return shim.Success(rb)
+
+	case "patient":
+		if report.PatientH == unameHash {
+			return shim.Success(rb)
 		}
-	}
-	if !authorized {
-		return nil, fmt.Errorf("access denied for %s", callerCN)
-	}
+		return shim.Error("unauthorized")
 
-	return &report, nil
+	case "insurer":
+		ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS,
+			[]string{report.PatientH, unameHash, reportID})
+		tb, _ := ctx.GetStub().GetState(ticketKey)
+		if tb == nil {
+			return shim.Error("no authorization")
+		}
+		var tk AuthTicket
+		_ = json.Unmarshal(tb, &tk)
+		if nowSec() > tk.Expiry {
+			return shim.Error("authorization expired")
+		}
+		return shim.Success(rb)
+
+	default:
+		return shim.Error("role not allowed")
+	}
 }
 
 // GrantAccess 授權其他人查閱報告
-func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInterface, reportID, targetCN string) error {
-	reportBytes, err := ctx.GetStub().GetState(reportID)
-	if err != nil || reportBytes == nil {
-		return fmt.Errorf("report %s not found", reportID)
+func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID, expiryStr string) peer.Response {
+
+	// (A) 僅患者可呼叫
+	patientHash, role, err := getCaller(ctx)
+	if err != nil || role != "patient" {
+		return shim.Error("only patient can grant access")
 	}
 
-	var report HealthReport
-	_ = json.Unmarshal(reportBytes, &report)
-
-	cert, err := ctx.GetClientIdentity().GetX509Certificate()
-	if err != nil {
-		return fmt.Errorf("failed to get caller certificate: %v", err)
-	}
-	callerCN := cert.Subject.CommonName
-
-	authorized := false
-	for _, cn := range report.AccessList {
-		if cn == callerCN {
-			authorized = true
-			break
-		}
-	}
-	if !authorized {
-		return fmt.Errorf("access denied for %s", callerCN)
+	// (B) 檢查到期時間有效
+	expiry, errExp := strconv.ParseInt(expiryStr, 10, 64)
+	if errExp != nil || expiry <= nowSec() {
+		return shim.Error("invalid expiry")
 	}
 
-	for _, cn := range report.AccessList {
-		if cn == targetCN {
-			return fmt.Errorf("%s already has access", targetCN)
-		}
+	// (C) 確認報告屬於患者
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	rb, _ := ctx.GetStub().GetState(repKey)
+	if rb == nil {
+		return shim.Error("report not found")
+	}
+	if recPatientHash(rb) != patientHash {
+		return shim.Error("not your report")
 	}
 
-	report.AccessList = append(report.AccessList, targetCN)
-
-	updatedBytes, err := json.Marshal(report)
-	if err != nil {
-		return err
+	// (D) 寫入授權票
+	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS,
+		[]string{patientHash, targetHash, reportID})
+	tk := AuthTicket{DocType: docAuth,
+		PatientH:  patientHash,
+		TargetH:   targetHash,
+		ReportID:  reportID,
+		GrantedAt: nowSec(),
+		Expiry:    expiry,
 	}
 
-	return ctx.GetStub().PutState(reportID, updatedBytes)
+	tbytes, _ := json.Marshal(tk)
+	if err := ctx.GetStub().PutState(ticketKey, tbytes); err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(nil)
+
 }
 
 // RevokeAccess 收回他人查閱權限
-func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInterface, reportID, targetCN string) error {
-	reportBytes, err := ctx.GetStub().GetState(reportID)
-	if err != nil || reportBytes == nil {
-		return fmt.Errorf("report %s not found", reportID)
+func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID string) peer.Response {
+	patientHash, role, err := getCaller(ctx)
+	if err != nil || role != "patient" {
+		return shim.Error("only patient can revoke")
 	}
-
-	var report HealthReport
-	_ = json.Unmarshal(reportBytes, &report)
-
-	cert, err := ctx.GetClientIdentity().GetX509Certificate()
-	if err != nil {
-		return fmt.Errorf("failed to get caller certificate: %v", err)
+	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS,
+		[]string{patientHash, targetHash, reportID})
+	if err := ctx.GetStub().DelState(ticketKey); err != nil {
+		return shim.Error(err.Error())
 	}
-	callerCN := cert.Subject.CommonName
-
-	authorized := false
-	for _, cn := range report.AccessList {
-		if cn == callerCN {
-			authorized = true
-			break
-		}
-	}
-	if !authorized {
-		return fmt.Errorf("access denied for %s", callerCN)
-	}
-
-	// 移除目標 CN
-	filtered := []string{}
-	for _, cn := range report.AccessList {
-		if cn != targetCN {
-			filtered = append(filtered, cn)
-		}
-	}
-	report.AccessList = filtered
-
-	updatedBytes, err := json.Marshal(report)
-	if err != nil {
-		return err
-	}
-
-	return ctx.GetStub().PutState(reportID, updatedBytes)
+	return shim.Success(nil)
 }
 
 // main 啟動鏈碼

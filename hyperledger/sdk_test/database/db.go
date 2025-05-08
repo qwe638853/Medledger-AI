@@ -26,6 +26,7 @@ func InitDB(path string) error {
 		email TEXT,
 		phone TEXT
 	);`
+
 	_, err = DB.Exec(createStmt)
 	if err != nil {
 		return fmt.Errorf("建立資料表失敗: %v", err)
@@ -47,4 +48,13 @@ func InsertUser(username, password, name, date, email, phone string) error {
 	_, err := DB.Exec("INSERT INTO users(username, password, name, date, email, phone) VALUES (?, ?, ?, ?, ?, ?)",
 		username, password, name, date, email, phone)
 	return err
+}
+
+func GetUserPassword(username string) (string, error) {
+	var password string
+	err := DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&password)
+	if err != nil {
+		return "", err
+	}
+	return password, nil
 }

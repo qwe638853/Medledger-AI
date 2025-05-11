@@ -6,6 +6,7 @@ import (
 	"sdk_test/fabric"
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
+	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
 
 	"google.golang.org/grpc/codes"
@@ -16,9 +17,13 @@ import (
 func HandleUploadReport(
 	ctx context.Context,
 	req *pb.UploadReportRequest,
-	wallet *wl.Wallet, builder fc.GWBuilder) (*pb.UploadReportResponse, error) {
+	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.UploadReportResponse, error) {
 
-	userID := req.UserId // 例如從 metadata 或 JWT 取得
+	// 取得JWT 裡面的userID
+	userID, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	entry, ok := wallet.Get(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")

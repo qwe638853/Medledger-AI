@@ -199,6 +199,71 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 
 }
 
+// ListMyReports 根據使用者身份查詢自己可見的報告清單（不含 ResultJSON）
+// 優化點：使用 rich query 篩選 + 僅回傳摘要 + 僅允許 patient/clinic 查詢
+func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) peer.Response {
+	unameHash, role, err := getCaller(ctx)
+	if err != nil {
+		return shim.Error("failed to get caller identity: " + err.Error())
+	}
+
+	var query string
+
+	switch role {
+	case "patient":
+		// 查詢自己是病患的報告
+		query = fmt.Sprintf(`{
+			"selector": {
+				"docType": "%s",
+				"patientHash": "%s"
+			}
+		}`, docHealth, unameHash)
+
+	case "clinic":
+		// 查詢自己診所上傳的報告
+		clinicID := unameHash // 診所 ID 目前假設綁在 username（依你的設計）
+		query = fmt.Sprintf(`{
+			"selector": {
+				"docType": "%s",
+				"clinicId": "%s"
+			}
+		}`, docHealth, clinicID)
+
+	default:
+		return shim.Error("unauthorized role: only patient or clinic can list their reports")
+	}
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return shim.Error("query execution failed: " + err.Error())
+	}
+	defer iter.Close()
+
+	var results []map[string]interface{}
+
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue // 跳過損壞的記錄
+		}
+
+		var rep HealthReport
+		if err := json.Unmarshal(kv.Value, &rep); err != nil {
+			continue
+		}
+
+		// 僅回傳摘要，不含 ResultJSON（防洩漏）
+		results = append(results, map[string]interface{}{
+			"reportId":  rep.ReportID,
+			"clinicId":  rep.ClinicID,
+			"createdAt": rep.CreatedAt,
+		})
+	}
+
+	bytes, _ := json.Marshal(results)
+	return shim.Success(bytes)
+}
+
 // RevokeAccess 收回他人查閱權限
 func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID string) peer.Response {
 	patientHash, role, err := getCaller(ctx)

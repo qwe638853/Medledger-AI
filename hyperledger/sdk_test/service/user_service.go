@@ -11,11 +11,12 @@ import (
 	"sdk_test/database"
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
+	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
 )
 
 // HandleRegister 處理註冊邏輯 + 寫入 SQLite + Fabric CA 註冊
-func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet *wl.Wallet, bulider fc.GWBuilder) (*pb.RegisterResponse, error) {
+func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.WalletInterface) (*pb.RegisterResponse, error) {
 	log.Printf("FFFFFReceived Register: %v", req)
 
 	// ✅ 基本欄位驗證
@@ -94,7 +95,7 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet *wl.Wal
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
 	}
 
-	err = w.PutFile(req.UserId, csrPath, keyPath, "Org1MSP")
+	err = wallet.PutFile(req.UserId, csrPath, keyPath, "Org1MSP")
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil
@@ -110,7 +111,7 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet *wl.Wal
 	return &pb.RegisterResponse{Success: true, Message: "註冊成功"}, nil
 }
 
-func HandleLogin(ctx context.Context, req *pb.LoginRequest, w *wl.Wallet) (*pb.LoginResponse, error) {
+func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface) (*pb.LoginResponse, error) {
 
 	log.Printf("Received Login: %v", req)
 
@@ -129,10 +130,20 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w *wl.Wallet) (*pb.L
 	}
 
 	// 2. 錢包已有 → 成功登入
-	if w.Exists(req.UserId) {
-		return &pb.LoginResponse{Success: true, Message: "登入成功"}, nil
+	if !w.Exists(req.UserId) {
+		log.Printf("❌ 錢包不存在: %s", req.UserId)
+		return &pb.LoginResponse{Success: false, Message: "錢包不存在"}, nil
 	}
 
-}
+	token, err := ut.GenerateJWT(req.UserId)
+	if err != nil {
+		return &pb.LoginResponse{Success: false, Message: "產生 token 失敗"}, nil
+	}
 
-// func HandleLogin(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	// 3. 回傳成功 + token
+	return &pb.LoginResponse{
+		Success: true,
+		Message: "登入成功",
+		Token:   token,
+	}, nil
+}

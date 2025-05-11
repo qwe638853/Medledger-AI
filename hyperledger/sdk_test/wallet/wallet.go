@@ -14,6 +14,12 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 )
 
+type WalletInterface interface {
+	PutFile(userID, certPath, keyPath, mspID string) error
+	Exists(label string) bool
+	Get(userID string) (*Entry, bool)
+}
+
 type Entry struct {
 	ID     *identity.X509Identity
 	Signer identity.Sign

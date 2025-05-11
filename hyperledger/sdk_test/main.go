@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -12,11 +10,9 @@ import (
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
 	sc "sdk_test/service"
-	"sdk_test/wallet"
 	wl "sdk_test/wallet"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,7 +49,7 @@ func (s *server) ReadReport(ctx context.Context, req *pb.ReadReportRequest) (*pb
 
 // Login
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	return sc.HandleLogin(ctx, req)
+	return sc.HandleLogin(ctx, req, s.Wallet)
 }
 
 // Register
@@ -67,7 +63,7 @@ func main() {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
 
-	w := wallet.New()
+	w := wl.New()
 
 	// ③ 建 PeerConnector (只做一次)
 	peer, err := fc.NewPeer(
@@ -149,7 +145,7 @@ func startHttpGatewayServer() {
 	}
 }
 
-// 測試功能
+/*
 func testUploadClaimRead(contract *client.Contract) {
 	testResults := map[string]string{
 		"Glu-AC": "95 mg/dL",
@@ -182,3 +178,4 @@ func testUploadClaimRead(contract *client.Contract) {
 	fmt.Println("📄 Report:")
 	fmt.Println(string(result))
 }
+*/

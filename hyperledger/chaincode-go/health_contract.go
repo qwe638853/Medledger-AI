@@ -199,6 +199,56 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 
 }
 
+func (h *HealthCheckContract) ListGrantedAccesses(ctx contractapi.TransactionContextInterface) peer.Response {
+	targetHash, role, err := getCaller(ctx)
+	if err != nil {
+		return shim.Error("failed to get caller identity: " + err.Error())
+	}
+	if role != "insurer" {
+		return shim.Error("only insurer can list granted accesses")
+	}
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"TargetHash": "%s"
+		}`,
+		docAuth, targetHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return shim.Error("query execution failed: " + err.Error())
+	}
+	defer iter.Close()
+
+	now := nowSec()
+
+	var results []map[string]interface{}
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue // 跳過損壞的記錄
+		}
+
+		var tk AuthTicket
+		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			continue
+		}
+
+		if now > tk.Expiry {
+			continue // 跳過過期的授權票
+		}
+
+		results = append(results, map[string]interface{}{
+			"patientHash": tk.PatientH,
+			"reportId":    tk.ReportID,
+			"grantedAt":   tk.GrantedAt,
+			"expiry":      tk.Expiry,
+		})
+	}
+	bytes, _ := json.Marshal(results)
+	return shim.Success(bytes)
+}
+
 // ListMyReports 根據使用者身份查詢自己可見的報告清單（不含 ResultJSON）
 // 優化點：使用 rich query 篩選 + 僅回傳摘要 + 僅允許 patient/clinic 查詢
 func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) peer.Response {

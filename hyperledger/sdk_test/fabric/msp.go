@@ -2,6 +2,11 @@ package fabric
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -10,22 +15,23 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"crypto/x509/pkix"
 
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/pkg/errors"
 )
 
+type attributeObject struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type RegisterRequest struct {
-	ID          string `json:"id"`
-	Secret      string `json:"secret"`
-	Type        string `json:"type"`
-	Affiliation string `json:"affiliation"`
+	ID          string            `json:"id"`
+	Secret      string            `json:"secret"`
+	Type        string            `json:"type"`
+	Affiliation string            `json:"affiliation"`
+	Attributes  []attributeObject `json:"attrs,omitempty"`
 }
 
 func B64Encode(data []byte) string {
@@ -71,7 +77,24 @@ func genECDSAToken(csp bccsp.BCCSP, key bccsp.Key, b64cert, payload string) (str
 
 // 📤 RegisterUser using BCCSP
 func RegisterUser(caURL, certPath, keyPath string, req RegisterRequest) error {
-	bodyBytes, err := json.Marshal(req)
+	attrs := []attributeObject{}
+	for k, v := range req.Attributes {
+		attrs = append(attrs, attributeObject{Name: k, Value: v})
+	}
+
+	payload := RegisterRequest{
+		ID:          req.ID,
+		Secret:      req.Secret,
+		Type:        req.Type,
+		Affiliation: req.Affiliation,
+		Attributes:  attrs,
+	}
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("❌ Failed to marshal request: %w", err)
+	}
+
 	if err != nil {
 		return fmt.Errorf("❌ Failed to marshal request: %w", err)
 	}
@@ -122,10 +145,10 @@ func RegisterUser(caURL, certPath, keyPath string, req RegisterRequest) error {
 	return nil
 }
 
-type EnrollRequest struct{
-	Profile string `json:"profile,omitempty"`	
+type EnrollRequest struct {
+	Profile             string `json:"profile,omitempty"`
 	Certificate_request string `json:"certificate_request,omitempty"`
- }
+}
 
 func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollRequest) error {
 
@@ -158,8 +181,6 @@ func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollReques
 
 	return nil
 }
-
-
 
 func GenerateCSR(commonName string) (*ecdsa.PrivateKey, []byte, error) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

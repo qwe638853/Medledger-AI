@@ -60,127 +60,8 @@
     <section class="cta-section">
       <v-container class="py-12 text-center">
         <h2 class="text-h4 font-weight-bold mb-6 cta-title">立即加入我們，開始守護您的健康！</h2>
-        <v-btn color="info" class="cta-btn mr-4" size="x-large" @click="openRegisterDialog">註冊</v-btn>
+        <v-btn color="info" class="cta-btn mr-4" size="x-large" :to="{ path: '/register' }">註冊</v-btn>
         <v-btn color="primary" class="cta-btn" size="x-large" :to="{ path: '/login' }">登入</v-btn>
-
-        <!-- 註冊對話框 -->
-        <v-dialog v-model="registerDialog" max-width="500px">
-          <v-card>
-            <v-toolbar color="primary" dark flat>
-              <v-toolbar-title>註冊</v-toolbar-title>
-            </v-toolbar>
-            <v-card-text class="pt-6">
-              <v-form ref="registerForm" v-model="valid" @submit.prevent="handleRegister">
-                <v-select
-                  v-model="registerForm.selectedRole"
-                  :items="roles"
-                  label="選擇角色"
-                  outlined
-                  prepend-icon="mdi-account-group"
-                  :rules="[rules.required]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.idNumber"
-                  label="身分證號/員工編號 (選填)"
-                  prepend-icon="mdi-account"
-                  type="text"
-                  outlined
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.password"
-                  label="密碼"
-                  prepend-icon="mdi-lock"
-                  :type="showPassword ? 'text' : 'password'"
-                  :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                  @click:append="showPassword = !showPassword"
-                  outlined
-                  :rules="[rules.required, rules.minLength]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.confirmPassword"
-                  label="確認密碼"
-                  prepend-icon="mdi-lock"
-                  type="password"
-                  outlined
-                  :rules="[rules.required, rules.matchPassword]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.fullName"
-                  label="全名"
-                  prepend-icon="mdi-account-box"
-                  type="text"
-                  outlined
-                  :rules="[rules.required]"
-                  class="mb-4"
-                  placeholder="請輸入您的全名"
-                />
-                <v-select
-                  v-model="registerForm.gender"
-                  :items="['男', '女', '其他', '不願透露']"
-                  label="性別"
-                  outlined
-                  :rules="[rules.required]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.birthDate"
-                  label="出生日期"
-                  prepend-icon="mdi-calendar"
-                  type="date"
-                  outlined
-                  :rules="[rules.required, rules.validDate]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.phoneNumber"
-                  label="電話號碼"
-                  prepend-icon="mdi-phone"
-                  type="tel"
-                  outlined
-                  :rules="[rules.required, rules.phone]"
-                  class="mb-4"
-                />
-                <v-text-field
-                  v-model="registerForm.email"
-                  label="電子郵件"
-                  prepend-icon="mdi-email"
-                  type="email"
-                  outlined
-                  :rules="[rules.required, rules.email]"
-                  class="mb-4"
-                />
-                <v-btn
-                  :loading="loading"
-                  color="primary"
-                  block
-                  type="submit"
-                  class="mt-6"
-                  :disabled="!valid"
-                >
-                  提交註冊
-                </v-btn>
-                <v-btn
-                  text
-                  @click="resetAndCloseDialog"
-                  class="mt-2"
-                >
-                  取消
-                </v-btn>
-                <v-alert
-                  v-if="errorMessage"
-                  type="error"
-                  class="mt-4"
-                >
-                  {{ errorMessage }}
-                </v-alert>
-              </v-form>
-            </v-card-text>
-          </v-card>
-        </v-dialog>
       </v-container>
     </section>
   </div>
@@ -188,7 +69,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuth } from '../composables/useAuth';
 
 const props = defineProps({
   userRole: { type: String, default: null },
@@ -209,109 +89,6 @@ const features = ref([
   { icon: 'mdi-brain', title: '智能分析', desc: '運用智能分析工具，協助您理解健康數據，預防疾病。' },
   { icon: 'mdi-account-circle', title: '簡易操作', desc: '介面簡單明瞭，適合所有年齡層輕鬆上手。' }
 ]);
-
-const registerDialog = ref(false);
-const registerForm = ref({
-  selectedRole: '',
-  idNumber: '',
-  password: '',
-  confirmPassword: '',
-  fullName: '',
-  gender: '',
-  birthDate: '',
-  phoneNumber: '',
-  email: ''
-});
-const loading = ref(false);
-const valid = ref(false);
-const showPassword = ref(false);
-const form = ref(null);
-const errorMessage = ref(''); // 添加錯誤訊息狀態
-
-const roles = ['一般用戶', '醫療機構', '其他機構'];
-
-const rules = {
-  required: value => !!value || '此欄位為必填',
-  minLength: value => (value && value.length >= 6) || '密碼至少需要6個字符',
-  matchPassword: value => value === registerForm.value.password || '密碼不一致',
-  email: value => /.+@.+\..+/.test(value) || '請輸入有效的電子郵件',
-  phone: value => /^\d{10}$/.test(value) || '請輸入有效的10位電話號碼',
-  validDate: value => !value || new Date(value) <= new Date() || '出生日期不得為未來日期'
-};
-
-const { register } = useAuth();
-
-const openRegisterDialog = () => {
-  registerDialog.value = true;
-  registerForm.value = {
-    selectedRole: '',
-    idNumber: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    gender: '',
-    birthDate: '',
-    phoneNumber: '',
-    email: ''
-  };
-  errorMessage.value = ''; // 清空錯誤訊息
-};
-
-const resetAndCloseDialog = () => {
-  registerForm.value = {
-    selectedRole: '',
-    idNumber: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    gender: '',
-    birthDate: '',
-    phoneNumber: '',
-    email: ''
-  };
-  errorMessage.value = '';
-  registerDialog.value = false;
-};
-
-const handleRegister = async () => {
-  const { valid: isValid } = await form.value.validate();
-  if (!isValid) {
-    emit('show-snackbar', '請修正表單中的錯誤', 'error');
-    return;
-  }
-  loading.value = true;
-  errorMessage.value = ''; // 清空之前的錯誤訊息
-  try {
-    await register({
-      id_number: registerForm.value.idNumber,
-      password: registerForm.value.password,
-      full_name: registerForm.value.fullName,
-      gender: registerForm.value.gender,
-      birth_date: registerForm.value.birthDate,
-      phone_number: registerForm.value.phoneNumber,
-      email: registerForm.value.email,
-      role: registerForm.value.selectedRole.toLowerCase()
-    });
-    emit('show-snackbar', '註冊成功！請登入', 'success');
-    // 不關閉對話框，允許連續註冊
-    registerForm.value = {
-      selectedRole: '',
-      idNumber: '',
-      password: '',
-      confirmPassword: '',
-      fullName: '',
-      gender: '',
-      birthDate: '',
-      phoneNumber: '',
-      email: ''
-    }; // 清空表單以便下次使用
-  } catch (error) {
-    errorMessage.value = error.response?.data?.detail || '註冊失敗，請稍後再試';
-    emit('show-snackbar', errorMessage.value, 'error');
-  } finally {
-    loading.value = false;
-  }
-};
 </script>
 
 <style scoped>
@@ -383,13 +160,6 @@ const handleRegister = async () => {
 }
 .cta-btn:hover {
   transform: scale(1.05);
-}
-
-.v-form {
-  padding: 16px;
-}
-.mb-4 {
-  margin-bottom: 24px !important;
 }
 
 @keyframes fadeIn {

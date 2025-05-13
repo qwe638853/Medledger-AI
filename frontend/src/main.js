@@ -34,16 +34,42 @@ const router = createRouter({
       meta: { requiresAuth: false }
     },
     {
-      path: '/:pathMatch(.*)*', // 404 路由
+      path: '/register',
+      name: 'Register',
+      component: () => import('./components/RegisterForm.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/user-dashboard',
+      name: 'UserDashboard',
+      component: () => import('./views/UserDashboard.vue'),
+      meta: { requiresAuth: true, roles: ['user'] }
+    },
+    {
+      path: '/hospital-dashboard',
+      name: 'HospitalDashboard',
+      component: () => import('./views/HospitalDashboard.vue'),
+      meta: { requiresAuth: true, roles: ['medical'] }
+    },
+    {
+      path: '/other-user-dashboard',
+      name: 'OtherUserDashboard',
+      component: () => import('./views/OtherUserDashboard.vue'),
+      meta: { requiresAuth: true, roles: ['other'] }
+    },
+    {
+      path: '/:pathMatch(.*)*',
       redirect: '/'
     }
   ]
 });
 
 router.beforeEach((to, from, next) => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, userRole } = useAuth();
   if (to.meta.requiresAuth && !isLoggedIn.value) {
     next('/login');
+  } else if (to.meta.requiresAuth && to.meta.roles && !to.meta.roles.includes(userRole.value)) {
+    next(isLoggedIn.value ? '/' : '/login');
   } else {
     next();
   }
@@ -54,7 +80,6 @@ app.use(createPinia());
 app.use(router);
 app.use(vuetify);
 
-// 移除 alert，改為靜默記錄並觸發 snackbar
 app.config.errorHandler = (err, vm, info) => {
   console.error('Vue error:', err, info);
   document.dispatchEvent(new CustomEvent('show-snackbar', {

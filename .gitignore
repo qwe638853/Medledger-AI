@@ -48,3 +48,4 @@ build/
 # Mac 和 Windows 系統檔案
 .DS_Store
 Thumbs.db
+hyperledger/orgs/org1.example.com/orderer/orderer1-data/

@@ -13,6 +13,8 @@ import (
 	pb "sdk_test/proto"
 	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
+
+	"github.com/hyperledger/fabric-ca/api"
 )
 
 // HandleRegister 處理註冊邏輯 + 寫入 SQLite + Fabric CA 註冊
@@ -42,34 +44,39 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 		return &pb.RegisterResponse{Success: false, Message: "帳號已存在"}, nil
 	}
 
-	// ✅ 呼叫 Fabric CA 註冊帳號
+	// ✅ 呼叫 Fabric CA 註冊帳號（使用 api.RegistrationRequest）
 	err = fc.RegisterUser(
 		"http://localhost:7054",
 		"../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem",
 		"../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key",
-		fc.RegisterRequest{
-			ID:          req.UserId,
+		api.RegistrationRequest{
+			Name:        req.UserId,
 			Secret:      req.Password,
-			Affiliation: "org1.department1",
 			Type:        "client",
-		})
+			Affiliation: "org1.department1",
+			Attributes: []api.Attribute{
+				{Name: "role", Value: "user"},
+			},
+		},
+	)
 	if err != nil {
 		log.Printf("❌ Fabric CA 註冊失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "Fabric 註冊失敗"}, nil
 	}
 
+	// ✅ 產生私鑰與 CSR
 	privKey, csrPEM, err := fc.GenerateCSR(req.UserId)
 	if err != nil {
 		log.Printf("❌ 產生私鑰或 CSR 失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "無法產生憑證"}, nil
 	}
-	// ✅ 建立使用者資料夾
+
+	// ✅ 建立使用者資料夾並儲存檔案
 	baseDir := filepath.Join("msp-data", "users", req.UserId)
 	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
 	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
 	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
 
-	// ✅ 儲存 CSR
 	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
 	err = fc.SaveCSRToFile(csrPEM, csrPath)
 	if err != nil {
@@ -77,7 +84,6 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 		return &pb.RegisterResponse{Success: false, Message: "儲存 CSR 失敗"}, nil
 	}
 
-	// ✅ 儲存私鑰
 	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
 	err = fc.SavePrivateKeyToFile(privKey, keyPath)
 	if err != nil {
@@ -86,13 +92,21 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 	}
 
 	// ✅ Enroll 產生證書
-	err = fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, fc.EnrollRequest{
+	certPem, err := fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, fc.EnrollRequest{
 		Certificate_request: string(csrPEM),
 		Profile:             "",
 	})
+
 	if err != nil {
 		log.Printf("❌ Enroll 失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
+	}
+
+	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
+	err = fc.SaveCertToFile(certPem, certPath)
+	if err != nil {
+		log.Printf("❌ 寫入證書失敗: %v", err)
+		return &pb.RegisterResponse{Success: false, Message: "儲存證書失敗"}, nil
 	}
 
 	err = wallet.PutFile(req.UserId, csrPath, keyPath, "Org1MSP")
@@ -112,24 +126,20 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 }
 
 func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface) (*pb.LoginResponse, error) {
-
 	log.Printf("Received Login: %v", req)
 
-	// ✅ 基本欄位驗證
 	if req.UserId == "" || req.Password == "" {
 		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
 	}
 
-	// 1. 取出資料庫密碼並比對、TODO: 改用 bcrypt.CompareHashAndPassword
 	dbPw, err := database.GetUserPassword(req.UserId)
 	if err != nil {
 		return &pb.LoginResponse{Success: false, Message: "查詢使用者時出錯"}, nil
 	}
-	if dbPw != req.Password { // TODO: 改用 bcrypt.CompareHashAndPassword
+	if dbPw != req.Password {
 		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
 	}
 
-	// 2. 錢包已有 → 成功登入
 	if !w.Exists(req.UserId) {
 		log.Printf("❌ 錢包不存在: %s", req.UserId)
 		return &pb.LoginResponse{Success: false, Message: "錢包不存在"}, nil
@@ -140,7 +150,6 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface
 		return &pb.LoginResponse{Success: false, Message: "產生 token 失敗"}, nil
 	}
 
-	// 3. 回傳成功 + token
 	return &pb.LoginResponse{
 		Success: true,
 		Message: "登入成功",

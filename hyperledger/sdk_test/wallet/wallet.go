@@ -59,6 +59,7 @@ func (w *Wallet) PutFile(userID, certPath, keyPath, mspID string) error {
 
 // PutRaw stores cert & key bytes directly in wallet table.
 func (w *Wallet) PutRaw(userID string, certPEM, keyPEM []byte, mspID string) error {
+	// 讀取憑證與私鑰
 	cert, err := identity.CertificateFromPEM(certPEM)
 	if err != nil {
 		return err
@@ -108,6 +109,7 @@ func (w *Wallet) Get(userID string) (*Entry, bool) {
 		PrivateKey  string `json:"privateKey"`
 	}
 	if err := json.Unmarshal(blob, &payload); err != nil {
+
 		return nil, false
 	}
 	cert, err := identity.CertificateFromPEM([]byte(payload.Certificate))

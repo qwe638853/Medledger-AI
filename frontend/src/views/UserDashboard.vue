@@ -1,30 +1,20 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useAuth } from '../composables/useAuth';
-import axios from 'axios';
+import { ref, onMounted, computed } from 'vue';
+import { useAuthStore } from '../stores';
+import { healthCheckService, notifyError } from '../services';
 
-const { currentUser, token, logout } = useAuth();
+const authStore = useAuthStore();
+const currentUser = computed(() => authStore.currentUser);
 const healthData = ref([]);
 const loading = ref(false);
 
 onMounted(async () => {
   loading.value = true;
   try {
-    const response = await axios.get(
-      `https://7aa9-140-124-249-9.ngrok-free.app/default/health-check/user/${currentUser.value}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token.value}`,
-          Accept: 'application/json'
-        },
-        timeout: 10000
-      }
-    );
-    healthData.value = response.data || [];
+    const response = await healthCheckService.fetchUserHealthData(currentUser.value);
+    healthData.value = response || [];
   } catch (error) {
-    document.dispatchEvent(new CustomEvent('show-snackbar', {
-      detail: { message: `獲取健康檢查數據失敗：${error.message}`, color: 'error' }
-    }));
+    notifyError(`獲取健康檢查數據失敗：${error.message}`);
     healthData.value = [];
   } finally {
     loading.value = false;
@@ -32,7 +22,7 @@ onMounted(async () => {
 });
 
 const handleLogout = () => {
-  logout();
+  authStore.logout();
 };
 </script>
 

@@ -14,11 +14,11 @@
           </v-col>
           <v-col cols="12" md="6">
             <v-img
-              :src="require('@/assets/hero-image.jpg')"
+              src="@/assets/hero-image.jpg"
               class="rounded-lg hero-img"
               max-height="350"
               contain
-              :lazy-src="require('@/assets/placeholder.jpg')"
+              lazy-src="@/assets/placeholder.jpg"
             />
           </v-col>
         </v-row>

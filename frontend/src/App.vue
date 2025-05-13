@@ -1,12 +1,13 @@
 <template>
   <v-app>
-    <v-navigation-drawer app v-model="drawer">
+    <v-navigation-drawer app v-model="navigationStore.drawer">
       <v-list>
         <v-list-item
-          v-for="item in menuItems"
+          v-for="item in navigationStore.navItems"
           :key="item.title"
           :to="item.path"
           :title="item.title"
+          @click="item.action && item.action()"
         />
       </v-list>
     </v-navigation-drawer>
@@ -14,30 +15,15 @@
     <v-app-bar app color="primary" dark>
       <v-toolbar-title>健康檢查數據平台</v-toolbar-title>
       <v-spacer />
-      <v-btn v-if="isLoggedIn" text @click="logout">登出</v-btn>
-      <v-progress-linear v-if="loading" indeterminate color="white" />
+      <v-btn v-if="authStore.isLoggedIn" text @click="authStore.logout">登出</v-btn>
+      <v-progress-linear v-if="authStore.loading || userStore.loading" indeterminate color="white" />
     </v-app-bar>
 
     <v-main>
-      <router-view
-        :user-role="userRole"
-        :is-logged-in="isLoggedIn"
-        :current-user="currentUser"
-        :show-login-form="showLoginForm"
-        :show-footer="showFooter"
-        :menu-items="menuItems"
-        @login="login"
-        @logout="logout"
-        @forgot-password="forgotPassword"
-        @register="register"
-        @go-home="goToHome(showLoginForm)"
-        @toggle-login-form="showLoginForm = !showLoginForm"
-        @toggle-footer="showFooter = !showFooter"
-        @show-snackbar="showSnackbar"
-      />
+      <router-view />
     </v-main>
 
-    <v-footer app v-if="showFooter" color="primary" dark>
+    <v-footer app color="primary" dark>
       <v-row justify="center">
         <v-col class="text-center" cols="12">
           © {{ new Date().getFullYear() }} 健康檢查數據平台
@@ -56,15 +42,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useAuth } from './composables/useAuth';
-import { useNavigation } from './composables/useNavigation';
-import { useUser } from './composables/useUser';
+import { useAuthStore, useUserStore, useNavigationStore } from './stores';
 
-const { userRole, isLoggedIn, currentUser, showLoginForm, loading, initAuth, login, logout, register } = useAuth();
-const { showFooter, menuItems, goToHome } = useNavigation();
-const { forgotPassword } = useUser();
+const authStore = useAuthStore();
+const userStore = useUserStore();
+const navigationStore = useNavigationStore();
 
-const drawer = ref(false);
 const snackbar = ref(false);
 const snackbarMessage = ref('');
 const snackbarColor = ref('error');
@@ -81,7 +64,6 @@ const handleSnackbarEvent = (event) => {
 };
 
 onMounted(() => {
-  initAuth();
   window.addEventListener('show-snackbar', handleSnackbarEvent);
 });
 

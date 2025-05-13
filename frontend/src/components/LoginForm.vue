@@ -1,52 +1,53 @@
 <template>
   <v-container class="fill-height">
     <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12">
+      <v-col cols="12" sm="8" md="6" lg="4">
+        <v-card class="elevation-3">
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title>登入</v-toolbar-title>
           </v-toolbar>
-          <v-card-text>
-            <v-form @submit.prevent="handleSubmit">
+          
+          <!-- 新增 Alert 組件 -->
+          <v-alert
+            v-if="alertInfo.show"
+            :type="alertInfo.type"
+            :title="alertInfo.title"
+            :icon="alertInfo.icon"
+            closable
+            border
+            class="ma-4"
+            @click:close="alertInfo.show = false"
+          >
+            {{ alertInfo.message }}
+          </v-alert>
+          
+          <v-card-text class="pt-6">
+            <v-form @submit.prevent="handleSubmit" ref="form" v-model="valid">
               <!-- 選擇角色 -->
               <v-select
                 v-model="selectedRole"
                 :items="roles"
+                item-title="text"
+                item-value="value"
                 label="選擇角色"
-                outlined
-                dense
                 prepend-icon="mdi-account-group"
-                :rules="[v => !!v || '請選擇角色']"
-                class="mb-4"
-                style="width: 100%; max-width: 100%;"
-              />
-
-              <!-- 性別（假設存在，根據圖片添加） -->
-              <v-select
-                v-model="gender"
-                :items="genders"
-                label="性別"
                 outlined
                 dense
-                prepend-icon="mdi-gender-male-female"
-                :rules="[v => !!v || '請選擇性別']"
+                :rules="[rules.required]"
                 class="mb-4"
-                style="width: 100%; max-width: 100%;"
               />
-
-              <!-- 用戶名 -->
+              
+              <!-- 身分證號/員工編號 -->
               <v-text-field
                 v-model="username"
                 label="身分證號/員工編號"
                 prepend-icon="mdi-account"
-                type="text"
                 outlined
                 dense
-                :rules="[v => !!v || '請輸入身分證號/員工編號']"
+                :rules="[rules.required]"
                 class="mb-4"
-                style="width: 100%; max-width: 100%;"
               />
-
+              
               <!-- 密碼 -->
               <v-text-field
                 v-model="password"
@@ -57,25 +58,36 @@
                 @click:append="showPassword = !showPassword"
                 outlined
                 dense
-                :rules="[v => !!v || '請輸入密碼', v => (v && v.length >= 6) || '密碼至少6位']"
-                class="mb-4"
-                style="width: 100%; max-width: 100%;"
+                :rules="[rules.required, rules.minLength]"
+                class="mb-6"
               />
-
+              
               <!-- 提交按鈕 -->
               <v-btn
                 :loading="loading"
                 color="primary"
                 block
                 type="submit"
+                :disabled="!valid"
+                elevation="2"
+                height="44"
                 class="mb-4"
               >
                 登入
               </v-btn>
-
-              <!-- 其他導航按鈕 -->
-              <v-btn text @click="goToHome" class="mr-4">返回首頁</v-btn>
-              <v-btn text @click="goToRegister">註冊</v-btn>
+              
+              <!-- 導航按鈕 -->
+              <div class="d-flex justify-space-between mb-4">
+                <v-btn text color="primary" @click="goToHome">
+                  返回首頁
+                </v-btn>
+                <v-btn text color="primary" @click="goToRegister">
+                  註冊
+                </v-btn>
+              </div>
+              
+              <!-- 開發模式下顯示表單數據 -->
+              <pre v-if="isDevelopment" class="debug-info mt-4 pa-2">{{ debugInfo }}</pre>
             </v-form>
           </v-card-text>
         </v-card>
@@ -85,50 +97,138 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuth } from '../composables/useAuth';
+import { useAuthStore } from '../stores';
 
 const router = useRouter();
-const { login, loading } = useAuth();
+const authStore = useAuthStore();
 
+// 表單數據
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
 const selectedRole = ref('');
-const gender = ref(''); // 添加性別字段
-const roles = ['健檢中心', '使用者', '其他使用者'];
-const genders = ['男', '女', '其他']; // 假設的性別選項
+const loading = computed(() => authStore.loading);
+const roles = [
+  { text: '一般用戶', value: 'user' },
+  { text: '醫療機構', value: 'medical' },
+  { text: '其他用戶', value: 'other' }
+];
+const form = ref(null);
+const valid = ref(false);
 
+// 判斷是否為開發環境
+const isDevelopment = import.meta.env.MODE === 'development';
+
+// 用於調試的數據
+const debugInfo = computed(() => {
+  const roleText = roles.find(r => r.value === selectedRole.value)?.text || selectedRole.value;
+  return {
+    username: username.value,
+    password: password.value ? '******' : '',
+    role: selectedRole.value,
+    roleText,
+    valid: valid.value,
+    loading: loading.value
+  };
+});
+
+// Alert 相關數據
+const alertInfo = ref({
+  show: false,
+  type: 'error',
+  title: '',
+  message: '',
+  icon: '',
+});
+
+// 顯示 Alert
+const showAlert = (type, message, title = '') => {
+  alertInfo.value = {
+    show: true,
+    type,
+    title,
+    message,
+    icon: type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle',
+  };
+  
+  // 5秒後自動關閉
+  setTimeout(() => {
+    alertInfo.value.show = false;
+  }, 5000);
+};
+
+// 驗證規則
+const rules = {
+  required: value => !!value || '此欄位為必填',
+  minLength: value => (value && value.length >= 6) || '密碼至少需要6個字符'
+};
+
+// 表單提交
 const handleSubmit = async () => {
-  if (!username.value || !password.value || !selectedRole.value || !gender.value) {
-    document.dispatchEvent(new CustomEvent('show-snackbar', {
-      detail: { message: '請填寫所有欄位', color: 'error' }
-    }));
+  if (!form.value.validate()) {
+    console.log('表單驗證失敗');
     return;
   }
-
-  const roleMap = {
-    '健檢中心': 'medical',
-    '使用者': 'user',
-    '其他使用者': 'other'
-  };
-
-  const role = roleMap[selectedRole.value];
+  
   try {
-    await login({
+    console.group('登入表單提交');
+    console.log('表單數據:', {
+      username: username.value,
+      role: selectedRole.value,
+      // 不記錄密碼，但顯示長度
+      passwordLength: password.value ? password.value.length : 0
+    });
+    
+    // 檢查角色是否已選擇
+    if (!selectedRole.value) {
+      showAlert('error', '請選擇用戶角色', '錯誤');
+      console.error('未選擇角色');
+      return;
+    }
+    
+    // 打印當前路由信息
+    console.log('當前路由:', router.currentRoute.value.path);
+    
+    await authStore.login({
       username: username.value,
       password: password.value,
-      role: role,
-      gender: gender.value // 假設後端需要性別
+      role: selectedRole.value
     });
+    
+    // 登入成功顯示
+    showAlert('success', '登入成功！正在為您導向...', '成功');
+    console.log('登入成功！');
+    
+    // 檢查是否需要手動重定向（如果 store 中的重定向失敗）
+    setTimeout(() => {
+      // 檢查是否仍在登入頁面
+      if (router.currentRoute.value.path === '/login') {
+        console.log('檢測到仍在登入頁面，嘗試手動重定向');
+        authStore.redirectToDashboard();
+      }
+    }, 1000);
   } catch (error) {
-    document.dispatchEvent(new CustomEvent('show-snackbar', {
-      detail: { message: '登入失敗，請檢查帳號密碼或角色', color: 'error' }
-    }));
+    console.error('登入處理錯誤:', error);
+    
+    // 根據錯誤類型顯示適當訊息
+    let errorMsg = '登入失敗，請檢查帳號密碼或角色';
+    
+    if (error.response) {
+      errorMsg = error.response.data?.message || errorMsg;
+      console.log('伺服器回應:', error.response.data);
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+    
+    showAlert('error', errorMsg, '錯誤');
+  } finally {
+    console.groupEnd();
   }
 };
 
+// 導航
 const goToHome = () => router.push('/');
 const goToRegister = () => router.push('/register');
 </script>
@@ -136,23 +236,28 @@ const goToRegister = () => router.push('/register');
 <style scoped>
 .fill-height {
   min-height: calc(100vh - 64px);
+  background-color: #f5f5f5;
 }
+
 .v-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
 }
-.v-btn {
-  text-transform: none;
-  letter-spacing: 0;
-  transition: transform 0.2s ease;
+
+.v-text-field :deep(.v-input__slot) {
+  min-height: 44px !important;
 }
-.v-btn:hover {
-  transform: scale(1.05);
+
+.v-select :deep(.v-input__slot) {
+  min-height: 44px !important;
 }
-.v-form {
-  padding: 16px;
-}
-.mb-4 {
-  margin-bottom: 24px !important;
+
+.debug-info {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  overflow: auto;
+  max-height: 150px;
 }
 </style>

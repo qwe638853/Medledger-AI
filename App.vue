@@ -29,7 +29,7 @@ const menuItems = ref([
 ]);
 
 // 在頁面載入時檢查本地存儲中是否有 token
-if (localStorage.getItem('token')) {
+if (localStorage.gettem('token')) {
     // 如果有 token，則設置相關的響應式變量
     token.value = localStorage.getItem('token');
     userRole.value = localStorage.getItem('role');

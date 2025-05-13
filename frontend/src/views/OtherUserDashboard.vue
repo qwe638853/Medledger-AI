@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useAuth } from '../composables/useAuth';
+import { useAuthStore } from '../stores/auth';
 import axios from 'axios';
 
-const { currentUser, token, logout } = useAuth();
+const authStore = useAuthStore();
+const currentUser = ref(authStore.currentUser);
+const token = ref(authStore.token);
 const healthData = ref([]);
 const loading = ref(false);
 
@@ -32,7 +34,7 @@ onMounted(async () => {
 });
 
 const handleLogout = () => {
-  logout();
+  authStore.logout();
 };
 </script>
 

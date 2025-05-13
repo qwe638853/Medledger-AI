@@ -8,26 +8,46 @@
           </v-toolbar>
           <v-card-text>
             <v-form @submit.prevent="handleSubmit">
+              <!-- 選擇角色 -->
               <v-select
                 v-model="selectedRole"
                 :items="roles"
-                item-title="text"
-                item-value="value"
                 label="選擇角色"
                 outlined
-                :rules="[v => !!v || '請選擇角色']"
+                dense
                 prepend-icon="mdi-account-group"
-                @update:model-value="selectRole"
+                :rules="[v => !!v || '請選擇角色']"
+                class="mb-4"
+                style="width: 100%; max-width: 100%;"
               />
+
+              <!-- 性別（假設存在，根據圖片添加） -->
+              <v-select
+                v-model="gender"
+                :items="genders"
+                label="性別"
+                outlined
+                dense
+                prepend-icon="mdi-gender-male-female"
+                :rules="[v => !!v || '請選擇性別']"
+                class="mb-4"
+                style="width: 100%; max-width: 100%;"
+              />
+
+              <!-- 用戶名 -->
               <v-text-field
                 v-model="username"
                 label="身分證號/員工編號"
                 prepend-icon="mdi-account"
                 type="text"
                 outlined
+                dense
                 :rules="[v => !!v || '請輸入身分證號/員工編號']"
-                class="mb-2"
+                class="mb-4"
+                style="width: 100%; max-width: 100%;"
               />
+
+              <!-- 密碼 -->
               <v-text-field
                 v-model="password"
                 label="密碼"
@@ -36,9 +56,13 @@
                 :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                 @click:append="showPassword = !showPassword"
                 outlined
-                :rules="[v => !!v || '請輸入密碼']"
-                class="mb-2"
+                dense
+                :rules="[v => !!v || '請輸入密碼', v => (v && v.length >= 6) || '密碼至少6位']"
+                class="mb-4"
+                style="width: 100%; max-width: 100%;"
               />
+
+              <!-- 提交按鈕 -->
               <v-btn
                 :loading="loading"
                 color="primary"
@@ -48,19 +72,10 @@
               >
                 登入
               </v-btn>
-              <v-btn
-                text
-                @click="emit('go-home')"
-                class="mr-4"
-              >
-                返回首頁
-              </v-btn>
-              <v-btn
-                text
-                @click="emit('forgot-password')"
-              >
-                忘記密碼？
-              </v-btn>
+
+              <!-- 其他導航按鈕 -->
+              <v-btn text @click="goToHome" class="mr-4">返回首頁</v-btn>
+              <v-btn text @click="goToRegister">註冊</v-btn>
             </v-form>
           </v-card-text>
         </v-card>
@@ -74,59 +89,70 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 
-const emit = defineEmits(['login', 'logout', 'forgot-password', 'go-home']);
-
-const { login, loading } = useAuth();
 const router = useRouter();
+const { login, loading } = useAuth();
 
-const selectedRole = ref('');
 const username = ref('');
 const password = ref('');
 const showPassword = ref(false);
-const roles = [
-  { text: '一般用戶', value: 'general' },
-  { text: '醫療機構', value: 'medical' },
-  { text: '其他用戶', value: 'other' }
-];
-
-const selectRole = (value) => {
-  selectedRole.value = value;
-};
+const selectedRole = ref('');
+const gender = ref(''); // 添加性別字段
+const roles = ['健檢中心', '使用者', '其他使用者'];
+const genders = ['男', '女', '其他']; // 假設的性別選項
 
 const handleSubmit = async () => {
-  if (!selectedRole.value || !username.value || !password.value) {
+  if (!username.value || !password.value || !selectedRole.value || !gender.value) {
+    document.dispatchEvent(new CustomEvent('show-snackbar', {
+      detail: { message: '請填寫所有欄位', color: 'error' }
+    }));
     return;
   }
+
+  const roleMap = {
+    '健檢中心': 'medical',
+    '使用者': 'user',
+    '其他使用者': 'other'
+  };
+
+  const role = roleMap[selectedRole.value];
   try {
     await login({
       username: username.value,
       password: password.value,
-      role: selectedRole.value
+      role: role,
+      gender: gender.value // 假設後端需要性別
     });
-    router.push('/');
   } catch (error) {
-    console.error('Login error:', error);
+    document.dispatchEvent(new CustomEvent('show-snackbar', {
+      detail: { message: '登入失敗，請檢查帳號密碼或角色', color: 'error' }
+    }));
   }
 };
+
+const goToHome = () => router.push('/');
+const goToRegister = () => router.push('/register');
 </script>
 
 <style scoped>
 .fill-height {
   min-height: calc(100vh - 64px);
 }
-
 .v-card {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
-
 .v-btn {
   text-transform: none;
   letter-spacing: 0;
   transition: transform 0.2s ease;
 }
-
 .v-btn:hover {
   transform: scale(1.05);
+}
+.v-form {
+  padding: 16px;
+}
+.mb-4 {
+  margin-bottom: 24px !important;
 }
 </style>

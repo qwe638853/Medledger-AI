@@ -12,7 +12,6 @@
     </v-navigation-drawer>
 
     <v-app-bar app color="primary" dark>
-      <v-app-bar-nav-icon @click="drawer = !drawer" />
       <v-toolbar-title>健康檢查數據平台</v-toolbar-title>
       <v-spacer />
       <v-btn v-if="isLoggedIn" text @click="logout">登出</v-btn>

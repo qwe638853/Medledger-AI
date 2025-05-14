@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-
+	"log"
 	"sdk_test/fabric"
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
@@ -24,10 +24,14 @@ func HandleUploadReport(
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("[Debug] UploadReport userID=%s", userID)
 	entry, ok := wallet.Get(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
+
+	log.Printf("[Debug] UploadReport args: reportID=%s, patientHash=%s, testResult=%s",
+	req.ReportId, req.PatientHash, req.TestResultsJson)
 
 	// 依使用者身分建立 Gateway + Contract
 	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)

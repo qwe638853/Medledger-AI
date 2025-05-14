@@ -92,15 +92,16 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 	}
 
 	// ✅ Enroll 產生證書
-	certPem, err := fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, fc.EnrollRequest{
+	enrollReq := fc.EnrollRequest{
 		Certificate_request: string(csrPEM),
-		Profile:             "",
-	})
+	}
 
+	certPem, err := fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, enrollReq)
 	if err != nil {
-		log.Printf("❌ Enroll 失敗: %v", err)
+		log.Fatalf("Enroll 失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
 	}
+	
 
 	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
 	err = fc.SaveCertToFile(certPem, certPath)
@@ -109,7 +110,7 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 		return &pb.RegisterResponse{Success: false, Message: "儲存證書失敗"}, nil
 	}
 
-	err = wallet.PutFile(req.UserId, csrPath, keyPath, "Org1MSP")
+	err = wallet.PutFile(req.UserId, certPath, keyPath, "Org1MSP")
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil

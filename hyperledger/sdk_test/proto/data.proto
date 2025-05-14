@@ -5,6 +5,7 @@ package health;
 option go_package = "sdk_test/proto;health"; 
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 service HealthService {
   rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
@@ -38,7 +39,15 @@ service HealthService {
       body: "*"
     };
   }
+  rpc ListMyReports(google.protobuf.Empty) returns (ListMyReportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports"
+    };
+  }
+
 }
+
+
 
 message UploadReportRequest {
   string report_id = 1;
@@ -95,4 +104,16 @@ message RegisterResponse {
     bool success = 1;
     string message = 2;
     
+}
+
+message Report {
+  string report_id = 1;
+  string clinic_id = 2;
+  string patient_hash = 3;
+  string result_json = 4;
+  int64 created_at = 5;
+}
+
+message ListMyReportsResponse {
+  repeated Report reports = 1;
 }

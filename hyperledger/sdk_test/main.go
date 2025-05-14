@@ -16,6 +16,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 )
 
 type server struct {
@@ -56,6 +58,10 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	return sc.HandleRegister(ctx, req, s.Wallet)
 }
+
+func (s *server) ListMyReports(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportsResponse, error) {
+	return sc.HandleListMyReports(ctx, in ,  s.Wallet, s.Builder)
+}	
 
 func main() {
 	err := db.InitDB("database/user_data.sqlite")

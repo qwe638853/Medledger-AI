@@ -37,7 +37,7 @@ onMounted(async () => {
     showSnackbar('會話可能已過期，請重新登入', 'warning');
   }
   
-  await fetchUploadedData();
+  //await fetchUploadedData();
 });
 
 const fetchUploadedData = async () => {

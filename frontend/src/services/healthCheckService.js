@@ -1,17 +1,89 @@
-import apiClient, { handleApiError, notifyError } from './apiService';
+import apiClient, { handleApiError, notifyError, notifySuccess } from './apiService';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * 獲取用戶已上傳的健康檢查數據
- * @param {string} userId - 用戶ID
  * @returns {Promise} - 包含用戶健康檢查數據的Promise
  */
-export const fetchUserHealthData = async (userId) => {
+export const fetchUserHealthData = async () => {
   try {
-    const response = await apiClient.get(`/default/health-check/uploaded/${userId}`);
-    return response.data;
+    // 正確串接後端 HandleListMyReports API
+    const response = await apiClient.get('/v1/reports');
+    
+    // 根據 HandleListMyReports 的回傳結構處理數據
+    if (response.data && response.data.reports) {
+      return response.data.reports; // 回傳報告陣列
+    }
+    return [];
   } catch (error) {
     const errorMsg = handleApiError(error, '獲取健康數據');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取可授權對象列表
+ * @returns {Promise<Array>} - 包含可授權對象的Promise
+ */
+export const fetchAuthorizeTargets = async () => {
+  try {
+    // 待後端實現授權目標 API
+    const response = await apiClient.get('/v1/auth/targets');
+    return response.data.targets || [];
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取授權對象列表');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 授權健康數據給指定對象
+ * @param {string} targetId - 授權對象ID
+ * @param {Array} healthData - 要授權的健康數據
+ * @returns {Promise} - 授權結果的Promise
+ */
+export const authorizeHealthData = async (targetId, healthData) => {
+  try {
+    // 待後端實現授權 API
+    const response = await apiClient.post('/v1/auth/authorize', {
+      targetId,
+      reportIds: healthData.map(data => data.id)
+    });
+    
+    if (response.data.success) {
+      notifySuccess('授權成功！');
+      return response.data;
+    } else {
+      throw new Error(response.data.message || '授權失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '授權健康數據');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 使用 LLM 分析健康數據
+ * @param {Array} healthData - 要分析的健康數據
+ * @returns {Promise<string>} - 分析結果的Promise
+ */
+export const analyzeLLMSummary = async (healthData) => {
+  try {
+    // 待後端實現 LLM 分析 API
+    const response = await apiClient.post('/v1/llm/analyze', {
+      reportIds: healthData.map(data => data.id)
+    });
+    
+    if (response.data.success) {
+      return response.data.summary;
+    } else {
+      throw new Error(response.data.message || 'LLM 分析失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, 'LLM 分析');
     notifyError(errorMsg);
     throw error;
   }
@@ -177,6 +249,9 @@ export const batchUploadHealthReports = async (
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
+  fetchAuthorizeTargets,
+  authorizeHealthData,
+  analyzeLLMSummary,
   fetchOtherHealthData,
   uploadHealthReport,
   batchUploadHealthReports

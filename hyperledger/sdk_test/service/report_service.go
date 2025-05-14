@@ -1,14 +1,18 @@
 package service
 
 import (
+    "encoding/json"
 	"context"
 	"log"
 	"sdk_test/fabric"
+	"crypto/sha256"
+	"encoding/hex"
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
 	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
-
+	
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -54,5 +58,48 @@ func HandleUploadReport(
 
 	return &pb.UploadReportResponse{
 		Success: true, Message: "上傳成功",
+	}, nil
+}
+
+// HandleListMyReports 呼叫鏈碼查詢病人自己的報告
+func HandleListMyReports(
+	ctx context.Context, _ *emptypb.Empty,
+	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.ListMyReportsResponse, error) {
+
+	userID, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
+	}
+
+	entry, ok := wallet.Get(userID)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, err
+	}
+	defer gw.Close()
+
+	sum := sha256.Sum256([]byte(userID))
+	hashedUserID := hex.EncodeToString(sum[:])
+	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
+
+	// 5. EvaluateTransaction 傳入 hashedUserID 給鏈碼使用
+	result, err := contract.EvaluateTransaction("ListMyReports", hashedUserID)
+	if err != nil {
+		fabric.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢失敗")
+	}
+
+	// 解析鏈碼回傳的 JSON 陣列
+	var reports []*pb.Report
+	if err := json.Unmarshal(result, &reports); err != nil {
+		return nil, status.Errorf(codes.Internal, "回傳格式錯誤: %v", err)
+	}
+
+	return &pb.ListMyReportsResponse{
+		Reports: reports,
 	}, nil
 }

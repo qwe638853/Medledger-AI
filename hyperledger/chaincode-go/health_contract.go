@@ -126,6 +126,106 @@ func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInt
 	return ctx.GetStub().DelState(ticketKey)
 }
 
+func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
+	unameHash, role, err := getCaller(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get caller identity: %v", err)
+	}
+	if role != "patient" {
+		return nil, fmt.Errorf("only patient can list their reports")
+	}
+
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"patientHash": "%s"
+		}
+	}`, docHealth, unameHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("query execution failed: %v", err)
+	}
+	defer iter.Close()
+
+	var results []HealthReport
+
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+
+		var rep HealthReport
+		if err := json.Unmarshal(kv.Value, &rep); err != nil {
+			continue
+		}
+
+		results = append(results, rep)
+	}
+
+	return results, nil
+}
+
+func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
+	targetHash, role, err := getCaller(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get caller identity: %v", err)
+	}
+	if role != "insurer" {
+		return nil, fmt.Errorf("only insurer can list authorized reports")
+	}
+
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"TargetHash": "%s"
+		}
+	}`, docAuth, targetHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query authorization tickets: %v", err)
+	}
+	defer iter.Close()
+
+	now := nowSec()
+	var results []HealthReport
+
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+
+		var tk AuthTicket
+		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			continue
+		}
+		if now > tk.Expiry {
+			continue // 忽略過期授權
+		}
+
+		// 查詢對應報告
+		repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{tk.ReportID})
+		rb, err := ctx.GetStub().GetState(repKey)
+		if err != nil || rb == nil {
+			continue
+		}
+
+		var rep HealthReport
+		if err := json.Unmarshal(rb, &rep); err != nil {
+			continue
+		}
+
+		results = append(results, rep)
+	}
+
+	return results, nil
+}
+
+
+
 func main() {
 	chaincode, err := contractapi.NewChaincode(&HealthCheckContract{})
 	if err != nil {

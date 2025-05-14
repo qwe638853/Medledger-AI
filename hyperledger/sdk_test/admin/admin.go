@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
-	userId := "clinic1"
+	userId := "clinic01"
 	password := "clinicpass"
 	name := "健檢中心1"
 	date := "2025-05-13"
@@ -46,7 +46,8 @@ func main() {
 			Type:        "client",
 			Affiliation: "org1.department1",
 			Attributes: []api.Attribute{
-				{Name: "role", Value: "clinic"},
+				{Name: "role", Value: "clinic", ECert: true},
+				{Name: "clinicId", Value: userId, ECert: true},
 			},
 		},
 	)

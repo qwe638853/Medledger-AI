@@ -76,6 +76,30 @@
                 登入
               </v-btn>
               
+              <!-- ===================== 測試功能（純前端跳轉）開始 ===================== -->
+              /**
+               * 測試登入功能（純前端跳轉，不呼叫後端）
+               * 
+               * 1. 必須先選擇角色
+               * 2. 直接顯示成功訊息並跳轉到對應 dashboard
+               * 3. 同步設置 authStore 狀態與 localStorage，確保 App.vue 能正確渲染
+               * 4. 跳轉後強制刷新頁面，確保 dashboard 正確顯示
+               * 
+               * ===================== 這一區塊僅供測試 =====================
+               * 不會影響主程式的正式登入流程
+               */
+              <v-btn
+                color="info"
+                block
+                @click="handleTestLogin"
+                elevation="2"
+                height="44"
+                class="mb-4"
+              >
+                測試登入
+              </v-btn>
+              <!-- ===================== 測試功能結束 ===================== -->
+              
               <!-- 導航按鈕 -->
               <div class="d-flex justify-space-between mb-4">
                 <v-btn text color="primary" @click="goToHome">
@@ -231,6 +255,44 @@ const handleSubmit = async () => {
 // 導航
 const goToHome = () => router.push('/');
 const goToRegister = () => router.push('/register');
+
+// ===================== 測試功能開始 =====================
+/**
+ * 測試登入功能（純前端跳轉，不呼叫後端）
+ * 
+ * 1. 必須先選擇角色
+ * 2. 直接顯示成功訊息並跳轉到對應 dashboard
+ */
+const handleTestLogin = async () => {
+  let role = selectedRole.value || '';
+  if (!role) {
+    showAlert('error', '請先選擇角色', '錯誤');
+    return;
+  }
+  // ====== 測試用：同步設置登入狀態與 localStorage ======
+  authStore.isLoggedIn = true;
+  authStore.userRole = role;
+  authStore.currentUser = role === 'user' ? 'test_user' : (role === 'medical' ? 'test_hospital' : 'test_other');
+  localStorage.setItem('token', 'testtoken');
+  localStorage.setItem('role', role);
+  localStorage.setItem('id_number', authStore.currentUser);
+  // ====== 測試用區塊結束 ======
+
+  showAlert('success', '測試登入成功！正在為您導向...', '成功');
+  setTimeout(() => {
+    if (role === 'user') {
+      router.push('/user-dashboard');
+    } else if (role === 'medical') {
+      router.push('/hospital-dashboard');
+    } else if (role === 'other') {
+      router.push('/other-user-dashboard');
+    }
+    // ====== 測試用：強制刷新頁面，確保 dashboard 正確顯示 ======
+    window.location.reload();
+    // ====== 測試用區塊結束 ======
+  }, 1000);
+};
+// ===================== 測試功能結束 =====================
 </script>
 
 <style scoped>

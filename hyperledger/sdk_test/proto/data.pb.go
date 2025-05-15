@@ -26,7 +26,7 @@ const (
 type UploadReportRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ReportId        string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	PatientHash     string                 `protobuf:"bytes,2,opt,name=patient_hash,json=patientHash,proto3" json:"patient_hash,omitempty"`
+	UserId          string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	TestResultsJson string                 `protobuf:"bytes,3,opt,name=test_results_json,json=testResultsJson,proto3" json:"test_results_json,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -69,9 +69,9 @@ func (x *UploadReportRequest) GetReportId() string {
 	return ""
 }
 
-func (x *UploadReportRequest) GetPatientHash() string {
+func (x *UploadReportRequest) GetUserId() string {
 	if x != nil {
-		return x.PatientHash
+		return x.UserId
 	}
 	return ""
 }
@@ -699,10 +699,10 @@ var File_proto_data_proto protoreflect.FileDescriptor
 
 const file_proto_data_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/data.proto\x12\x06health\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x81\x01\n" +
+	"\x10proto/data.proto\x12\x06health\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\"w\n" +
 	"\x13UploadReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\x12!\n" +
-	"\fpatient_hash\x18\x02 \x01(\tR\vpatientHash\x12*\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12*\n" +
 	"\x11test_results_json\x18\x03 \x01(\tR\x0ftestResultsJson\"J\n" +
 	"\x14UploadReportResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +

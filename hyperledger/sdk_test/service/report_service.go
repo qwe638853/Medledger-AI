@@ -1,20 +1,20 @@
 package service
 
 import (
-    "encoding/json"
 	"context"
-	"log"
-	"sdk_test/fabric"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"log"
+
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
 	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
-	
-	"google.golang.org/protobuf/types/known/emptypb"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // HandleUploadReport 驗證請求 → 存 SQLite → 調用 Fabric
@@ -35,7 +35,7 @@ func HandleUploadReport(
 	}
 
 	log.Printf("[Debug] UploadReport args: reportID=%s, patientHash=%s, testResult=%s",
-	req.ReportId, req.PatientHash, req.TestResultsJson)
+		req.ReportId, req.UserId, req.TestResultsJson)
 
 	// 依使用者身分建立 Gateway + Contract
 	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
@@ -44,15 +44,19 @@ func HandleUploadReport(
 	}
 	defer gw.Close()
 
+	sum := sha256.Sum256([]byte(req.UserId))
+	hashedUserID := hex.EncodeToString(sum[:])
+	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
+
 	// 呼叫鏈碼
 	_, err = contract.SubmitTransaction(
 		"UploadReport",
 		req.ReportId,
-		req.PatientHash,
+		hashedUserID,
 		req.TestResultsJson,
 	)
 	if err != nil {
-		fabric.PrintGatewayError(err) // 看錯誤細節
+		fc.PrintGatewayError(err) // 看錯誤細節
 		return nil, status.Error(codes.Internal, "鏈上交易失敗")
 	}
 
@@ -89,17 +93,40 @@ func HandleListMyReports(
 	// 5. EvaluateTransaction 傳入 hashedUserID 給鏈碼使用
 	result, err := contract.EvaluateTransaction("ListMyReports", hashedUserID)
 	if err != nil {
-		fabric.PrintGatewayError(err)
+		fc.PrintGatewayError(err)
 		return nil, status.Error(codes.Internal, "查詢失敗")
 	}
+	// 建立中介結構以對應 camelCase JSON 欄位
+	type rawReport struct {
+		ReportID    string `json:"reportId"`
+		ClinicID    string `json:"clinicId"`
+		PatientHash string `json:"patientHash"`
+		ResultJson  string `json:"resultJson"`
+		CreatedAt   int64  `json:"createdAt"`
+	}
 
-	// 解析鏈碼回傳的 JSON 陣列
-	var reports []*pb.Report
-	if err := json.Unmarshal(result, &reports); err != nil {
+	var rawList []rawReport
+	if err := json.Unmarshal(result, &rawList); err != nil {
 		return nil, status.Errorf(codes.Internal, "回傳格式錯誤: %v", err)
+	}
+
+	// 映射成 protobuf 格式
+	var reports []*pb.Report
+	for i, r := range rawList {
+		log.Printf("[Report #%d] ReportID: %s, PatientHash: %s, TestResults: %s",
+			i, r.ReportID, r.PatientHash, r.ResultJson)
+
+		reports = append(reports, &pb.Report{
+			ReportId:    r.ReportID,
+			ClinicId:    r.ClinicID,
+			PatientHash: r.PatientHash,
+			ResultJson:  r.ResultJson,
+			CreatedAt:   r.CreatedAt,
+		})
 	}
 
 	return &pb.ListMyReportsResponse{
 		Reports: reports,
 	}, nil
+
 }

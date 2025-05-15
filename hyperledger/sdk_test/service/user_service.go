@@ -55,7 +55,7 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 			Type:        "client",
 			Affiliation: "org1.department1",
 			Attributes: []api.Attribute{
-				{Name: "role", Value: "user"},
+				{Name: "role", Value: "patient", ECert: true},
 			},
 		},
 	)
@@ -101,7 +101,6 @@ func HandleRegister(ctx context.Context, req *pb.RegisterRequest, wallet wl.Wall
 		log.Fatalf("Enroll 失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
 	}
-	
 
 	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
 	err = fc.SaveCertToFile(certPem, certPath)

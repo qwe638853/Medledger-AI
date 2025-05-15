@@ -74,6 +74,7 @@ services:     # 定義服務的層級
       - /home/WOW/hyperledger/orgs/org1.example.com/peers/peer1.org1.example.com:/tmp/hyperledger/org1/peer1
       - /home/WOW/hyperledger/orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
       - /home/WOW/hyperledger/chaincode-go:/tmp/hyperledger/org1/chaincode
+      - /home/WOW/hyperledger/orgs/org1.example.com/peers/peer1-data:/var/hyperledger/production
     ports:
       - 7051:7051
       - 9444:9444 
@@ -124,6 +125,7 @@ services:     # 定義服務的層級
       - /home/WOW/hyperledger/orgs/org1.example.com/peers/peer2.org1.example.com:/tmp/hyperledger/org1/peer2
       - /home/WOW/hyperledger/orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
       - /home/WOW/hyperledger/chaincode-go:/tmp/hyperledger/org1/chaincode
+      - /home/WOW/hyperledger/orgs/org1.example.com/peers/peer2-data:/var/hyperledger/production
     ports:
       - 7053:7053
       - 9445:9445

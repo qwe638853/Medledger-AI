@@ -51,7 +51,7 @@ service HealthService {
 
 message UploadReportRequest {
   string report_id = 1;
-  string patient_hash = 2;
+  string user_id = 2;
   string test_results_json = 3;
 }
 
@@ -107,12 +107,13 @@ message RegisterResponse {
 }
 
 message Report {
-  string report_id = 1;
-  string clinic_id = 2;
-  string patient_hash = 3;
-  string result_json = 4;
-  int64 created_at = 5;
+  string report_id = 1 
+  string clinic_id = 2 
+  string patient_hash = 3 
+  string result_json = 4 
+  int64 created_at = 5 
 }
+
 
 message ListMyReportsResponse {
   repeated Report reports = 1;

@@ -146,6 +146,30 @@
                 提交註冊
               </v-btn>
               
+              <!-- ===================== 測試功能開始 ===================== -->
+              <!-- 
+                測試註冊按鈕：
+                1. 用於在開發階段測試註冊功能
+                2. 不需要填寫表單即可測試
+                3. 使用預設的測試數據進行註冊
+                4. 註冊成功後會自動導向到登入頁面
+                
+                修改說明：
+                1. 如需修改測試數據，請修改 handleTestRegister 函數中的測試數據
+                2. 如需修改註冊成功後的跳轉邏輯，請修改 handleTestRegister 函數中的重定向部分
+              -->
+              <v-btn
+                color="info"
+                block
+                @click="handleTestRegister"
+                elevation="2"
+                height="44"
+                class="mb-4"
+              >
+                測試註冊
+              </v-btn>
+              <!-- ===================== 測試功能結束 ===================== -->
+              
               <!-- 導航按鈕 -->
               <div class="d-flex justify-space-between mb-4">
                 <v-btn text color="primary" @click="goToHome">
@@ -328,6 +352,103 @@ const handleRegister = async () => {
 // 導航
 const goToHome = () => router.push('/');
 const goToLogin = () => router.push('/login');
+
+// ===================== 測試功能開始 =====================
+/**
+ * 測試註冊功能
+ * 
+ * 功能說明：
+ * 1. 使用固定的測試數據進行註冊
+ * 2. 模擬註冊成功的情況
+ * 3. 自動導向到登入頁面
+ * 
+ * 測試數據：
+ * - 一般用戶：
+ *   username: 'test_user'
+ *   password: 'test123'
+ *   name: '測試用戶'
+ *   date: '2000-01-01'
+ *   email: 'test@example.com'
+ *   phone: '0912345678'
+ *   role: 'user'
+ * 
+ * - 醫療機構：
+ *   username: 'test_hospital'
+ *   password: 'test123'
+ *   name: '測試醫院'
+ *   date: '2000-01-01'
+ *   email: 'hospital@example.com'
+ *   phone: '0912345678'
+ *   role: 'medical'
+ * 
+ * - 其他用戶：
+ *   username: 'test_other'
+ *   password: 'test123'
+ *   name: '測試其他'
+ *   date: '2000-01-01'
+ *   email: 'other@example.com'
+ *   phone: '0912345678'
+ *   role: 'other'
+ */
+const handleTestRegister = async () => {
+  try {
+    console.group('測試註冊');
+    
+    // 根據選擇的角色使用對應的測試數據
+    let testData = {
+      username: 'test_user',
+      password: 'test123',
+      name: '測試用戶',
+      date: '2000-01-01',
+      email: 'test@example.com',
+      phone: '0912345678',
+      role: 'user'
+    };
+    
+    if (registerForm.value.selectedRole === 'medical') {
+      testData = {
+        username: 'test_hospital',
+        password: 'test123',
+        name: '測試醫院',
+        date: '2000-01-01',
+        email: 'hospital@example.com',
+        phone: '0912345678',
+        role: 'medical'
+      };
+    } else if (registerForm.value.selectedRole === 'other') {
+      testData = {
+        username: 'test_other',
+        password: 'test123',
+        name: '測試其他',
+        date: '2000-01-01',
+        email: 'other@example.com',
+        phone: '0912345678',
+        role: 'other'
+      };
+    }
+    
+    console.log('使用測試數據:', testData);
+    
+    // 模擬註冊成功
+    await authStore.register(testData);
+    
+    // 註冊成功顯示
+    showAlert('success', '測試註冊成功！即將為您導向登入頁面', '成功');
+    console.log('測試註冊成功！');
+    
+    // 延遲導航，讓用戶看到成功訊息
+    setTimeout(() => {
+      console.log('正在導航到登入頁...');
+      router.push('/login');
+    }, 2000);
+  } catch (error) {
+    console.error('測試註冊處理錯誤:', error);
+    showAlert('error', '測試註冊失敗', '錯誤');
+  } finally {
+    console.groupEnd();
+  }
+};
+// ===================== 測試功能結束 =====================
 </script>
 
 <style scoped>

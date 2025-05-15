@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -40,13 +42,24 @@ type HealthCheckContract struct {
 	contractapi.Contract
 }
 
-func getCaller(ctx contractapi.TransactionContextInterface) (unameHash, role string, err error) {
-	id, _ := cid.New(ctx.GetStub())
-	unameHash, ok1, _ := id.GetAttributeValue("username")
-	role, ok2, _ := id.GetAttributeValue("role")
-	if !ok1 || !ok2 {
-		err = fmt.Errorf("missing username or role attribute in cert")
+func hashID(id string) string {
+	hash := sha256.Sum256([]byte(id))
+	return hex.EncodeToString(hash[:])
+}
+
+func getCaller(ctx contractapi.TransactionContextInterface) (userID, role string, err error) {
+	id, err := cid.New(ctx.GetStub())
+	if err != nil {
+		return "", "", fmt.Errorf("cannot create client ID: %v", err)
 	}
+
+	userID, ok1, _ := id.GetAttributeValue("hf.EnrollmentID")
+	role, ok2, _ := id.GetAttributeValue("role")
+
+	if !ok1 || !ok2 {
+		err = fmt.Errorf("missing hf.EnrollmentID or role attribute in cert")
+	}
+
 	return
 }
 
@@ -85,19 +98,19 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 	}
 
 	rec := HealthReport{
-		DocType: docHealth,
-		ReportID: reportID,
-		PatientH: patientHash,
-		ClinicID: getClinicID(ctx),
+		DocType:    docHealth,
+		ReportID:   reportID,
+		PatientH:   patientHash,
+		ClinicID:   getClinicID(ctx),
 		ResultJSON: resultJSON,
-		CreatedAt: nowSec(),
+		CreatedAt:  nowSec(),
 	}
 	bytes, _ := json.Marshal(rec)
 	return ctx.GetStub().PutState(repKey, bytes)
 }
 
 func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID, expiryStr string) error {
-	patientHash, role, err := getCaller(ctx)
+	userID, role, err := getCaller(ctx)
 	if err != nil || role != "patient" {
 		return fmt.Errorf("only patient can grant access")
 	}
@@ -105,6 +118,8 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 	if errExp != nil || expiry <= nowSec() {
 		return fmt.Errorf("invalid expiry")
 	}
+
+	patientHash := hashID(userID)
 
 	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
 	rb, _ := ctx.GetStub().GetState(repKey)
@@ -118,16 +133,19 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 }
 
 func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID string) error {
-	patientHash, role, err := getCaller(ctx)
+	userID, role, err := getCaller(ctx)
 	if err != nil || role != "patient" {
 		return fmt.Errorf("only patient can revoke")
 	}
+
+	patientHash := hashID(userID)
+
 	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
 	return ctx.GetStub().DelState(ticketKey)
 }
 
 func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
-	unameHash, role, err := getCaller(ctx)
+	userID, role, err := getCaller(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get caller identity: %v", err)
 	}
@@ -135,12 +153,14 @@ func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextIn
 		return nil, fmt.Errorf("only patient can list their reports")
 	}
 
+	patientHash := hashID(userID)
+
 	query := fmt.Sprintf(`{
 		"selector": {
 			"docType": "%s",
 			"patientHash": "%s"
 		}
-	}`, docHealth, unameHash)
+	}`, docHealth, patientHash)
 
 	iter, err := ctx.GetStub().GetQueryResult(query)
 	if err != nil {
@@ -223,8 +243,6 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 
 	return results, nil
 }
-
-
 
 func main() {
 	chaincode, err := contractapi.NewChaincode(&HealthCheckContract{})

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { healthCheckService, setupAuthInterceptor } from '../services';
 
@@ -18,6 +18,18 @@ const snackbar = ref({
   message: '',
   color: 'success'
 });
+
+// 新增病人身分證欄位
+const patientId = ref('');
+const patientIdRules = [
+  v => !!v || '請輸入病人身分證字號',
+  v => /^[A-Z][12]\d{8}$/.test(v) || '身分證字號格式不正確'
+];
+
+// 新增預覽對話框
+const previewDialog = ref(false);
+const parsedData = ref(null);
+const parseError = ref(null);
 
 onMounted(async () => {
   // 確保在組件掛載時重新設置 API 客戶端的身份驗證
@@ -73,17 +85,20 @@ const handleFileDrop = (e) => {
   if (!e.dataTransfer.files.length) return;
   
   const droppedFiles = Array.from(e.dataTransfer.files);
-  // 過濾出支持的文件類型（例如Excel、CSV、PDF等）
+  // 過濾出支持的文件類型（包括JSON）
   const supportedFiles = droppedFiles.filter(file => {
     const fileType = file.type;
+    const fileName = file.name.toLowerCase();
     return fileType.includes('excel') || 
            fileType.includes('spreadsheet') || 
            fileType.includes('csv') || 
-           fileType.includes('pdf');
+           fileType.includes('pdf') ||
+           fileType.includes('json') ||
+           fileName.endsWith('.json');
   });
   
   if (supportedFiles.length === 0) {
-    showSnackbar('請上傳支持的檔案格式（Excel、CSV或PDF）', 'error');
+    showSnackbar('請上傳支持的檔案格式（Excel、CSV、PDF或JSON）', 'error');
     return;
   }
   
@@ -99,11 +114,106 @@ const handleFileSelect = (e) => {
 
 const clearFiles = () => {
   files.value = [];
+  parseError.value = null;
 };
 
-const handleFileUpload = async () => {
+// 讀取 JSON 文件內容
+const readJSONFile = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      try {
+        const jsonData = JSON.parse(event.target.result);
+        resolve(jsonData);
+      } catch (error) {
+        reject(new Error(`無法解析 JSON 文件: ${error.message}`));
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('讀取文件時發生錯誤'));
+    };
+    
+    reader.readAsText(file);
+  });
+};
+
+// 新增預覽功能
+const previewFiles = async () => {
   if (!files.value.length) {
     showSnackbar('請選擇檔案', 'error');
+    return;
+  }
+  
+  if (!patientId.value || !patientIdRules[1](patientId.value)) {
+    showSnackbar('請輸入有效的病人身分證字號', 'error');
+    return;
+  }
+  
+  parseError.value = null;
+  
+  try {
+    // 解析文件內容
+    parsedData.value = await Promise.all(
+      files.value.map(async (file) => {
+        try {
+          const fileExt = file.name.split('.').pop().toLowerCase();
+          let parsed;
+          
+          // 針對不同文件格式進行處理
+          if (fileExt === 'json' || file.type.includes('json')) {
+            // 實際讀取 JSON 文件內容
+            parsed = await readJSONFile(file);
+            console.log('已解析 JSON 檔案:', file.name, parsed);
+          } else {
+            // 其他格式暫時仍使用模擬數據
+            parsed = await parseHealthReportFile(file);
+          }
+          
+          return {
+            fileName: file.name,
+            fileSize: formatFileSize(file.size),
+            fileType: fileExt,
+            patientId: patientId.value,
+            reportData: parsed,
+            isJson: fileExt === 'json' || file.type.includes('json')
+          };
+        } catch (err) {
+          console.error(`解析文件 ${file.name} 失敗:`, err);
+          throw err;
+        }
+      })
+    );
+    
+    previewDialog.value = true;
+  } catch (error) {
+    parseError.value = error.message;
+    showSnackbar(`解析檔案失敗：${error.message}`, 'error');
+  }
+};
+
+// 解析健康檢查報告文件
+const parseHealthReportFile = async (file) => {
+  // 這裡使用已有的函數，但實際上我們先預覽
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 模擬解析結果
+      resolve({
+        'Glu-AC': Math.floor(Math.random() * 50 + 70) + ' mg/dL', // 血糖值
+        'HbA1c': (Math.random() * 2 + 4).toFixed(1) + ' %',       // 糖化血色素
+        'LDL-C': Math.floor(Math.random() * 70 + 80) + ' mg/dL',  // 低密度脂蛋白膽固醇
+        'HDL-C': Math.floor(Math.random() * 20 + 40) + ' mg/dL',  // 高密度脂蛋白膽固醇
+        'BP': `${Math.floor(Math.random() * 40 + 100)}/${Math.floor(Math.random() * 20 + 60)} mmHg` // 血壓
+      });
+    }, 500);
+  });
+};
+
+// 修改上傳邏輯，確保JSON資料傳送至後端
+const handleFileUpload = async () => {
+  if (!parsedData.value || !patientId.value) {
+    showSnackbar('請先預覽檔案並確認病人身分證字號', 'error');
     return;
   }
 
@@ -115,20 +225,82 @@ const handleFileUpload = async () => {
       uploadProgress.value = progress;
     };
     
-    const fileCompletedCallback = (result) => {
-      // 將新上傳的數據添加到列表
-      uploadedData.value.push(result);
-    };
+    const uploadResults = [];
     
-    await healthCheckService.batchUploadHealthReports(
-      files.value,
-      currentUser.value,
-      updateProgress,
-      fileCompletedCallback
-    );
+    // 上傳每個檔案
+    for (let i = 0; i < files.value.length; i++) {
+      const file = files.value[i];
+      const fileData = parsedData.value[i];
+      updateProgress(Math.floor((i / files.value.length) * 90));
+      
+      // 針對 JSON 文件特殊處理
+      if (fileData.isJson) {
+        try {
+          console.log(`上傳 JSON 數據給病人 ${patientId.value}:`, fileData.reportData);
+          
+          // 直接使用解析好的 JSON 數據
+          const result = await healthCheckService.uploadJsonHealthData(
+            patientId.value,
+            fileData.reportData,
+            file.name,
+            (progress) => {
+              const baseProgress = Math.floor((i / files.value.length) * 90);
+              const fileProgress = Math.floor((progress / 100) * (90 / files.value.length));
+              updateProgress(baseProgress + fileProgress);
+            }
+          );
+          
+          uploadResults.push({
+            ...result,
+            fileName: file.name,
+            fileType: 'json',
+            uploadTime: new Date().toISOString()
+          });
+        } catch (error) {
+          console.error(`上傳 JSON 數據失敗:`, error);
+          uploadResults.push({
+            success: false,
+            error: true,
+            fileName: file.name,
+            message: `JSON 上傳失敗: ${error.message}`
+          });
+        }
+      } else {
+        // 其他類型文件使用原來的方法上傳
+        try {
+          const result = await healthCheckService.uploadHealthReport(
+            file,
+            patientId.value,
+            (progress) => {
+              const baseProgress = Math.floor((i / files.value.length) * 90);
+              const fileProgress = Math.floor((progress / 100) * (90 / files.value.length));
+              updateProgress(baseProgress + fileProgress);
+            }
+          );
+          
+          uploadResults.push(result);
+        } catch (error) {
+          console.error(`上傳文件 ${file.name} 失敗:`, error);
+          uploadResults.push({
+            success: false,
+            error: true,
+            fileName: file.name,
+            message: `上傳失敗: ${error.message}`
+          });
+        }
+      }
+    }
     
-    showSnackbar(`成功上傳 ${files.value.length} 個檔案！`, 'success');
+    // 將上傳結果添加到列表
+    uploadedData.value = [...uploadedData.value, ...uploadResults];
+    
+    updateProgress(100);
+    
+    showSnackbar(`成功上傳 ${files.value.length} 個檔案至病人 ${patientId.value}！`, 'success');
     files.value = []; // 清空選擇的文件
+    patientId.value = ''; // 清空病人身分證號
+    previewDialog.value = false; // 關閉預覽
+    parsedData.value = null; // 清空解析數據
   } catch (error) {
     showSnackbar(`上傳失敗：${error.message}`, 'error');
   } finally {
@@ -138,13 +310,19 @@ const handleFileUpload = async () => {
 };
 
 const getFileIcon = (file) => {
-  const fileType = file.type || '';
+  if (!file || !file.type) return 'mdi-file';
+  
+  const fileType = file.type;
+  const fileName = file.name || '';
+  
   if (fileType.includes('excel') || fileType.includes('spreadsheet')) {
     return 'mdi-file-excel';
   } else if (fileType.includes('pdf')) {
     return 'mdi-file-pdf';
   } else if (fileType.includes('csv')) {
     return 'mdi-file-delimited';
+  } else if (fileType.includes('json') || fileName.toLowerCase().endsWith('.json')) {
+    return 'mdi-code-json';
   } else {
     return 'mdi-file';
   }
@@ -163,6 +341,35 @@ const formatFileSize = (size) => {
 const handleLogout = () => {
   authStore.logout();
 };
+
+// 格式化 JSON 數據顯示
+const formatJSONDisplay = (data) => {
+  if (typeof data !== 'object' || data === null) {
+    return data;
+  }
+  
+  // 將最頂層的物件或陣列展平成鍵值對
+  const flattenedData = {};
+  
+  if (Array.isArray(data)) {
+    // 處理陣列
+    data.forEach((item, index) => {
+      flattenedData[`項目 ${index + 1}`] = typeof item === 'object' ? JSON.stringify(item) : item;
+    });
+  } else {
+    // 處理物件
+    Object.keys(data).forEach(key => {
+      const value = data[key];
+      if (typeof value === 'object' && value !== null) {
+        flattenedData[key] = JSON.stringify(value);
+      } else {
+        flattenedData[key] = value;
+      }
+    });
+  }
+  
+  return flattenedData;
+};
 </script>
 
 <template>
@@ -178,6 +385,26 @@ const handleLogout = () => {
             歡迎，{{ currentUser }}
           </v-card-subtitle>
           <v-card-text>
+            <!-- 病人身分證字號輸入 -->
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="patientId"
+                  label="病人身分證字號"
+                  placeholder="例：A123456789"
+                  :rules="patientIdRules"
+                  outlined
+                  dense
+                  hint="請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字"
+                  persistent-hint
+                >
+                  <template v-slot:prepend>
+                    <v-icon>mdi-account-badge</v-icon>
+                  </template>
+                </v-text-field>
+              </v-col>
+            </v-row>
+            
             <v-row>
               <v-col cols="12">
                 <!-- 文件上傳區域 -->
@@ -202,12 +429,13 @@ const handleLogout = () => {
                         選擇檔案
                       </v-btn>
                     </p>
-                    <p class="text-caption text-grey">支援 Excel、CSV、PDF 格式</p>
+                    <p class="text-caption text-grey">支援 Excel、CSV、PDF 與 JSON 格式</p>
                     <input
                       ref="fileInput"
                       type="file"
                       multiple
                       class="d-none"
+                      accept=".xlsx,.xls,.csv,.pdf,.json"
                       @change="handleFileSelect"
                     />
                   </div>
@@ -231,7 +459,10 @@ const handleLogout = () => {
                   <v-list>
                     <v-list-item v-for="(file, index) in files" :key="index">
                       <template v-slot:prepend>
-                        <v-icon :color="getFileIcon(file) === 'mdi-file-pdf' ? 'red' : 'green'">
+                        <v-icon :color="
+                          file.name.toLowerCase().endsWith('.json') ? 'deep-purple' : 
+                          getFileIcon(file) === 'mdi-file-pdf' ? 'red' : 'green'
+                        ">
                           {{ getFileIcon(file) }}
                         </v-icon>
                       </template>
@@ -239,25 +470,30 @@ const handleLogout = () => {
                       <v-list-item-subtitle>{{ formatFileSize(file.size) }}</v-list-item-subtitle>
                     </v-list-item>
                   </v-list>
+                  
+                  <!-- 解析錯誤提示 -->
+                  <v-alert
+                    v-if="parseError"
+                    type="error"
+                    class="ma-3"
+                    dense
+                  >
+                    {{ parseError }}
+                  </v-alert>
+                  
                   <v-card-actions>
                     <v-spacer></v-spacer>
+                    <!-- 修改為預覽按鈕 -->
                     <v-btn
-                      color="primary"
-                      :loading="isUploading"
-                      :disabled="isUploading"
-                      @click="handleFileUpload"
+                      color="info"
+                      :disabled="!files.length || !patientId"
+                      @click="previewFiles"
+                      class="mr-2"
                     >
-                      <v-icon left>mdi-cloud-upload</v-icon>
-                      上傳
+                      <v-icon left>mdi-eye</v-icon>
+                      預覽
                     </v-btn>
                   </v-card-actions>
-                  <v-progress-linear
-                    v-if="isUploading"
-                    :value="uploadProgress"
-                    height="10"
-                    color="primary"
-                    striped
-                  ></v-progress-linear>
                 </v-card>
               </v-col>
             </v-row>
@@ -284,10 +520,13 @@ const handleLogout = () => {
                           <v-icon color="primary">mdi-file-check</v-icon>
                         </template>
                         <v-list-item-title>
-                          用戶：{{ item.user_id || currentUser }}
+                          病人：{{ item.userId || item.patient_hash || '未知' }}
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                          數據：{{ item.content || JSON.stringify(item) }}
+                          檔案：{{ item.fileName || '未命名' }}
+                        </v-list-item-subtitle>
+                        <v-list-item-subtitle>
+                          時間：{{ item.uploadTime || new Date().toLocaleString() }}
                         </v-list-item-subtitle>
                       </v-list-item>
                     </v-list>
@@ -310,6 +549,77 @@ const handleLogout = () => {
         </v-card>
       </v-col>
     </v-row>
+    
+    <!-- 預覽對話框 -->
+    <v-dialog v-model="previewDialog" max-width="800" persistent>
+      <v-card>
+        <v-card-title class="text-h5">
+          <v-icon left>mdi-eye</v-icon>
+          預覽健檢報告
+        </v-card-title>
+        <v-card-subtitle>
+          病人身分證：{{ patientId }}
+        </v-card-subtitle>
+        <v-card-text>
+          <v-expansion-panels v-if="parsedData">
+            <v-expansion-panel v-for="(fileData, index) in parsedData" :key="index">
+              <v-expansion-panel-title>
+                <v-icon class="mr-2" :color="
+                  fileData.fileType === 'json' ? 'deep-purple' : 
+                  fileData.fileType === 'pdf' ? 'red' : 'green'
+                ">
+                  {{ fileData.fileType === 'json' ? 'mdi-code-json' : 
+                     fileData.fileType === 'pdf' ? 'mdi-file-pdf' : 
+                     fileData.fileType === 'csv' ? 'mdi-file-delimited' : 
+                     'mdi-file-excel' }}
+                </v-icon>
+                {{ fileData.fileName }} ({{ fileData.fileSize }})
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th>項目</th>
+                        <th>數值</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(value, key) in formatJSONDisplay(fileData.reportData)" :key="key">
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" text @click="previewDialog = false">
+            取消
+          </v-btn>
+          <v-btn
+            color="primary"
+            :loading="isUploading"
+            :disabled="isUploading"
+            @click="handleFileUpload"
+          >
+            <v-icon left>mdi-cloud-upload</v-icon>
+            確認上傳
+          </v-btn>
+        </v-card-actions>
+        <v-progress-linear
+          v-if="isUploading"
+          :value="uploadProgress"
+          height="10"
+          color="primary"
+          striped
+        ></v-progress-linear>
+      </v-card>
+    </v-dialog>
     
     <!-- 通知提示 -->
     <v-snackbar

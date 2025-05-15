@@ -187,7 +187,7 @@ export const uploadHealthReport = async (file, userId, progressCallback) => {
       clearProgressSimulation();
       progressCallback(100);
       
-      console.log('上傳報告響應:', response.data);
+      console.log('上傳報告響應:', response);
       
       // 結合API響應和解析的數據
       return {
@@ -246,6 +246,82 @@ export const batchUploadHealthReports = async (
   return results;
 };
 
+/**
+ * 上傳 JSON 格式的健康檢查報告數據
+ * @param {string} patientId - 病人身分證
+ * @param {Object} jsonData - 從 JSON 文件解析出的健康數據
+ * @param {string} fileName - 原始文件名
+ * @param {Function} progressCallback - 上傳進度回調函數
+ * @returns {Promise} - 上傳結果的Promise
+ */
+export const uploadJsonHealthData = async (patientId, jsonData, fileName, progressCallback) => {
+  try {
+    // 檢查 localStorage 中是否存在令牌
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('未登入或會話已過期，請重新登入');
+    }
+    
+    // 模擬上傳進度
+    if (progressCallback) {
+      const simulateProgress = () => {
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          if (progress >= 90) {
+            clearInterval(interval);
+          }
+          progressCallback(progress);
+        }, 100);
+        return () => clearInterval(interval);
+      };
+      const clearProgressSimulation = simulateProgress();
+      
+      // 生成唯一報告ID
+      const reportId = `report_${uuidv4().substring(0, 8)}`;
+      
+      // 將原始 JSON 數據轉為字符串
+      const testResultsJson = JSON.stringify(jsonData);
+      
+      // 準備上傳到區塊鏈的請求數據
+      const uploadData = {
+        report_id: reportId,
+        user_id: patientId, // 使用病人身分證
+        test_results_json: testResultsJson,
+      };
+      
+      // 發送請求
+      const response = await apiClient.post('/v1/upload', uploadData, {
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // 清除進度模擬
+      clearProgressSimulation();
+      progressCallback(100);
+      
+      console.log('上傳 JSON 報告響應:', response.data);
+      
+      // 結合API響應和解析的數據
+      return {
+        reportId: reportId,
+        patientId: patientId,
+        fileName: fileName,
+        uploadTime: new Date().toISOString(),
+        success: response.data.success || true,
+        message: response.data.message || '上傳成功',
+        testResults: jsonData  // 保存原始解析的 JSON 數據
+      };
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '上傳健康報告');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
@@ -254,5 +330,6 @@ export default {
   analyzeLLMSummary,
   fetchOtherHealthData,
   uploadHealthReport,
-  batchUploadHealthReports
+  batchUploadHealthReports,
+  uploadJsonHealthData
 }; 

@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hyperledger/fabric v2.1.1+incompatible
 	github.com/hyperledger/fabric-ca v1.5.15
@@ -11,7 +12,6 @@ require (
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.4
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.5
@@ -50,6 +50,7 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	github.com/weppos/publicsuffix-go v0.5.0 // indirect

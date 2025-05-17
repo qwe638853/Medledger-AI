@@ -46,7 +46,7 @@ export const login = async (data) => {
  */
 export const register = async (data) => {
   try {
-    const response = await apiClient.post('/v1/register', {
+    const response = await apiClient.post('/v1/register/user', {
       user_id: data.username,
       password: data.password,
       name: data.name,
@@ -58,6 +58,42 @@ export const register = async (data) => {
     return response.data;
   } catch (error) {
     const errorMsg = handleApiError(error, '註冊');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 保險業者註冊
+ * @param {Object} data - 註冊資料
+ * @param {string} data.insurerId - 保險業者ID
+ * @param {string} data.password - 密碼
+ * @param {string} data.companyName - 公司名稱
+ * @param {string} data.contactPerson - 聯絡人
+ * @param {string} data.email - 電子郵件
+ * @param {string} data.phone - 電話號碼
+ * @returns {Promise} - 包含註冊結果的 Promise
+ */
+export const registerInsurer = async (data) => {
+  try {
+    console.log('發送保險業者註冊請求:', { 
+      insurerId: data.insurerId,
+      hasPassword: !!data.password,
+      companyName: data.companyName
+    });
+    
+    const response = await apiClient.post('/v1/register/insurer', {
+      insurer_id: data.insurerId,
+      password: data.password,
+      company_name: data.companyName,
+      contact_person: data.contactPerson,
+      email: data.email,
+      phone: data.phone
+    });
+    
+    return response.data;
+  } catch (error) {
+    const errorMsg = handleApiError(error, '保險業者註冊');
     notifyError(errorMsg);
     throw error;
   }
@@ -89,5 +125,6 @@ export const forgotPassword = async (data) => {
 export default {
   login,
   register,
+  registerInsurer,
   forgotPassword
 }; 

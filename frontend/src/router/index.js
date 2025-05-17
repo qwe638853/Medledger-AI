@@ -35,9 +35,9 @@ const routes = [
   },
   {
     path: '/other-user-dashboard',
-    name: 'OtherUserDashboard',
+    name: 'InsurerDashboard',
     component: () => import('../views/OtherUserDashboard.vue'),
-    meta: { requiresAuth: true, roles: ['other'] }
+    meta: { requiresAuth: true, roles: ['insurer'] }
   },
   {
     path: '/:pathMatch(.*)*',

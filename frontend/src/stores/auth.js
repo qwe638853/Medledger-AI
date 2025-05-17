@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
           const roleMappings = {
             '一般用戶': 'user',
             '醫療機構': 'medical',
-            '其他用戶': 'other'
+            '保險業者': 'insurer'
           };
           
           if (roleMappings[data.role]) {
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  // 註冊
+  // 一般用戶註冊
   const register = async (data) => {
     loading.value = true;
     try {
@@ -98,6 +98,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  // 保險業者註冊
+  const registerInsurer = async (data) => {
+    loading.value = true;
+    try {
+      const response = await authService.registerInsurer(data);
+      
+      if (response.success) {
+        notifySuccess('保險業者註冊成功！請登入您的帳號。');
+        return true;
+      } else {
+        throw new Error(response.message || '保險業者註冊失敗');
+      }
+    } catch (error) {
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   // 跳轉到儀表板
   const redirectToDashboard = () => {
     console.group('重定向到儀表板');
@@ -108,7 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
         router.push('/user-dashboard');
       } else if (userRole.value === 'medical') {
         router.push('/hospital-dashboard');
-      } else if (userRole.value === 'other') {
+      } else if (userRole.value === 'insurer') {
         router.push('/other-user-dashboard');
       } else {
         router.push('/');
@@ -142,6 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
     initAuth,
     login,
     register,
+    registerInsurer,
     logout,
     redirectToDashboard
   };

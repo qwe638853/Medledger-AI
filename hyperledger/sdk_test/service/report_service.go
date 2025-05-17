@@ -6,12 +6,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
+	"time"
 
+	"sdk_test/database"
 	fc "sdk_test/fabric"
 	pb "sdk_test/proto"
 	ut "sdk_test/utils"
 	wl "sdk_test/wallet"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -128,5 +131,232 @@ func HandleListMyReports(
 	return &pb.ListMyReportsResponse{
 		Reports: reports,
 	}, nil
+}
 
+// HandleRequestAccess 處理保險業者請求授權
+func HandleRequestAccess(
+	ctx context.Context,
+	req *pb.RequestAccessRequest,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.RequestAccessResponse, error) {
+
+	// 取得JWT中的使用者ID（應為保險業者）
+	requesterId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(requesterId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以申請授權")
+	}
+
+	// 生成唯一請求ID
+	requestId := uuid.New().String()
+
+	// 檢查請求內容
+	if req.ReportId == "" || req.PatientId == "" || req.Reason == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供報告ID、病患ID和申請原因")
+	}
+
+	// 設定過期時間，若未提供則預設30天
+	expiry := req.Expiry
+	if expiry == 0 {
+		expiry = time.Now().Unix() + 30*24*60*60 // 30天
+	}
+
+	// 儲存申請記錄到SQLite
+	now := time.Now().Unix()
+	err = database.InsertAccessRequest(
+		requestId,
+		req.ReportId,
+		req.PatientId,
+		requesterId,
+		req.Reason,
+		now,
+		expiry,
+		"PENDING", // 初始狀態
+	)
+	if err != nil {
+		log.Printf("❌ 儲存授權請求失敗: %v", err)
+		return nil, status.Error(codes.Internal, "無法儲存授權請求")
+	}
+
+	return &pb.RequestAccessResponse{
+		Success:   true,
+		RequestId: requestId,
+	}, nil
+}
+
+// HandleListAccessRequests 列出病患的所有授權請求
+func HandleListAccessRequests(
+	ctx context.Context,
+	_ *emptypb.Empty,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ListAccessRequestsResponse, error) {
+
+	// 取得JWT中的使用者ID
+	patientId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 從數據庫查詢該用戶的授權請求
+	requests, err := database.GetAccessRequestsForUser(patientId)
+	if err != nil {
+		log.Printf("❌ 查詢授權請求失敗: %v", err)
+		return nil, status.Error(codes.Internal, "無法查詢授權請求")
+	}
+
+	// 轉換為protobuf格式
+	var accessRequests []*pb.AccessRequest
+	for _, req := range requests {
+		accessRequests = append(accessRequests, &pb.AccessRequest{
+			RequestId:    req["request_id"].(string),
+			ReportId:     req["report_id"].(string),
+			PatientHash:  "", // 資料庫中不保存hash，無需回傳
+			TargetHash:   "", // 資料庫中不保存hash，無需回傳
+			Reason:       req["reason"].(string),
+			RequestedAt:  req["requested_at"].(int64),
+			Expiry:       req["expiry"].(int64),
+			Status:       req["status"].(string),
+		})
+	}
+
+	return &pb.ListAccessRequestsResponse{
+		Requests: accessRequests,
+	}, nil
+}
+
+// HandleApproveAccessRequest 批准授權請求
+func HandleApproveAccessRequest(
+	ctx context.Context,
+	req *pb.ApproveAccessRequestRequest,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ApproveAccessRequestResponse, error) {
+
+	// 取得JWT中的使用者ID
+	patientId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查請求ID
+	if req.RequestId == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供請求ID")
+	}
+
+	// 獲取授權請求詳情
+	requestDetails, err := database.GetAccessRequestById(req.RequestId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "找不到該授權請求")
+	}
+
+	// 驗證請求是否屬於當前用戶
+	if requestDetails["patient_id"].(string) != patientId {
+		return nil, status.Error(codes.PermissionDenied, "無權批准此授權請求")
+	}
+
+	// 檢查請求狀態
+	if requestDetails["status"].(string) != "PENDING" {
+		return nil, status.Error(codes.FailedPrecondition, "只能批准待處理的授權請求")
+	}
+
+	// 更新授權請求狀態
+	err = database.UpdateAccessRequestStatus(req.RequestId, "APPROVED")
+	if err != nil {
+		log.Printf("❌ 更新授權請求狀態失敗: %v", err)
+		return nil, status.Error(codes.Internal, "無法更新授權請求狀態")
+	}
+
+	// 調用區塊鏈授權操作
+	entry, ok := wallet.Get(patientId)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "區塊鏈連接失敗")
+	}
+	defer gw.Close()
+
+	reportId := requestDetails["report_id"].(string)
+	requesterId := requestDetails["requester_id"].(string)
+	expiry := requestDetails["expiry"].(int64)
+
+	// 將用戶ID轉為雜湊
+	sumPatient := sha256.Sum256([]byte(patientId))
+	hashedPatientID := hex.EncodeToString(sumPatient[:])
+
+	sumRequester := sha256.Sum256([]byte(requesterId))
+	hashedRequesterID := hex.EncodeToString(sumRequester[:])
+
+	// 呼叫區塊鏈授權
+	_, err = contract.SubmitTransaction(
+		"AuthorizeAccess",
+		reportId,
+		hashedPatientID,
+		hashedRequesterID,
+		string(expiry),
+	)
+	if err != nil {
+		fc.PrintGatewayError(err)
+		// 發生錯誤時回滾資料庫更新
+		database.UpdateAccessRequestStatus(req.RequestId, "PENDING")
+		return nil, status.Error(codes.Internal, "區塊鏈授權失敗")
+	}
+
+	return &pb.ApproveAccessRequestResponse{
+		Success: true,
+		Message: "已成功批准授權請求",
+	}, nil
+}
+
+// HandleRejectAccessRequest 拒絕授權請求
+func HandleRejectAccessRequest(
+	ctx context.Context,
+	req *pb.RejectAccessRequestRequest,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.RejectAccessRequestResponse, error) {
+
+	// 取得JWT中的使用者ID
+	patientId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查請求ID
+	if req.RequestId == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供請求ID")
+	}
+
+	// 獲取授權請求詳情
+	requestDetails, err := database.GetAccessRequestById(req.RequestId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "找不到該授權請求")
+	}
+
+	// 驗證請求是否屬於當前用戶
+	if requestDetails["patient_id"].(string) != patientId {
+		return nil, status.Error(codes.PermissionDenied, "無權拒絕此授權請求")
+	}
+
+	// 檢查請求狀態
+	if requestDetails["status"].(string) != "PENDING" {
+		return nil, status.Error(codes.FailedPrecondition, "只能拒絕待處理的授權請求")
+	}
+
+	// 更新授權請求狀態
+	err = database.UpdateAccessRequestStatus(req.RequestId, "REJECTED")
+	if err != nil {
+		log.Printf("❌ 更新授權請求狀態失敗: %v", err)
+		return nil, status.Error(codes.Internal, "無法更新授權請求狀態")
+	}
+
+	return &pb.RejectAccessRequestResponse{
+		Success: true,
+		Message: "已成功拒絕授權請求",
+	}, nil
 }

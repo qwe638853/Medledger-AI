@@ -54,14 +54,38 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
 	return sc.HandleLogin(ctx, req, s.Wallet)
 }
 
-// Register
-func (s *server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	return sc.HandleRegister(ctx, req, s.Wallet)
+// 實現新的註冊方法
+func (s *server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterResponse, error) {
+	return sc.HandleRegisterUser(ctx, req, s.Wallet)
+}
+
+func (s *server) RegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest) (*pb.RegisterResponse, error) {
+	return sc.HandleRegisterInsurer(ctx, req, s.Wallet)
 }
 
 func (s *server) ListMyReports(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportsResponse, error) {
-	return sc.HandleListMyReports(ctx, in ,  s.Wallet, s.Builder)
-}	
+	return sc.HandleListMyReports(ctx, in, s.Wallet, s.Builder)
+}
+
+// 新增 RequestAccess API 方法
+func (s *server) RequestAccess(ctx context.Context, req *pb.RequestAccessRequest) (*pb.RequestAccessResponse, error) {
+	return sc.HandleRequestAccess(ctx, req, s.Wallet, s.Builder)
+}
+
+// 新增 ListAccessRequests API 方法
+func (s *server) ListAccessRequests(ctx context.Context, in *emptypb.Empty) (*pb.ListAccessRequestsResponse, error) {
+	return sc.HandleListAccessRequests(ctx, in, s.Wallet, s.Builder)
+}
+
+// 新增 ApproveAccessRequest API 方法
+func (s *server) ApproveAccessRequest(ctx context.Context, req *pb.ApproveAccessRequestRequest) (*pb.ApproveAccessRequestResponse, error) {
+	return sc.HandleApproveAccessRequest(ctx, req, s.Wallet, s.Builder)
+}
+
+// 新增 RejectAccessRequest API 方法
+func (s *server) RejectAccessRequest(ctx context.Context, req *pb.RejectAccessRequestRequest) (*pb.RejectAccessRequestResponse, error) {
+	return sc.HandleRejectAccessRequest(ctx, req, s.Wallet, s.Builder)
+}
 
 func main() {
 	err := db.InitDB("database/user_data.sqlite")

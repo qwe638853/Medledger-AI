@@ -23,6 +23,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AccessRequestStatus int32
+
+const (
+	AccessRequestStatus_PENDING  AccessRequestStatus = 0
+	AccessRequestStatus_APPROVED AccessRequestStatus = 1
+	AccessRequestStatus_REJECTED AccessRequestStatus = 2
+)
+
+// Enum value maps for AccessRequestStatus.
+var (
+	AccessRequestStatus_name = map[int32]string{
+		0: "PENDING",
+		1: "APPROVED",
+		2: "REJECTED",
+	}
+	AccessRequestStatus_value = map[string]int32{
+		"PENDING":  0,
+		"APPROVED": 1,
+		"REJECTED": 2,
+	}
+)
+
+func (x AccessRequestStatus) Enum() *AccessRequestStatus {
+	p := new(AccessRequestStatus)
+	*p = x
+	return p
+}
+
+func (x AccessRequestStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AccessRequestStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_data_proto_enumTypes[0].Descriptor()
+}
+
+func (AccessRequestStatus) Type() protoreflect.EnumType {
+	return &file_proto_data_proto_enumTypes[0]
+}
+
+func (x AccessRequestStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AccessRequestStatus.Descriptor instead.
+func (AccessRequestStatus) EnumDescriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{0}
+}
+
 type UploadReportRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ReportId        string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
@@ -439,7 +488,7 @@ func (x *LoginResponse) GetToken() string {
 	return ""
 }
 
-type RegisterRequest struct {
+type RegisterUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
@@ -451,20 +500,20 @@ type RegisterRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RegisterRequest) Reset() {
-	*x = RegisterRequest{}
+func (x *RegisterUserRequest) Reset() {
+	*x = RegisterUserRequest{}
 	mi := &file_proto_data_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RegisterRequest) String() string {
+func (x *RegisterUserRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RegisterRequest) ProtoMessage() {}
+func (*RegisterUserRequest) ProtoMessage() {}
 
-func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
+func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_data_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -476,47 +525,131 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
-func (*RegisterRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RegisterUserRequest.ProtoReflect.Descriptor instead.
+func (*RegisterUserRequest) Descriptor() ([]byte, []int) {
 	return file_proto_data_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *RegisterRequest) GetUserId() string {
+func (x *RegisterUserRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *RegisterRequest) GetPassword() string {
+func (x *RegisterUserRequest) GetPassword() string {
 	if x != nil {
 		return x.Password
 	}
 	return ""
 }
 
-func (x *RegisterRequest) GetName() string {
+func (x *RegisterUserRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *RegisterRequest) GetDate() string {
+func (x *RegisterUserRequest) GetDate() string {
 	if x != nil {
 		return x.Date
 	}
 	return ""
 }
 
-func (x *RegisterRequest) GetEmail() string {
+func (x *RegisterUserRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
 	}
 	return ""
 }
 
-func (x *RegisterRequest) GetPhone() string {
+func (x *RegisterUserRequest) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+type RegisterInsurerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InsurerId     string                 `protobuf:"bytes,1,opt,name=insurer_id,json=insurerId,proto3" json:"insurer_id,omitempty"` // 例如: CATHAY-01
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	CompanyName   string                 `protobuf:"bytes,3,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
+	ContactPerson string                 `protobuf:"bytes,4,opt,name=contact_person,json=contactPerson,proto3" json:"contact_person,omitempty"`
+	Email         string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	Phone         string                 `protobuf:"bytes,6,opt,name=phone,proto3" json:"phone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterInsurerRequest) Reset() {
+	*x = RegisterInsurerRequest{}
+	mi := &file_proto_data_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterInsurerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterInsurerRequest) ProtoMessage() {}
+
+func (x *RegisterInsurerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterInsurerRequest.ProtoReflect.Descriptor instead.
+func (*RegisterInsurerRequest) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *RegisterInsurerRequest) GetInsurerId() string {
+	if x != nil {
+		return x.InsurerId
+	}
+	return ""
+}
+
+func (x *RegisterInsurerRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *RegisterInsurerRequest) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
+	}
+	return ""
+}
+
+func (x *RegisterInsurerRequest) GetContactPerson() string {
+	if x != nil {
+		return x.ContactPerson
+	}
+	return ""
+}
+
+func (x *RegisterInsurerRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *RegisterInsurerRequest) GetPhone() string {
 	if x != nil {
 		return x.Phone
 	}
@@ -533,7 +666,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_proto_data_proto_msgTypes[9]
+	mi := &file_proto_data_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +678,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[9]
+	mi := &file_proto_data_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +691,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{9}
+	return file_proto_data_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -588,7 +721,7 @@ type Report struct {
 
 func (x *Report) Reset() {
 	*x = Report{}
-	mi := &file_proto_data_proto_msgTypes[10]
+	mi := &file_proto_data_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +733,7 @@ func (x *Report) String() string {
 func (*Report) ProtoMessage() {}
 
 func (x *Report) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[10]
+	mi := &file_proto_data_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +746,7 @@ func (x *Report) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Report.ProtoReflect.Descriptor instead.
 func (*Report) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{10}
+	return file_proto_data_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Report) GetReportId() string {
@@ -660,7 +793,7 @@ type ListMyReportsResponse struct {
 
 func (x *ListMyReportsResponse) Reset() {
 	*x = ListMyReportsResponse{}
-	mi := &file_proto_data_proto_msgTypes[11]
+	mi := &file_proto_data_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -672,7 +805,7 @@ func (x *ListMyReportsResponse) String() string {
 func (*ListMyReportsResponse) ProtoMessage() {}
 
 func (x *ListMyReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[11]
+	mi := &file_proto_data_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -685,7 +818,7 @@ func (x *ListMyReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyReportsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{11}
+	return file_proto_data_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListMyReportsResponse) GetReports() []*Report {
@@ -693,6 +826,466 @@ func (x *ListMyReportsResponse) GetReports() []*Report {
 		return x.Reports
 	}
 	return nil
+}
+
+// 🔵 保險業者送出授權申請
+type RequestAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	PatientId     string                 `protobuf:"bytes,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	Expiry        int64                  `protobuf:"varint,4,opt,name=expiry,proto3" json:"expiry,omitempty"` // Unix 秒
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccessRequest) Reset() {
+	*x = RequestAccessRequest{}
+	mi := &file_proto_data_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccessRequest) ProtoMessage() {}
+
+func (x *RequestAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccessRequest.ProtoReflect.Descriptor instead.
+func (*RequestAccessRequest) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *RequestAccessRequest) GetReportId() string {
+	if x != nil {
+		return x.ReportId
+	}
+	return ""
+}
+
+func (x *RequestAccessRequest) GetPatientId() string {
+	if x != nil {
+		return x.PatientId
+	}
+	return ""
+}
+
+func (x *RequestAccessRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *RequestAccessRequest) GetExpiry() int64 {
+	if x != nil {
+		return x.Expiry
+	}
+	return 0
+}
+
+type RequestAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	RequestId     string                 `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // optional: 回傳申請單 ID
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccessResponse) Reset() {
+	*x = RequestAccessResponse{}
+	mi := &file_proto_data_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccessResponse) ProtoMessage() {}
+
+func (x *RequestAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccessResponse.ProtoReflect.Descriptor instead.
+func (*RequestAccessResponse) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *RequestAccessResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RequestAccessResponse) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+// 🟢 病患查詢自己的待審申請
+type AccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	ReportId      string                 `protobuf:"bytes,2,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	PatientHash   string                 `protobuf:"bytes,3,opt,name=patient_hash,json=patientHash,proto3" json:"patient_hash,omitempty"`
+	TargetHash    string                 `protobuf:"bytes,4,opt,name=target_hash,json=targetHash,proto3" json:"target_hash,omitempty"`
+	Reason        string                 `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
+	RequestedAt   int64                  `protobuf:"varint,6,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
+	Expiry        int64                  `protobuf:"varint,7,opt,name=expiry,proto3" json:"expiry,omitempty"`
+	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"` // pending / approved / rejected
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessRequest) Reset() {
+	*x = AccessRequest{}
+	mi := &file_proto_data_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessRequest) ProtoMessage() {}
+
+func (x *AccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessRequest.ProtoReflect.Descriptor instead.
+func (*AccessRequest) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *AccessRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetReportId() string {
+	if x != nil {
+		return x.ReportId
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetPatientHash() string {
+	if x != nil {
+		return x.PatientHash
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetTargetHash() string {
+	if x != nil {
+		return x.TargetHash
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetRequestedAt() int64 {
+	if x != nil {
+		return x.RequestedAt
+	}
+	return 0
+}
+
+func (x *AccessRequest) GetExpiry() int64 {
+	if x != nil {
+		return x.Expiry
+	}
+	return 0
+}
+
+func (x *AccessRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type ListAccessRequestsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Requests      []*AccessRequest       `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccessRequestsResponse) Reset() {
+	*x = ListAccessRequestsResponse{}
+	mi := &file_proto_data_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccessRequestsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccessRequestsResponse) ProtoMessage() {}
+
+func (x *ListAccessRequestsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccessRequestsResponse.ProtoReflect.Descriptor instead.
+func (*ListAccessRequestsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListAccessRequestsResponse) GetRequests() []*AccessRequest {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+// 🟡 病患點同意授權
+type ApproveAccessRequestRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveAccessRequestRequest) Reset() {
+	*x = ApproveAccessRequestRequest{}
+	mi := &file_proto_data_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveAccessRequestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveAccessRequestRequest) ProtoMessage() {}
+
+func (x *ApproveAccessRequestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveAccessRequestRequest.ProtoReflect.Descriptor instead.
+func (*ApproveAccessRequestRequest) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ApproveAccessRequestRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type ApproveAccessRequestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveAccessRequestResponse) Reset() {
+	*x = ApproveAccessRequestResponse{}
+	mi := &file_proto_data_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveAccessRequestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveAccessRequestResponse) ProtoMessage() {}
+
+func (x *ApproveAccessRequestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveAccessRequestResponse.ProtoReflect.Descriptor instead.
+func (*ApproveAccessRequestResponse) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ApproveAccessRequestResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ApproveAccessRequestResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// 🔴 病患拒絕授權
+type RejectAccessRequestRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectAccessRequestRequest) Reset() {
+	*x = RejectAccessRequestRequest{}
+	mi := &file_proto_data_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectAccessRequestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectAccessRequestRequest) ProtoMessage() {}
+
+func (x *RejectAccessRequestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectAccessRequestRequest.ProtoReflect.Descriptor instead.
+func (*RejectAccessRequestRequest) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *RejectAccessRequestRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type RejectAccessRequestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectAccessRequestResponse) Reset() {
+	*x = RejectAccessRequestResponse{}
+	mi := &file_proto_data_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectAccessRequestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectAccessRequestResponse) ProtoMessage() {}
+
+func (x *RejectAccessRequestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectAccessRequestResponse.ProtoReflect.Descriptor instead.
+func (*RejectAccessRequestResponse) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RejectAccessRequestResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RejectAccessRequestResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
 }
 
 var File_proto_data_proto protoreflect.FileDescriptor
@@ -723,12 +1316,20 @@ const file_proto_data_proto_rawDesc = "" +
 	"\rLoginResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\"\x9a\x01\n" +
-	"\x0fRegisterRequest\x12\x17\n" +
+	"\x05token\x18\x03 \x01(\tR\x05token\"\x9e\x01\n" +
+	"\x13RegisterUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
 	"\x04date\x18\x04 \x01(\tR\x04date\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\x14\n" +
+	"\x05phone\x18\x06 \x01(\tR\x05phone\"\xc9\x01\n" +
+	"\x16RegisterInsurerRequest\x12\x1d\n" +
+	"\n" +
+	"insurer_id\x18\x01 \x01(\tR\tinsurerId\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\x12!\n" +
+	"\fcompany_name\x18\x03 \x01(\tR\vcompanyName\x12%\n" +
+	"\x0econtact_person\x18\x04 \x01(\tR\rcontactPerson\x12\x14\n" +
 	"\x05email\x18\x05 \x01(\tR\x05email\x12\x14\n" +
 	"\x05phone\x18\x06 \x01(\tR\x05phone\"F\n" +
 	"\x10RegisterResponse\x12\x18\n" +
@@ -743,16 +1344,60 @@ const file_proto_data_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\x03R\tcreatedAt\"A\n" +
 	"\x15ListMyReportsResponse\x12(\n" +
-	"\areports\x18\x01 \x03(\v2\x0e.health.ReportR\areports2\xb5\x04\n" +
+	"\areports\x18\x01 \x03(\v2\x0e.health.ReportR\areports\"\x82\x01\n" +
+	"\x14RequestAccessRequest\x12\x1b\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x1d\n" +
+	"\n" +
+	"patient_id\x18\x02 \x01(\tR\tpatientId\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x16\n" +
+	"\x06expiry\x18\x04 \x01(\x03R\x06expiry\"P\n" +
+	"\x15RequestAccessResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x02 \x01(\tR\trequestId\"\xfa\x01\n" +
+	"\rAccessRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1b\n" +
+	"\treport_id\x18\x02 \x01(\tR\breportId\x12!\n" +
+	"\fpatient_hash\x18\x03 \x01(\tR\vpatientHash\x12\x1f\n" +
+	"\vtarget_hash\x18\x04 \x01(\tR\n" +
+	"targetHash\x12\x16\n" +
+	"\x06reason\x18\x05 \x01(\tR\x06reason\x12!\n" +
+	"\frequested_at\x18\x06 \x01(\x03R\vrequestedAt\x12\x16\n" +
+	"\x06expiry\x18\a \x01(\x03R\x06expiry\x12\x16\n" +
+	"\x06status\x18\b \x01(\tR\x06status\"O\n" +
+	"\x1aListAccessRequestsResponse\x121\n" +
+	"\brequests\x18\x01 \x03(\v2\x15.health.AccessRequestR\brequests\"<\n" +
+	"\x1bApproveAccessRequestRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\"R\n" +
+	"\x1cApproveAccessRequestResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\";\n" +
+	"\x1aRejectAccessRequestRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\"Q\n" +
+	"\x1bRejectAccessRequestResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage*>\n" +
+	"\x13AccessRequestStatus\x12\v\n" +
+	"\aPENDING\x10\x00\x12\f\n" +
+	"\bAPPROVED\x10\x01\x12\f\n" +
+	"\bREJECTED\x10\x022\x8d\t\n" +
 	"\rHealthService\x12`\n" +
 	"\fUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/v1/upload\x12\\\n" +
 	"\vClaimReport\x12\x1a.health.ClaimReportRequest\x1a\x1b.health.ClaimReportResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/claim\x12c\n" +
 	"\n" +
 	"ReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/report/{report_id}\x12J\n" +
-	"\x05Login\x12\x14.health.LoginRequest\x1a\x15.health.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/login\x12V\n" +
-	"\bRegister\x12\x17.health.RegisterRequest\x1a\x18.health.RegisterResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/register\x12[\n" +
-	"\rListMyReports\x12\x16.google.protobuf.Empty\x1a\x1d.health.ListMyReportsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/reportsB\x17Z\x15sdk_test/proto;healthb\x06proto3"
+	"\x05Login\x12\x14.health.LoginRequest\x1a\x15.health.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/login\x12c\n" +
+	"\fRegisterUser\x12\x1b.health.RegisterUserRequest\x1a\x18.health.RegisterResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/register/user\x12l\n" +
+	"\x0fRegisterInsurer\x12\x1e.health.RegisterInsurerRequest\x1a\x18.health.RegisterResponse\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/register/insurer\x12[\n" +
+	"\rListMyReports\x12\x16.google.protobuf.Empty\x1a\x1d.health.ListMyReportsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/reports\x12k\n" +
+	"\rRequestAccess\x12\x1c.health.RequestAccessRequest\x1a\x1d.health.RequestAccessResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/access/request\x12m\n" +
+	"\x12ListAccessRequests\x12\x16.google.protobuf.Empty\x1a\".health.ListAccessRequestsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/access/requests\x12\x80\x01\n" +
+	"\x14ApproveAccessRequest\x12#.health.ApproveAccessRequestRequest\x1a$.health.ApproveAccessRequestResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/access/approve\x12|\n" +
+	"\x13RejectAccessRequest\x12\".health.RejectAccessRequestRequest\x1a#.health.RejectAccessRequestResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/access/rejectB\x17Z\x15sdk_test/proto;healthb\x06proto3"
 
 var (
 	file_proto_data_proto_rawDescOnce sync.Once
@@ -766,41 +1411,63 @@ func file_proto_data_proto_rawDescGZIP() []byte {
 	return file_proto_data_proto_rawDescData
 }
 
-var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_proto_data_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_data_proto_goTypes = []any{
-	(*UploadReportRequest)(nil),   // 0: health.UploadReportRequest
-	(*UploadReportResponse)(nil),  // 1: health.UploadReportResponse
-	(*ClaimReportRequest)(nil),    // 2: health.ClaimReportRequest
-	(*ClaimReportResponse)(nil),   // 3: health.ClaimReportResponse
-	(*ReadReportRequest)(nil),     // 4: health.ReadReportRequest
-	(*ReadReportResponse)(nil),    // 5: health.ReadReportResponse
-	(*LoginRequest)(nil),          // 6: health.LoginRequest
-	(*LoginResponse)(nil),         // 7: health.LoginResponse
-	(*RegisterRequest)(nil),       // 8: health.RegisterRequest
-	(*RegisterResponse)(nil),      // 9: health.RegisterResponse
-	(*Report)(nil),                // 10: health.Report
-	(*ListMyReportsResponse)(nil), // 11: health.ListMyReportsResponse
-	(*emptypb.Empty)(nil),         // 12: google.protobuf.Empty
+	(AccessRequestStatus)(0),             // 0: health.AccessRequestStatus
+	(*UploadReportRequest)(nil),          // 1: health.UploadReportRequest
+	(*UploadReportResponse)(nil),         // 2: health.UploadReportResponse
+	(*ClaimReportRequest)(nil),           // 3: health.ClaimReportRequest
+	(*ClaimReportResponse)(nil),          // 4: health.ClaimReportResponse
+	(*ReadReportRequest)(nil),            // 5: health.ReadReportRequest
+	(*ReadReportResponse)(nil),           // 6: health.ReadReportResponse
+	(*LoginRequest)(nil),                 // 7: health.LoginRequest
+	(*LoginResponse)(nil),                // 8: health.LoginResponse
+	(*RegisterUserRequest)(nil),          // 9: health.RegisterUserRequest
+	(*RegisterInsurerRequest)(nil),       // 10: health.RegisterInsurerRequest
+	(*RegisterResponse)(nil),             // 11: health.RegisterResponse
+	(*Report)(nil),                       // 12: health.Report
+	(*ListMyReportsResponse)(nil),        // 13: health.ListMyReportsResponse
+	(*RequestAccessRequest)(nil),         // 14: health.RequestAccessRequest
+	(*RequestAccessResponse)(nil),        // 15: health.RequestAccessResponse
+	(*AccessRequest)(nil),                // 16: health.AccessRequest
+	(*ListAccessRequestsResponse)(nil),   // 17: health.ListAccessRequestsResponse
+	(*ApproveAccessRequestRequest)(nil),  // 18: health.ApproveAccessRequestRequest
+	(*ApproveAccessRequestResponse)(nil), // 19: health.ApproveAccessRequestResponse
+	(*RejectAccessRequestRequest)(nil),   // 20: health.RejectAccessRequestRequest
+	(*RejectAccessRequestResponse)(nil),  // 21: health.RejectAccessRequestResponse
+	(*emptypb.Empty)(nil),                // 22: google.protobuf.Empty
 }
 var file_proto_data_proto_depIdxs = []int32{
-	10, // 0: health.ListMyReportsResponse.reports:type_name -> health.Report
-	0,  // 1: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
-	2,  // 2: health.HealthService.ClaimReport:input_type -> health.ClaimReportRequest
-	4,  // 3: health.HealthService.ReadReport:input_type -> health.ReadReportRequest
-	6,  // 4: health.HealthService.Login:input_type -> health.LoginRequest
-	8,  // 5: health.HealthService.Register:input_type -> health.RegisterRequest
-	12, // 6: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
-	1,  // 7: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
-	3,  // 8: health.HealthService.ClaimReport:output_type -> health.ClaimReportResponse
-	5,  // 9: health.HealthService.ReadReport:output_type -> health.ReadReportResponse
-	7,  // 10: health.HealthService.Login:output_type -> health.LoginResponse
-	9,  // 11: health.HealthService.Register:output_type -> health.RegisterResponse
-	11, // 12: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
-	7,  // [7:13] is the sub-list for method output_type
-	1,  // [1:7] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	12, // 0: health.ListMyReportsResponse.reports:type_name -> health.Report
+	16, // 1: health.ListAccessRequestsResponse.requests:type_name -> health.AccessRequest
+	1,  // 2: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
+	3,  // 3: health.HealthService.ClaimReport:input_type -> health.ClaimReportRequest
+	5,  // 4: health.HealthService.ReadReport:input_type -> health.ReadReportRequest
+	7,  // 5: health.HealthService.Login:input_type -> health.LoginRequest
+	9,  // 6: health.HealthService.RegisterUser:input_type -> health.RegisterUserRequest
+	10, // 7: health.HealthService.RegisterInsurer:input_type -> health.RegisterInsurerRequest
+	22, // 8: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
+	14, // 9: health.HealthService.RequestAccess:input_type -> health.RequestAccessRequest
+	22, // 10: health.HealthService.ListAccessRequests:input_type -> google.protobuf.Empty
+	18, // 11: health.HealthService.ApproveAccessRequest:input_type -> health.ApproveAccessRequestRequest
+	20, // 12: health.HealthService.RejectAccessRequest:input_type -> health.RejectAccessRequestRequest
+	2,  // 13: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
+	4,  // 14: health.HealthService.ClaimReport:output_type -> health.ClaimReportResponse
+	6,  // 15: health.HealthService.ReadReport:output_type -> health.ReadReportResponse
+	8,  // 16: health.HealthService.Login:output_type -> health.LoginResponse
+	11, // 17: health.HealthService.RegisterUser:output_type -> health.RegisterResponse
+	11, // 18: health.HealthService.RegisterInsurer:output_type -> health.RegisterResponse
+	13, // 19: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
+	15, // 20: health.HealthService.RequestAccess:output_type -> health.RequestAccessResponse
+	17, // 21: health.HealthService.ListAccessRequests:output_type -> health.ListAccessRequestsResponse
+	19, // 22: health.HealthService.ApproveAccessRequest:output_type -> health.ApproveAccessRequestResponse
+	21, // 23: health.HealthService.RejectAccessRequest:output_type -> health.RejectAccessRequestResponse
+	13, // [13:24] is the sub-list for method output_type
+	2,  // [2:13] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_data_proto_init() }
@@ -813,13 +1480,14 @@ func file_proto_data_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_data_proto_rawDesc), len(file_proto_data_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   12,
+			NumEnums:      1,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proto_data_proto_goTypes,
 		DependencyIndexes: file_proto_data_proto_depIdxs,
+		EnumInfos:         file_proto_data_proto_enumTypes,
 		MessageInfos:      file_proto_data_proto_msgTypes,
 	}.Build()
 	File_proto_data_proto = out.File

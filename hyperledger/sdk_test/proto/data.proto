@@ -33,9 +33,16 @@ service HealthService {
       body: "*"
     };
   }
-  rpc Register(RegisterRequest) returns (RegisterResponse) {
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-      post: "/v1/register"
+      post: "/v1/register/user"
+      body: "*"
+    };z
+  }
+
+  rpc RegisterInsurer(RegisterInsurerRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/insurer"
       body: "*"
     };
   }
@@ -45,6 +52,32 @@ service HealthService {
     };
   }
 
+  rpc RequestAccess(RequestAccessRequest) returns (RequestAccessResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/request"
+      body: "*"
+    };
+  }
+
+  rpc ListAccessRequests(google.protobuf.Empty) returns (ListAccessRequestsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/requests"
+    };
+  }
+
+  rpc ApproveAccessRequest(ApproveAccessRequestRequest) returns (ApproveAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/approve"
+      body: "*"
+    };
+  }
+
+  rpc RejectAccessRequest(RejectAccessRequestRequest) returns (RejectAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/reject"
+      body: "*"
+    };
+  }
 }
 
 
@@ -91,7 +124,7 @@ message LoginResponse {
     string token = 3; 
 }
 
-message RegisterRequest {
+message RegisterUserRequest {
   string user_id = 1;
   string password = 2;
   string name = 3;
@@ -100,6 +133,16 @@ message RegisterRequest {
   string phone = 6;
 }
 
+message RegisterInsurerRequest {
+  string insurer_id = 1;      // 例如: CATHAY-01
+  string password = 2;
+  string company_name = 3;
+  string contact_person = 4;
+  string email = 5;
+  string phone = 6;
+}
+
+
 message RegisterResponse {
     bool success = 1;
     string message = 2;
@@ -107,14 +150,69 @@ message RegisterResponse {
 }
 
 message Report {
-  string report_id = 1 
-  string clinic_id = 2 
-  string patient_hash = 3 
-  string result_json = 4 
-  int64 created_at = 5 
+  string report_id = 1;
+  string clinic_id = 2;
+  string patient_hash = 3; 
+  string result_json = 4;
+  int64 created_at = 5;
 }
 
 
 message ListMyReportsResponse {
   repeated Report reports = 1;
+}
+
+// 🔵 保險業者送出授權申請
+message RequestAccessRequest {
+  string report_id = 1;
+  string patient_id = 2;
+  string reason = 3;
+  int64 expiry = 4; // Unix 秒
+}
+
+message RequestAccessResponse {
+  bool success = 1;
+  string request_id = 2; // optional: 回傳申請單 ID
+}
+
+// 🟢 病患查詢自己的待審申請
+message AccessRequest {
+  string request_id = 1;
+  string report_id = 2;
+  string patient_hash = 3;
+  string target_hash = 4;
+  string reason = 5;
+  int64 requested_at = 6;
+  int64 expiry = 7;
+  string status = 8; // pending / approved / rejected
+}
+
+message ListAccessRequestsResponse {
+  repeated AccessRequest requests = 1;
+}
+
+// 🟡 病患點同意授權
+message ApproveAccessRequestRequest {
+  string request_id = 1;
+}
+
+message ApproveAccessRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 🔴 病患拒絕授權
+message RejectAccessRequestRequest {
+  string request_id = 1;
+}
+
+message RejectAccessRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+enum AccessRequestStatus {
+  PENDING = 0;
+  APPROVED = 1;
+  REJECTED = 2;
 }

@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height">
     <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="6" lg="5">
-        <v-card class="elevation-3">
+      <v-col cols="12" sm="10" md="8" lg="7" xl="6">
+        <v-card class="elevation-3 register-card">
           <v-toolbar color="primary" dark flat>
             <v-toolbar-title class="text-h5 font-weight-bold">企業帳號註冊</v-toolbar-title>
           </v-toolbar>
@@ -22,302 +22,329 @@
           </v-alert>
           
           <v-card-text class="pt-6">
-            <v-stepper v-model="currentStep" class="mb-6 elevation-0">
-              <v-stepper-header class="elevation-1 rounded-lg">
-                <v-stepper-item value="1" title="角色選擇"></v-stepper-item>
-                <v-divider></v-divider>
-                <v-stepper-item value="2" title="基本資料"></v-stepper-item>
-                <v-divider></v-divider>
-                <v-stepper-item value="3" title="帳號設定"></v-stepper-item>
-              </v-stepper-header>
-              
-              <v-stepper-window>
-                <!-- 步驟 1: 角色選擇 -->
-                <v-stepper-window-item value="1">
-                  <v-card flat class="mt-6 pa-4 rounded-lg">
-                    <div class="section-title mb-4">
-                      <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
-                        <v-icon color="primary" class="me-2">mdi-account-multiple</v-icon>
-                        角色選擇
-                      </h3>
-                      <div class="text-caption text-grey mt-1">請選擇您的帳號類型</div>
-                      <v-divider class="mt-2"></v-divider>
+            <!-- 自訂步驟條 -->
+            <div class="custom-stepper">
+              <div
+                v-for="(step, idx) in steps"
+                :key="step.value"
+                class="step-btn"
+                :class="{
+                  active: currentStep === String(step.value),
+                  completed: Number(currentStep) > step.value
+                }"
+                @click="goToStep(step.value)"
+              >
+                <span class="step-circle">{{ step.value }}</span>
+                <span class="step-title">{{ step.title }}</span>
+              </div>
+            </div>
+
+            <!-- 步驟 1: 角色選擇 -->
+            <div v-if="currentStep === '1'">
+              <v-card flat class="mt-6 pa-4 rounded-lg">
+                <div class="section-title mb-4">
+                  <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
+                    <v-icon color="primary" class="me-2">mdi-account-multiple</v-icon>
+                    角色選擇
+                  </h3>
+                  <div class="text-caption text-grey mt-1">請選擇您的帳號類型</div>
+                  <v-divider class="mt-2"></v-divider>
+                </div>
+                <v-radio-group
+                  v-model="registerForm.selectedRole"
+                  inline
+                  class="mt-4"
+                  :rules="[rules.required]"
+                >
+                  <v-radio
+                    v-for="role in roles"
+                    :key="role.value"
+                    :label="role.text"
+                    :value="role.value"
+                    color="primary"
+                  >
+                    <template v-slot:label>
+                      <div class="d-flex align-center">
+                        <v-icon :color="role.color" class="me-2">{{ role.icon }}</v-icon>
+                        <span>{{ role.text }}</span>
+                      </div>
+                    </template>
+                  </v-radio>
+                </v-radio-group>
+                <div class="mt-6 text-center">
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    size="large"
+                    width="180"
+                    @click="nextStep"
+                    :disabled="!registerForm.selectedRole"
+                  >
+                    下一步
+                    <v-icon class="ms-2">mdi-arrow-right</v-icon>
+                  </v-btn>
+                </div>
+              </v-card>
+            </div>
+
+            <!-- 步驟 2: 基本資料 -->
+            <div v-if="currentStep === '2'">
+              <v-card flat class="mt-6 pa-4 rounded-lg">
+                <v-form ref="basicForm" v-model="basicFormValid" lazy-validation>
+                  <div class="section-title mb-4">
+                    <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
+                      <v-icon color="primary" class="me-2">mdi-card-account-details</v-icon>
+                      {{ isInsurerRole ? '企業基本資料' : '個人基本資料' }}
+                    </h3>
+                    <div class="text-caption text-grey mt-1">
+                      {{ isInsurerRole ? '請填寫貴公司的基本資訊' : '請填寫您的個人基本資訊' }}
                     </div>
-                    
-                    <v-radio-group
-                      v-model="registerForm.selectedRole"
-                      inline
-                      class="mt-4"
-                      :rules="[rules.required]"
-                    >
-                      <v-radio
-                        v-for="role in roles"
-                        :key="role.value"
-                        :label="role.text"
-                        :value="role.value"
-                        color="primary"
-                      >
-                        <template v-slot:label>
-                          <div class="d-flex align-center">
-                            <v-icon
-                              :color="role.color"
-                              class="me-2"
-                            >
-                              {{ role.icon }}
-                            </v-icon>
-                            <span>{{ role.text }}</span>
-                          </div>
-                        </template>
-                      </v-radio>
-                    </v-radio-group>
-                    
-                    <div class="mt-6 text-center">
-                      <v-btn
-                        color="primary"
-                        variant="flat"
-                        size="large"
-                        width="180"
-                        @click="nextStep"
-                        :disabled="!registerForm.selectedRole"
-                      >
-                        下一步
-                        <v-icon class="ms-2">mdi-arrow-right</v-icon>
-                      </v-btn>
+                    <v-divider class="mt-2"></v-divider>
+                  </div>
+                  <!-- 保險業者專屬欄位 -->
+                  <template v-if="isInsurerRole">
+                    <v-row>
+                      <v-col cols="12">
+                        <v-text-field
+                          v-model="registerForm.companyName"
+                          label="公司名稱"
+                          variant="outlined"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-office-building"
+                          :rules="[rules.required]"
+                          hint="請輸入完整的公司登記名稱"
+                          persistent-hint
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-text-field
+                          v-model="registerForm.contactPerson"
+                          label="聯絡人姓名"
+                          variant="outlined"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-account"
+                          :rules="[rules.required]"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </template>
+                  <!-- 一般用戶/醫療機構欄位 -->
+                  <template v-else>
+                    <v-row>
+                      <v-col cols="12">
+                        <v-text-field
+                          v-model="registerForm.fullName"
+                          label="姓名"
+                          variant="outlined"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-account-box"
+                          :rules="[rules.required]"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-select
+                          v-model="registerForm.gender"
+                          :items="genders"
+                          label="性別"
+                          variant="outlined"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-gender-male-female"
+                          :rules="[rules.required]"
+                        ></v-select>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-text-field
+                          v-model="registerForm.birthDate"
+                          label="出生日期"
+                          variant="outlined"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-calendar"
+                          type="date"
+                          :rules="[rules.required, rules.validDate]"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </template>
+                  <!-- 共同欄位：聯絡資訊 -->
+                  <div class="section-title mt-6 mb-4">
+                    <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
+                      <v-icon color="primary" class="me-2">mdi-contacts</v-icon>
+                      聯絡資訊
+                    </h3>
+                    <v-divider class="mt-2"></v-divider>
+                  </div>
+                  <v-row>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="registerForm.phoneNumber"
+                        label="電話號碼"
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-phone"
+                        type="tel"
+                        :rules="[rules.required, rules.phone]"
+                        placeholder="例如：0912345678"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="registerForm.email"
+                        label="電子郵件"
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-email"
+                        type="email"
+                        :rules="[rules.required, rules.email]"
+                        placeholder="例如：example@email.com"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                  <div class="mt-6 d-flex justify-space-between">
+                    <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
+                    <v-btn color="primary" variant="flat" @click="validateAndGoNext" :disabled="!basicFormValid">
+                      下一步
+                      <v-icon class="ms-2">mdi-arrow-right</v-icon>
+                    </v-btn>
+                  </div>
+                </v-form>
+              </v-card>
+            </div>
+
+            <!-- 步驟 3: 帳號設定 -->
+            <div v-if="currentStep === '3'">
+              <v-card flat class="mt-6 pa-4 rounded-lg">
+                <v-form ref="accountForm" v-model="accountFormValid" lazy-validation>
+                  <div class="section-title mb-4">
+                    <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
+                      <v-icon color="primary" class="me-2">mdi-account-key</v-icon>
+                      帳號安全設定
+                    </h3>
+                    <div class="text-caption text-grey mt-1">請設定您的身分識別碼與密碼</div>
+                    <v-divider class="mt-2"></v-divider>
+                  </div>
+                  <v-row>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="registerForm.idNumber"
+                        :label="idLabel"
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-identifier"
+                        :rules="[rules.required, rules.idFormat]"
+                        :hint="idHint"
+                        persistent-hint
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="registerForm.password"
+                        label="密碼"
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-lock"
+                        :type="showPassword ? 'text' : 'password'"
+                        :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                        @click:append-inner="showPassword = !showPassword"
+                        :rules="[rules.required, rules.minLength]"
+                        hint="密碼至少需要6個字符"
+                        persistent-hint
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="registerForm.confirmPassword"
+                        label="確認密碼"
+                        variant="outlined"
+                        density="comfortable"
+                        prepend-inner-icon="mdi-lock-check"
+                        :type="showConfirmPassword ? 'text' : 'password'"
+                        :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                        @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                        :rules="[rules.required, rules.matchPassword]"
+                        hint="請再次輸入您的密碼"
+                        persistent-hint
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                  <div class="mt-6 d-flex justify-space-between">
+                    <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
+                    <v-btn color="primary" variant="flat" @click="validateAndGoNextAccount" :disabled="!accountFormValid">
+                      下一步
+                      <v-icon class="ms-2">mdi-arrow-right</v-icon>
+                    </v-btn>
+                  </div>
+                </v-form>
+              </v-card>
+            </div>
+
+            <!-- 步驟 4: 身分證上傳 -->
+            <div v-if="currentStep === '4'">
+              <v-card flat class="mt-6 pa-4 rounded-lg">
+                <div class="section-title mb-4">
+                  <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
+                    <v-icon color="primary" class="me-2">mdi-credit-card</v-icon>
+                    身分證上傳
+                  </h3>
+                  <div class="text-caption text-grey mt-1">請上傳身分證正反面照片（JPG/PNG, 5MB以內）</div>
+                  <v-divider class="mt-2"></v-divider>
+                </div>
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-file-input
+                      v-model="registerForm.idCardFront"
+                      label="上傳身分證正面"
+                      accept="image/jpeg, image/png"
+                      prepend-icon="mdi-upload"
+                      show-size
+                      :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
+                      @change="onFileInputChange('idCardFront')"
+                      outlined
+                      dense
+                    ></v-file-input>
+                    <div v-if="registerForm.idCardFront">
+                      <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardFront.name }}</div>
+                      <v-img
+                        :src="frontPreviewUrl"
+                        aspect-ratio="1.6"
+                        max-height="180"
+                        class="mt-2 id-card-preview"
+                        cover
+                      ></v-img>
                     </div>
-                  </v-card>
-                </v-stepper-window-item>
-                
-                <!-- 步驟 2: 基本資料 -->
-                <v-stepper-window-item value="2">
-                  <v-card flat class="mt-6 pa-4 rounded-lg">
-                    <v-form ref="basicForm" v-model="basicFormValid" lazy-validation>
-                      <div class="section-title mb-4">
-                        <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
-                          <v-icon color="primary" class="me-2">mdi-card-account-details</v-icon>
-                          {{ isInsurerRole ? '企業基本資料' : '個人基本資料' }}
-                        </h3>
-                        <div class="text-caption text-grey mt-1">
-                          {{ isInsurerRole ? '請填寫貴公司的基本資訊' : '請填寫您的個人基本資訊' }}
-                        </div>
-                        <v-divider class="mt-2"></v-divider>
-                      </div>
-                      
-                      <!-- 保險業者專屬欄位 -->
-                      <template v-if="isInsurerRole">
-                        <v-row>
-                          <v-col cols="12">
-                            <v-text-field
-                              v-model="registerForm.companyName"
-                              label="公司名稱"
-                              variant="outlined"
-                              density="comfortable"
-                              prepend-inner-icon="mdi-office-building"
-                              :rules="[rules.required]"
-                              hint="請輸入完整的公司登記名稱"
-                              persistent-hint
-                            ></v-text-field>
-                          </v-col>
-                          
-                          <v-col cols="12">
-                            <v-text-field
-                              v-model="registerForm.contactPerson"
-                              label="聯絡人姓名"
-                              variant="outlined"
-                              density="comfortable"
-                              prepend-inner-icon="mdi-account"
-                              :rules="[rules.required]"
-                            ></v-text-field>
-                          </v-col>
-                        </v-row>
-                      </template>
-                      
-                      <!-- 一般用戶/醫療機構欄位 -->
-                      <template v-else>
-                        <v-row>
-                          <v-col cols="12">
-                            <v-text-field
-                              v-model="registerForm.fullName"
-                              label="姓名"
-                              variant="outlined"
-                              density="comfortable"
-                              prepend-inner-icon="mdi-account-box"
-                              :rules="[rules.required]"
-                            ></v-text-field>
-                          </v-col>
-                          
-                          <v-col cols="12" md="6">
-                            <v-select
-                              v-model="registerForm.gender"
-                              :items="genders"
-                              label="性別"
-                              variant="outlined"
-                              density="comfortable"
-                              prepend-inner-icon="mdi-gender-male-female"
-                              :rules="[rules.required]"
-                            ></v-select>
-                          </v-col>
-                          
-                          <v-col cols="12" md="6">
-                            <v-text-field
-                              v-model="registerForm.birthDate"
-                              label="出生日期"
-                              variant="outlined"
-                              density="comfortable"
-                              prepend-inner-icon="mdi-calendar"
-                              type="date"
-                              :rules="[rules.required, rules.validDate]"
-                            ></v-text-field>
-                          </v-col>
-                        </v-row>
-                      </template>
-                      
-                      <!-- 共同欄位：聯絡資訊 -->
-                      <div class="section-title mt-6 mb-4">
-                        <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
-                          <v-icon color="primary" class="me-2">mdi-contacts</v-icon>
-                          聯絡資訊
-                        </h3>
-                        <v-divider class="mt-2"></v-divider>
-                      </div>
-                      
-                      <v-row>
-                        <v-col cols="12" md="6">
-                          <v-text-field
-                            v-model="registerForm.phoneNumber"
-                            label="電話號碼"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-phone"
-                            type="tel"
-                            :rules="[rules.required, rules.phone]"
-                            placeholder="例如：0912345678"
-                          ></v-text-field>
-                        </v-col>
-                        
-                        <v-col cols="12" md="6">
-                          <v-text-field
-                            v-model="registerForm.email"
-                            label="電子郵件"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-email"
-                            type="email"
-                            :rules="[rules.required, rules.email]"
-                            placeholder="例如：example@email.com"
-                          ></v-text-field>
-                        </v-col>
-                      </v-row>
-                      
-                      <div class="mt-6 d-flex justify-space-between">
-                        <v-btn
-                          variant="tonal"
-                          @click="previousStep"
-                          prepend-icon="mdi-arrow-left"
-                        >
-                          返回
-                        </v-btn>
-                        
-                        <v-btn
-                          color="primary"
-                          variant="flat"
-                          @click="validateAndGoNext"
-                          :disabled="!basicFormValid"
-                        >
-                          下一步
-                          <v-icon class="ms-2">mdi-arrow-right</v-icon>
-                        </v-btn>
-                      </div>
-                    </v-form>
-                  </v-card>
-                </v-stepper-window-item>
-                
-                <!-- 步驟 3: 帳號設定 -->
-                <v-stepper-window-item value="3">
-                  <v-card flat class="mt-6 pa-4 rounded-lg">
-                    <v-form ref="accountForm" v-model="accountFormValid" @submit.prevent="handleRegister" lazy-validation>
-                      <div class="section-title mb-4">
-                        <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
-                          <v-icon color="primary" class="me-2">mdi-account-key</v-icon>
-                          帳號安全設定
-                        </h3>
-                        <div class="text-caption text-grey mt-1">
-                          請設定您的身分識別碼與密碼
-                        </div>
-                        <v-divider class="mt-2"></v-divider>
-                      </div>
-                      
-                      <v-row>
-                        <v-col cols="12">
-                          <v-text-field
-                            v-model="registerForm.idNumber"
-                            :label="idLabel"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-identifier"
-                            :rules="[rules.required, rules.idFormat]"
-                            :hint="idHint"
-                            persistent-hint
-                          ></v-text-field>
-                        </v-col>
-                        
-                        <v-col cols="12">
-                          <v-text-field
-                            v-model="registerForm.password"
-                            label="密碼"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-lock"
-                            :type="showPassword ? 'text' : 'password'"
-                            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                            @click:append-inner="showPassword = !showPassword"
-                            :rules="[rules.required, rules.minLength]"
-                            hint="密碼至少需要6個字符"
-                            persistent-hint
-                          ></v-text-field>
-                        </v-col>
-                        
-                        <v-col cols="12">
-                          <v-text-field
-                            v-model="registerForm.confirmPassword"
-                            label="確認密碼"
-                            variant="outlined"
-                            density="comfortable"
-                            prepend-inner-icon="mdi-lock-check"
-                            :type="showConfirmPassword ? 'text' : 'password'"
-                            :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                            @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                            :rules="[rules.required, rules.matchPassword]"
-                            hint="請再次輸入您的密碼"
-                            persistent-hint
-                          ></v-text-field>
-                        </v-col>
-                      </v-row>
-                      
-                      <div class="mt-6 d-flex justify-space-between">
-                        <v-btn
-                          variant="tonal"
-                          @click="previousStep"
-                          prepend-icon="mdi-arrow-left"
-                        >
-                          返回
-                        </v-btn>
-                        
-                        <v-btn
-                          color="success"
-                          type="submit"
-                          variant="flat"
-                          :loading="loading"
-                          :disabled="!accountFormValid"
-                        >
-                          完成註冊
-                          <v-icon class="ms-2">mdi-check</v-icon>
-                        </v-btn>
-                      </div>
-                    </v-form>
-                  </v-card>
-                </v-stepper-window-item>
-              </v-stepper-window>
-            </v-stepper>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-file-input
+                      v-model="registerForm.idCardBack"
+                      label="上傳身分證反面"
+                      accept="image/jpeg, image/png"
+                      prepend-icon="mdi-upload"
+                      show-size
+                      :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
+                      @change="onFileInputChange('idCardBack')"
+                      outlined
+                      dense
+                    ></v-file-input>
+                    <div v-if="registerForm.idCardBack">
+                      <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardBack.name }}</div>
+                      <v-img
+                        :src="backPreviewUrl"
+                        aspect-ratio="1.6"
+                        max-height="180"
+                        class="mt-2 id-card-preview"
+                        cover
+                      ></v-img>
+                    </div>
+                  </v-col>
+                </v-row>
+                <div class="mt-6 d-flex justify-space-between">
+                  <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">上一步</v-btn>
+                  <v-btn color="success" variant="flat" :loading="loading" @click="handleRegister" :disabled="!registerForm.idCardFront || !registerForm.idCardBack">
+                    完成註冊
+                    <v-icon class="ms-2">mdi-check</v-icon>
+                  </v-btn>
+                </div>
+              </v-card>
+            </div>
             
             <!-- 導航按鈕 -->
             <div class="d-flex justify-space-between mb-4 mt-4">
@@ -365,7 +392,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
@@ -392,7 +419,9 @@ const registerForm = ref({
   email: '',
   // 保險業者專用欄位
   companyName: '',
-  contactPerson: ''
+  contactPerson: '',
+  idCardFront: null,
+  idCardBack: null
 });
 
 const loading = ref(false);
@@ -534,6 +563,44 @@ const validateAndGoNext = () => {
   }
 };
 
+// 預覽網址
+const frontPreviewUrl = ref('');
+const backPreviewUrl = ref('');
+
+function onFileInputChange(side) {
+  if (side === 'idCardFront') {
+    if (registerForm.value.idCardFront) {
+      frontPreviewUrl.value = URL.createObjectURL(registerForm.value.idCardFront);
+    } else {
+      frontPreviewUrl.value = '';
+    }
+  } else if (side === 'idCardBack') {
+    if (registerForm.value.idCardBack) {
+      backPreviewUrl.value = URL.createObjectURL(registerForm.value.idCardBack);
+    } else {
+      backPreviewUrl.value = '';
+    }
+  }
+}
+// 清理 URL 物件（避免記憶體洩漏）
+watch(() => registerForm.value.idCardFront, (newVal, oldVal) => {
+  if (oldVal && frontPreviewUrl.value) URL.revokeObjectURL(frontPreviewUrl.value);
+  if (newVal) frontPreviewUrl.value = URL.createObjectURL(newVal);
+  else frontPreviewUrl.value = '';
+});
+watch(() => registerForm.value.idCardBack, (newVal, oldVal) => {
+  if (oldVal && backPreviewUrl.value) URL.revokeObjectURL(backPreviewUrl.value);
+  if (newVal) backPreviewUrl.value = URL.createObjectURL(newVal);
+  else backPreviewUrl.value = '';
+});
+
+// 驗證與流程控制
+const validateAndGoNextAccount = () => {
+  if (accountForm.value.validate()) {
+    nextStep();
+  }
+};
+
 // 表單提交
 const handleRegister = async () => {
   if (!accountForm.value.validate()) {
@@ -603,7 +670,9 @@ const handleRegister = async () => {
       phoneNumber: '',
       email: '',
       companyName: '',
-      contactPerson: ''
+      contactPerson: '',
+      idCardFront: null,
+      idCardBack: null
     };
     
     // 延遲導航，讓用戶看到成功訊息
@@ -706,12 +775,75 @@ const handleTestRegister = async () => {
     console.groupEnd();
   }
 };
+
+const steps = [
+  { value: 1, title: '角色選擇' },
+  { value: 2, title: '基本資料' },
+  { value: 3, title: '帳號設定' },
+  { value: 4, title: '身分證上傳' }
+];
+function goToStep(val) {
+  // 可加驗證，這裡直接切換
+  currentStep.value = String(val);
+}
 </script>
 
 <style scoped>
 .fill-height {
   min-height: calc(100vh - 64px);
   background-color: #f8f9fa;
+}
+
+.register-card {
+  max-width: 720px;
+  margin: auto;
+}
+
+.register-stepper {
+  min-width: 0;
+}
+
+:deep(.v-stepper-header) {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  min-width: 0;
+  overflow-x: hidden;
+  width: 100%;
+}
+:deep(.v-stepper-item) {
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+:deep(.v-divider) {
+  margin: 0 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .register-card {
+    max-width: 98vw;
+  }
+  :deep(.v-stepper-header) {
+    font-size: 15px;
+  }
+}
+@media (max-width: 600px) {
+  .register-card {
+    max-width: 100vw;
+    border-radius: 0 !important;
+  }
+  :deep(.v-stepper-header) {
+    font-size: 13px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  :deep(.v-stepper-item) {
+    font-size: 13px;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+  }
 }
 
 .v-card {
@@ -754,5 +886,83 @@ const handleTestRegister = async () => {
 
 :deep(.v-stepper-header) {
   box-shadow: none !important;
+}
+
+.custom-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.step-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  cursor: pointer;
+  background: #f5f7fa;
+  border: 2px solid #b0bec5;
+  border-radius: 12px;
+  padding: 12px 8px 8px 8px;
+  transition: border 0.2s, background 0.2s;
+  min-width: 80px;
+  max-width: 160px;
+  margin: 0 2px;
+  user-select: none;
+}
+.step-btn .step-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #b0bec5;
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+.step-btn .step-title {
+  font-size: 15px;
+  color: #607d8b;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+.step-btn.active {
+  border-color: #1976d2;
+  background: #e3f2fd;
+}
+.step-btn.active .step-circle {
+  background: #1976d2;
+}
+.step-btn.completed {
+  border-color: #4caf50;
+  background: #e8f5e9;
+}
+.step-btn.completed .step-circle {
+  background: #4caf50;
+}
+@media (max-width: 700px) {
+  .custom-stepper {
+    gap: 0.2rem;
+  }
+  .step-btn {
+    min-width: 60px;
+    max-width: 100px;
+    padding: 8px 2px 6px 2px;
+  }
+  .step-btn .step-title {
+    font-size: 13px;
+  }
+  .step-btn .step-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 15px;
+  }
 }
 </style>

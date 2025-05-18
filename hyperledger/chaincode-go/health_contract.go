@@ -21,21 +21,21 @@ const (
 )
 
 type HealthReport struct {
-	DocType    string `json:"docType"`
-	ReportID   string `json:"reportId"`
-	PatientH   string `json:"patientHash"`
-	ClinicID   string `json:"clinicId"`
-	ResultJSON string `json:"resultJson"`
-	CreatedAt  int64  `json:"createdAt"`
+	DocType     string `json:"docType"`
+	ReportID    string `json:"reportId"`
+	PatientHash string `json:"patientHash"`
+	ClinicID    string `json:"clinicId"`
+	ResultJSON  string `json:"resultJson"`
+	CreatedAt   int64  `json:"createdAt"`
 }
 
 type AuthTicket struct {
-	DocType   string `json:"docType"`
-	PatientH  string `json:"patientHash"`
-	TargetH   string `json:"TargetHash"`
-	ReportID  string `json:"reportId"`
-	GrantedAt int64  `json:"grantedAt"`
-	Expiry    int64  `json:"expiry"`
+	DocType      string `json:"docType"`
+	PatientHash  string `json:"patientHash"`
+	TargetHash   string `json:"targetHash"`
+	ReportID     string `json:"reportId"`
+	GrantedAt    int64  `json:"grantedAt"`
+	Expiry       int64  `json:"expiry"`
 }
 
 type HealthCheckContract struct {
@@ -71,10 +71,10 @@ func getClinicID(ctx contractapi.TransactionContextInterface) string {
 
 func recPatientHash(raw []byte) string {
 	var t struct {
-		PatientH string `json:"patientHash"`
+		PatientHash string `json:"patientHash"`
 	}
 	_ = json.Unmarshal(raw, &t)
-	return t.PatientH
+	return t.PatientHash
 }
 
 func nowSec() int64 {
@@ -98,18 +98,18 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 	}
 
 	rec := HealthReport{
-		DocType:    docHealth,
-		ReportID:   reportID,
-		PatientH:   patientHash,
-		ClinicID:   getClinicID(ctx),
-		ResultJSON: resultJSON,
-		CreatedAt:  nowSec(),
+		DocType:     docHealth,
+		ReportID:    reportID,
+		PatientHash: patientHash,
+		ClinicID:    getClinicID(ctx),
+		ResultJSON:  resultJSON,
+		CreatedAt:   nowSec(),
 	}
 	bytes, _ := json.Marshal(rec)
 	return ctx.GetStub().PutState(repKey, bytes)
 }
 
-func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID, expiryStr string) error {
+func (h *HealthCheckContract) AuthorizeAccess(ctx contractapi.TransactionContextInterface, reportID, patientHash, targetHash, expiryStr string) error {
 	userID, role, err := getCaller(ctx)
 	if err != nil || role != "patient" {
 		return fmt.Errorf("only patient can grant access")
@@ -119,7 +119,11 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("invalid expiry")
 	}
 
-	patientHash := hashID(userID)
+	// 驗證用戶身份
+	callerHash := hashID(userID)
+	if callerHash != patientHash {
+		return fmt.Errorf("caller identity does not match patientHash")
+	}
 
 	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
 	rb, _ := ctx.GetStub().GetState(repKey)
@@ -127,7 +131,14 @@ func (h *HealthCheckContract) GrantAccess(ctx contractapi.TransactionContextInte
 		return fmt.Errorf("not your report")
 	}
 	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
-	tk := AuthTicket{DocType: docAuth, PatientH: patientHash, TargetH: targetHash, ReportID: reportID, GrantedAt: nowSec(), Expiry: expiry}
+	tk := AuthTicket{
+		DocType:     docAuth, 
+		PatientHash: patientHash, 
+		TargetHash:  targetHash, 
+		ReportID:    reportID, 
+		GrantedAt:   nowSec(), 
+		Expiry:      expiry,
+	}
 	tbytes, _ := json.Marshal(tk)
 	return ctx.GetStub().PutState(ticketKey, tbytes)
 }
@@ -188,7 +199,7 @@ func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextIn
 }
 
 func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
-	targetHash, role, err := getCaller(ctx)
+	userID, role, err := getCaller(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get caller identity: %v", err)
 	}
@@ -196,10 +207,12 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 		return nil, fmt.Errorf("only insurer can list authorized reports")
 	}
 
+	targetHash := hashID(userID)
+
 	query := fmt.Sprintf(`{
 		"selector": {
 			"docType": "%s",
-			"TargetHash": "%s"
+			"targetHash": "%s"
 		}
 	}`, docAuth, targetHash)
 
@@ -239,6 +252,55 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 		}
 
 		results = append(results, rep)
+	}
+
+	return results, nil
+}
+
+// 不含健檢數據的報告元數據
+type ReportMeta struct {
+	ReportID  string `json:"reportId"`
+	ClinicID  string `json:"clinicId"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.TransactionContextInterface, patientID string) ([]ReportMeta, error) {
+	_  , role, err := getCaller(ctx)
+	if err != nil || role != "insurer" {
+		return nil, fmt.Errorf("only insurer can query report meta")
+	}
+
+	patientHash := hashID(patientID)
+
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"patientHash": "%s"
+		}
+	}`, docHealth, patientHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("query execution failed: %v", err)
+	}
+	defer iter.Close()
+
+	var results []ReportMeta
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+		var report HealthReport
+		if err := json.Unmarshal(kv.Value, &report); err != nil {
+			continue
+		}
+
+		results = append(results, ReportMeta{
+			ReportID:  report.ReportID,
+			ClinicID:  report.ClinicID,
+			CreatedAt: report.CreatedAt,
+		})
 	}
 
 	return results, nil

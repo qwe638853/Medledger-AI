@@ -57,6 +57,13 @@ export const handleApiError = (error, action) => {
     console.log('錯誤狀態碼:', error.response.status);
     console.log('後端回應標頭:', error.response.headers);
     console.log('後端回應資料:', error.response.data);
+    
+    // 處理空回應數據的情況
+    if (!error.response.data) {
+      console.log('警告: 後端回應資料為空');
+      return `${action}失敗：伺服器回應為空`;
+    }
+    
     return error.response.data?.message || `${action}失敗：伺服器錯誤 (${error.response.status})`;
   } else if (error.request) {
     // 請求已發送但未收到回應

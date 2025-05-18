@@ -603,8 +603,21 @@ const validateAndGoNextAccount = () => {
 
 // 表單提交
 const handleRegister = async () => {
-  if (!accountForm.value.validate()) {
-    showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+  // 修改驗證邏輯，避免在最後步驟重新驗證前面步驟的表單
+  if (currentStep.value !== '4') {
+    // 如果不是最後一步，需要驗證當前表單
+    if (currentStep.value === '3' && accountForm.value && !accountForm.value.validate()) {
+      showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+      return;
+    } else if (currentStep.value === '2' && basicForm.value && !basicForm.value.validate()) {
+      showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+      return;
+    }
+  }
+  
+  // 在最後一步，檢查身份證是否已上傳
+  if (currentStep.value === '4' && (!registerForm.value.idCardFront || !registerForm.value.idCardBack)) {
+    showAlert('error', '請上傳身分證正反面照片', '表單驗證失敗');
     return;
   }
   

@@ -12,10 +12,12 @@ const healthData = ref([]);
 const loading = ref(false);
 
 // 授權相關
-const authorizeDialog = ref(false);
-const authorizeTarget = ref('');
-const authorizeTargets = ref(['醫師A', '醫院B', '家人C']); // 暫時使用假資料
-const authorizing = ref(false);
+const authTab = ref('requests');
+const accessRequests = ref([]);
+const authorizedTickets = ref([]);
+const loadingRequests = ref(false);
+const loadingTickets = ref(false);
+const authProcessing = ref(false);
 
 // LLM 分析相關
 const llmLoading = ref(false);
@@ -96,6 +98,12 @@ onMounted(async () => {
     });
     
     console.log('處理後的健康數據:', healthData.value);
+    
+    // 載入授權請求和已授權票據
+    await Promise.all([
+      loadAccessRequests(),
+      loadGrantedTickets()
+    ]);
   } catch (error) {
     console.error('獲取健康數據失敗:', error);
     notifyError(`獲取健康數據失敗：${error.message}`);
@@ -104,6 +112,143 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+// 載入授權請求
+const loadAccessRequests = async () => {
+  loadingRequests.value = true;
+  try {
+    console.log('開始載入授權請求...');
+    accessRequests.value = await healthCheckService.fetchAccessRequests();
+    console.log('載入授權請求完成:', accessRequests.value);
+    
+    // 檢查獲取的數據是否完整
+    if (accessRequests.value.length > 0) {
+      accessRequests.value.forEach((request, index) => {
+        if (!request.reportId || !request.reason || !request.requestTime) {
+          console.warn(`授權請求 #${index} 資料不完整:`, request);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('載入授權請求失敗:', error);
+    notifyError(`無法載入授權請求：${error.message || '未知錯誤'}`);
+    accessRequests.value = []; // 確保失敗時清空列表
+  } finally {
+    loadingRequests.value = false;
+  }
+};
+
+// 載入已授權票據
+const loadGrantedTickets = async () => {
+  loadingTickets.value = true;
+  try {
+    console.log('開始載入已授權票據...');
+    authorizedTickets.value = await healthCheckService.fetchGrantedTickets();
+    console.log('載入已授權票據完成:', authorizedTickets.value);
+    
+    // 檢查獲取的數據是否完整
+    if (authorizedTickets.value.length > 0) {
+      authorizedTickets.value.forEach((ticket, index) => {
+        if (!ticket.reportId || !ticket.targetId || !ticket.grantTime) {
+          console.warn(`授權票據 #${index} 資料不完整:`, ticket);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('載入已授權票據失敗:', error);
+    notifyError(`無法載入已授權票據：${error.message || '未知錯誤'}`);
+    authorizedTickets.value = []; // 確保失敗時清空列表
+  } finally {
+    loadingTickets.value = false;
+  }
+};
+
+// 同意授權請求
+const approveRequest = async (requestId) => {
+  authProcessing.value = true;
+  try {
+    console.log('開始處理同意授權請求:', requestId);
+    const result = await healthCheckService.approveAccessRequest(requestId);
+    console.log('授權結果:', result);
+    
+    if (result && result.success) {
+      notifySuccess('授權請求已成功處理');
+      // 重新載入授權請求和授權票據
+      await Promise.all([
+        loadAccessRequests(),
+        loadGrantedTickets()
+      ]);
+    } else {
+      throw new Error('未能成功處理授權請求');
+    }
+  } catch (error) {
+    console.error('同意授權請求失敗:', error);
+    notifyError(`授權處理失敗：${error.message || '未知錯誤'}`);
+  } finally {
+    authProcessing.value = false;
+  }
+};
+
+// 拒絕授權請求
+const rejectRequest = async (requestId) => {
+  authProcessing.value = true;
+  try {
+    console.log('開始處理拒絕授權請求:', requestId);
+    const result = await healthCheckService.rejectAccessRequest(requestId);
+    console.log('拒絕結果:', result);
+    
+    if (result && result.success) {
+      notifySuccess('已拒絕授權請求');
+      // 重新載入授權請求
+      await loadAccessRequests();
+    } else {
+      throw new Error('未能成功處理拒絕請求');
+    }
+  } catch (error) {
+    console.error('拒絕授權請求失敗:', error);
+    notifyError(`拒絕處理失敗：${error.message || '未知錯誤'}`);
+  } finally {
+    authProcessing.value = false;
+  }
+};
+
+// 格式化時間戳為日期
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '未設定';
+  
+  try {
+    console.log('格式化時間戳:', timestamp, typeof timestamp);
+    
+    // 如果是字符串數字，轉為數字
+    if (typeof timestamp === 'string') {
+      timestamp = parseInt(timestamp, 10);
+    }
+    
+    // 確保是以秒為單位的時間戳
+    if (timestamp < 10000000000) {
+      // 如果時間戳是以秒為單位
+      return new Date(timestamp * 1000).toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } else {
+      // 如果時間戳是以毫秒為單位
+      return new Date(timestamp).toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  } catch (e) {
+    console.error('格式化時間戳失敗:', e, timestamp);
+    return timestamp.toString();
+  }
+};
 
 // 嘗試將內容解析為JSON對象
 function parseReportContent(content) {
@@ -305,33 +450,6 @@ const handleLogout = () => {
   authStore.logout();
 };
 
-// 處理授權行為
-const handleAuthorize = async () => {
-  if (!authorizeTarget.value || !healthData.value.length) {
-    notifyError('請選擇授權對象且確保有健康數據');
-    return;
-  }
-  
-  authorizing.value = true;
-  try {
-    // 待後端 API 完成後實現
-    // await healthCheckService.authorizeHealthData(
-    //   authorizeTarget.value,
-    //   healthData.value
-    // );
-    
-    // 暫時使用模擬授權
-    await new Promise(resolve => setTimeout(resolve, 800));
-    notifySuccess(`已成功授權給 ${authorizeTarget.value}！`);
-    authorizeDialog.value = false;
-    authorizeTarget.value = '';
-  } catch (error) {
-    notifyError(`授權失敗：${error.message}`);
-  } finally {
-    authorizing.value = false;
-  }
-};
-
 // 處理 LLM 分析
 const handleLLMSummary = async () => {
   if (!healthData.value.length) {
@@ -416,31 +534,148 @@ const handleLLMSummary = async () => {
           </v-data-table>
         </v-card>
 
-        <!-- 授權區塊 -->
+        <!-- 資料授權區塊 -->
         <v-card class="pa-4 mb-6" elevation="4">
-          <h3 class="mb-3">資料授權</h3>
-          <v-row>
-            <v-col cols="12" sm="8" md="6">
-              <v-select
-                v-model="authorizeTarget"
-                :items="authorizeTargets"
-                label="選擇授權對象"
-                dense
-                outlined
-                clearable
-              ></v-select>
-            </v-col>
-            <v-col cols="12" sm="4" md="6" class="d-flex align-end">
-              <v-btn
+          <h3 class="mb-3">資料授權管理</h3>
+          
+          <v-tabs v-model="authTab" color="primary" slider-color="primary">
+            <v-tab value="requests" class="text-none">
+              <v-icon start>mdi-clipboard-alert</v-icon>
+              授權請求
+              <v-badge
+                v-if="accessRequests.length > 0"
+                :content="accessRequests.length.toString()"
+                color="error"
+                offset-x="5"
+                offset-y="-5"
+              ></v-badge>
+            </v-tab>
+            <v-tab value="authorized" class="text-none">
+              <v-icon start>mdi-clipboard-check</v-icon>
+              已授權清單
+              <v-badge
+                v-if="authorizedTickets.length > 0"
+                :content="authorizedTickets.length.toString()"
                 color="success"
-                :disabled="!authorizeTarget || authorizing || !healthData.length"
-                @click="authorizeDialog = true"
-                elevation="2"
+                offset-x="5"
+                offset-y="-5"
+              ></v-badge>
+            </v-tab>
+          </v-tabs>
+          
+          <v-divider class="mb-3"></v-divider>
+          
+          <v-window v-model="authTab">
+            <!-- 授權請求分頁 -->
+            <v-window-item value="requests">
+              <v-data-table
+                :headers="[
+                  { title: '報告編號', key: 'reportId', width: '120px' },
+                  { title: '請求者', key: 'requesterName', width: '120px' },
+                  { title: '授權理由', key: 'reason', width: '200px' },
+                  { title: '申請時間', key: 'requestTime', width: '150px' },
+                  { title: '到期時間', key: 'expiry', width: '150px' },
+                  { title: '操作', key: 'actions', width: '180px', sortable: false }
+                ]"
+                :items="accessRequests"
+                :loading="loadingRequests"
+                loading-text="載入中..."
+                no-data-text="目前沒有授權請求"
+                hide-default-footer
+                class="elevation-0"
+                :class="{'opacity-50': authProcessing}"
               >
-                <v-icon left>mdi-account-key</v-icon> 授權
-              </v-btn>
-            </v-col>
-          </v-row>
+                <template v-slot:item.requestTime="{ item }">
+                  {{ formatTimestamp(item.requestTime) }}
+                </template>
+                
+                <template v-slot:item.expiry="{ item }">
+                  {{ item.expiry ? formatTimestamp(item.expiry) : '永久' }}
+                </template>
+                
+                <template v-slot:item.reason="{ item }">
+                  <div class="reason-cell">{{ item.reason }}</div>
+                </template>
+                
+                <template v-slot:item.actions="{ item }">
+                  <div class="d-flex gap-2">
+                    <v-btn
+                      color="success"
+                      size="small"
+                      :loading="authProcessing"
+                      :disabled="authProcessing"
+                      @click="approveRequest(item.id)"
+                      prepend-icon="mdi-check"
+                    >
+                      同意
+                    </v-btn>
+                    <v-btn
+                      color="error"
+                      size="small"
+                      :loading="authProcessing"
+                      :disabled="authProcessing"
+                      @click="rejectRequest(item.id)"
+                      prepend-icon="mdi-close"
+                    >
+                      拒絕
+                    </v-btn>
+                  </div>
+                </template>
+              </v-data-table>
+              
+              <div v-if="!loadingRequests && accessRequests.length === 0" class="text-center py-5">
+                <v-icon size="64" color="grey-lighten-1">mdi-inbox-outline</v-icon>
+                <div class="text-h6 mt-2 text-grey-darken-1">目前沒有待處理的授權請求</div>
+                <div class="text-body-2 mt-1 text-grey">當保險業者請求訪問您的健康報告時，將顯示在這裡</div>
+              </div>
+            </v-window-item>
+            
+            <!-- 已授權清單分頁 -->
+            <v-window-item value="authorized">
+              <v-data-table
+                :headers="[
+                  { title: '報告編號', key: 'reportId', width: '120px' },
+                  { title: '授權對象', key: 'targetName', width: '120px' },
+                  { title: '授權時間', key: 'grantTime', width: '150px' },
+                  { title: '到期時間', key: 'expiry', width: '150px' },
+                  { title: '狀態', key: 'status', width: '100px' }
+                ]"
+                :items="authorizedTickets"
+                :loading="loadingTickets"
+                loading-text="載入中..."
+                no-data-text="目前沒有已授權報告"
+                hide-default-footer
+                class="elevation-0"
+              >
+                <template v-slot:item.grantTime="{ item }">
+                  {{ formatTimestamp(item.grantTime) }}
+                </template>
+                
+                <template v-slot:item.expiry="{ item }">
+                  <span v-if="item.expiry && item.expiry !== '0'">
+                    {{ formatTimestamp(item.expiry) }}
+                  </span>
+                  <span v-else class="text-green">永久</span>
+                </template>
+                
+                <template v-slot:item.status="{ item }">
+                  <v-chip
+                    :color="new Date().getTime() > item.expiry * 1000 && item.expiry !== 0 ? 'grey' : 'success'"
+                    size="small"
+                    variant="outlined"
+                  >
+                    {{ new Date().getTime() > item.expiry * 1000 && item.expiry !== 0 ? '已過期' : '有效' }}
+                  </v-chip>
+                </template>
+              </v-data-table>
+              
+              <div v-if="!loadingTickets && authorizedTickets.length === 0" class="text-center py-5">
+                <v-icon size="64" color="grey-lighten-1">mdi-shield-outline</v-icon>
+                <div class="text-h6 mt-2 text-grey-darken-1">目前沒有已授權的健康報告</div>
+                <div class="text-body-2 mt-1 text-grey">當您同意授權請求後，授權記錄將顯示在這裡</div>
+              </div>
+            </v-window-item>
+          </v-window>
         </v-card>
 
         <!-- LLM 分析區塊 -->
@@ -469,21 +704,6 @@ const handleLLMSummary = async () => {
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- 授權確認對話框 -->
-    <v-dialog v-model="authorizeDialog" max-width="400">
-      <v-card>
-        <v-card-title class="headline">確認授權</v-card-title>
-        <v-card-text>
-          確定要將健康資料授權給 <b>{{ authorizeTarget }}</b> 嗎？
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="authorizeDialog = false">取消</v-btn>
-          <v-btn color="success" :loading="authorizing" @click="handleAuthorize">確認</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- 健康報告詳細資料對話框 -->
     <v-dialog v-model="detailDialog" max-width="900" scrollable>
@@ -744,5 +964,42 @@ h3 {
 }
 .pulse-animation {
   animation: pulse 2s infinite;
+}
+
+/* 授權管理相關樣式 */
+.reason-cell {
+  max-width: 200px;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+:deep(.v-data-table .v-table__wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.v-data-table thead) {
+  background-color: #f5f5f5;
+}
+
+:deep(.v-data-table tbody tr:hover) {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.text-green {
+  color: #2e7d32;
 }
 </style>

@@ -37,7 +37,7 @@ service HealthService {
     option (google.api.http) = {
       post: "/v1/register/user"
       body: "*"
-    };z
+    };
   }
 
   rpc RegisterInsurer(RegisterInsurerRequest) returns (RegisterResponse) {
@@ -78,6 +78,24 @@ service HealthService {
       body: "*"
     };
   }
+
+  rpc GetInsurerDashboardStats(google.protobuf.Empty) returns (InsurerDashboardStatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/dashboard/summary"
+    };
+  }
+  rpc ListAuthorizedReports(google.protobuf.Empty) returns (ListAuthorizedReportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/authorized"
+    };
+  }
+
+  rpc ListReportMetaByPatientID(PatientIDRequest) returns (ListReportMetaResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/meta/{patient_id}"
+    };
+  }
+
 }
 
 
@@ -215,4 +233,39 @@ enum AccessRequestStatus {
   PENDING = 0;
   APPROVED = 1;
   REJECTED = 2;
+}
+
+
+message InsurerDashboardStatsResponse {
+  int32 total_authorized = 1;
+  int32 pending_requests = 2;
+  int32 total_patients = 3;
+}
+
+
+message AuthorizedReport {
+  string report_id = 1;
+  string patient_id = 2;
+  string content = 3;
+  string date = 4;
+  string expiry = 5;
+}
+
+message ListAuthorizedReportsResponse {
+  repeated AuthorizedReport reports = 1;
+}
+
+
+message PatientIDRequest {
+  string patient_id = 1;
+}
+
+message ReportMeta {
+  string report_id = 1;
+  string clinic_id = 2;
+  int64 created_at = 3;
+}
+
+message ListReportMetaResponse {
+  repeated ReportMeta reports = 1;
 }

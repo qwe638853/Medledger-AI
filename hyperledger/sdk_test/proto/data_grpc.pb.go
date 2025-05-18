@@ -20,17 +20,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HealthService_UploadReport_FullMethodName         = "/health.HealthService/UploadReport"
-	HealthService_ClaimReport_FullMethodName          = "/health.HealthService/ClaimReport"
-	HealthService_ReadReport_FullMethodName           = "/health.HealthService/ReadReport"
-	HealthService_Login_FullMethodName                = "/health.HealthService/Login"
-	HealthService_RegisterUser_FullMethodName         = "/health.HealthService/RegisterUser"
-	HealthService_RegisterInsurer_FullMethodName      = "/health.HealthService/RegisterInsurer"
-	HealthService_ListMyReports_FullMethodName        = "/health.HealthService/ListMyReports"
-	HealthService_RequestAccess_FullMethodName        = "/health.HealthService/RequestAccess"
-	HealthService_ListAccessRequests_FullMethodName   = "/health.HealthService/ListAccessRequests"
-	HealthService_ApproveAccessRequest_FullMethodName = "/health.HealthService/ApproveAccessRequest"
-	HealthService_RejectAccessRequest_FullMethodName  = "/health.HealthService/RejectAccessRequest"
+	HealthService_UploadReport_FullMethodName              = "/health.HealthService/UploadReport"
+	HealthService_ClaimReport_FullMethodName               = "/health.HealthService/ClaimReport"
+	HealthService_ReadReport_FullMethodName                = "/health.HealthService/ReadReport"
+	HealthService_Login_FullMethodName                     = "/health.HealthService/Login"
+	HealthService_RegisterUser_FullMethodName              = "/health.HealthService/RegisterUser"
+	HealthService_RegisterInsurer_FullMethodName           = "/health.HealthService/RegisterInsurer"
+	HealthService_ListMyReports_FullMethodName             = "/health.HealthService/ListMyReports"
+	HealthService_RequestAccess_FullMethodName             = "/health.HealthService/RequestAccess"
+	HealthService_ListAccessRequests_FullMethodName        = "/health.HealthService/ListAccessRequests"
+	HealthService_ApproveAccessRequest_FullMethodName      = "/health.HealthService/ApproveAccessRequest"
+	HealthService_RejectAccessRequest_FullMethodName       = "/health.HealthService/RejectAccessRequest"
+	HealthService_GetInsurerDashboardStats_FullMethodName  = "/health.HealthService/GetInsurerDashboardStats"
+	HealthService_ListAuthorizedReports_FullMethodName     = "/health.HealthService/ListAuthorizedReports"
+	HealthService_ListReportMetaByPatientID_FullMethodName = "/health.HealthService/ListReportMetaByPatientID"
 )
 
 // HealthServiceClient is the client API for HealthService service.
@@ -48,6 +51,9 @@ type HealthServiceClient interface {
 	ListAccessRequests(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAccessRequestsResponse, error)
 	ApproveAccessRequest(ctx context.Context, in *ApproveAccessRequestRequest, opts ...grpc.CallOption) (*ApproveAccessRequestResponse, error)
 	RejectAccessRequest(ctx context.Context, in *RejectAccessRequestRequest, opts ...grpc.CallOption) (*RejectAccessRequestResponse, error)
+	GetInsurerDashboardStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InsurerDashboardStatsResponse, error)
+	ListAuthorizedReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedReportsResponse, error)
+	ListReportMetaByPatientID(ctx context.Context, in *PatientIDRequest, opts ...grpc.CallOption) (*ListReportMetaResponse, error)
 }
 
 type healthServiceClient struct {
@@ -168,6 +174,36 @@ func (c *healthServiceClient) RejectAccessRequest(ctx context.Context, in *Rejec
 	return out, nil
 }
 
+func (c *healthServiceClient) GetInsurerDashboardStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InsurerDashboardStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InsurerDashboardStatsResponse)
+	err := c.cc.Invoke(ctx, HealthService_GetInsurerDashboardStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *healthServiceClient) ListAuthorizedReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedReportsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAuthorizedReportsResponse)
+	err := c.cc.Invoke(ctx, HealthService_ListAuthorizedReports_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *healthServiceClient) ListReportMetaByPatientID(ctx context.Context, in *PatientIDRequest, opts ...grpc.CallOption) (*ListReportMetaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListReportMetaResponse)
+	err := c.cc.Invoke(ctx, HealthService_ListReportMetaByPatientID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HealthServiceServer is the server API for HealthService service.
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility.
@@ -183,6 +219,9 @@ type HealthServiceServer interface {
 	ListAccessRequests(context.Context, *emptypb.Empty) (*ListAccessRequestsResponse, error)
 	ApproveAccessRequest(context.Context, *ApproveAccessRequestRequest) (*ApproveAccessRequestResponse, error)
 	RejectAccessRequest(context.Context, *RejectAccessRequestRequest) (*RejectAccessRequestResponse, error)
+	GetInsurerDashboardStats(context.Context, *emptypb.Empty) (*InsurerDashboardStatsResponse, error)
+	ListAuthorizedReports(context.Context, *emptypb.Empty) (*ListAuthorizedReportsResponse, error)
+	ListReportMetaByPatientID(context.Context, *PatientIDRequest) (*ListReportMetaResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -225,6 +264,15 @@ func (UnimplementedHealthServiceServer) ApproveAccessRequest(context.Context, *A
 }
 func (UnimplementedHealthServiceServer) RejectAccessRequest(context.Context, *RejectAccessRequestRequest) (*RejectAccessRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RejectAccessRequest not implemented")
+}
+func (UnimplementedHealthServiceServer) GetInsurerDashboardStats(context.Context, *emptypb.Empty) (*InsurerDashboardStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInsurerDashboardStats not implemented")
+}
+func (UnimplementedHealthServiceServer) ListAuthorizedReports(context.Context, *emptypb.Empty) (*ListAuthorizedReportsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAuthorizedReports not implemented")
+}
+func (UnimplementedHealthServiceServer) ListReportMetaByPatientID(context.Context, *PatientIDRequest) (*ListReportMetaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListReportMetaByPatientID not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
 func (UnimplementedHealthServiceServer) testEmbeddedByValue()                       {}
@@ -445,6 +493,60 @@ func _HealthService_RejectAccessRequest_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HealthService_GetInsurerDashboardStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).GetInsurerDashboardStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_GetInsurerDashboardStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).GetInsurerDashboardStats(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HealthService_ListAuthorizedReports_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).ListAuthorizedReports(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_ListAuthorizedReports_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).ListAuthorizedReports(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HealthService_ListReportMetaByPatientID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatientIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).ListReportMetaByPatientID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_ListReportMetaByPatientID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).ListReportMetaByPatientID(ctx, req.(*PatientIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HealthService_ServiceDesc is the grpc.ServiceDesc for HealthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -495,6 +597,18 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RejectAccessRequest",
 			Handler:    _HealthService_RejectAccessRequest_Handler,
+		},
+		{
+			MethodName: "GetInsurerDashboardStats",
+			Handler:    _HealthService_GetInsurerDashboardStats_Handler,
+		},
+		{
+			MethodName: "ListAuthorizedReports",
+			Handler:    _HealthService_ListAuthorizedReports_Handler,
+		},
+		{
+			MethodName: "ListReportMetaByPatientID",
+			Handler:    _HealthService_ListReportMetaByPatientID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

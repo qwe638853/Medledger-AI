@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"strconv"
 
 	"sdk_test/database"
 	fc "sdk_test/fabric"
@@ -137,7 +138,7 @@ func HandleListMyReports(
 func HandleRequestAccess(
 	ctx context.Context,
 	req *pb.RequestAccessRequest,
-	wallet wl.WalletInterface,
+	wallet wl.WalletInterface, 
 	builder fc.GWBuilder) (*pb.RequestAccessResponse, error) {
 
 	// 取得JWT中的使用者ID（應為保險業者）
@@ -215,10 +216,10 @@ func HandleListAccessRequests(
 		accessRequests = append(accessRequests, &pb.AccessRequest{
 			RequestId:    req["request_id"].(string),
 			ReportId:     req["report_id"].(string),
-			PatientHash:  "", // 資料庫中不保存hash，無需回傳
-			TargetHash:   "", // 資料庫中不保存hash，無需回傳
+			PatientHash:  "",
+			TargetHash:   req["requester_id"].(string),
 			Reason:       req["reason"].(string),
-			RequestedAt:  req["requested_at"].(int64),
+			RequestedAt:  req["requested_at"].(int64),	
 			Expiry:       req["expiry"].(int64),
 			Status:       req["status"].(string),
 		})
@@ -242,6 +243,7 @@ func HandleApproveAccessRequest(
 		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
 	}
 
+	log.Printf("[Debug] ApproveAccessRequest patientId=%s, requestId=%s", patientId, req.RequestId)
 	// 檢查請求ID
 	if req.RequestId == "" {
 		return nil, status.Error(codes.InvalidArgument, "必須提供請求ID")
@@ -293,13 +295,14 @@ func HandleApproveAccessRequest(
 	sumRequester := sha256.Sum256([]byte(requesterId))
 	hashedRequesterID := hex.EncodeToString(sumRequester[:])
 
+	log.Printf("[Debug] AuthorizeAccess reportId=%s, patientId=%s, requesterId=%s, expiry=%d", reportId, hashedPatientID, hashedRequesterID, expiry)	
 	// 呼叫區塊鏈授權
 	_, err = contract.SubmitTransaction(
 		"AuthorizeAccess",
 		reportId,
 		hashedPatientID,
 		hashedRequesterID,
-		string(expiry),
+		strconv.FormatInt(expiry, 10),
 	)
 	if err != nil {
 		fc.PrintGatewayError(err)
@@ -358,5 +361,173 @@ func HandleRejectAccessRequest(
 	return &pb.RejectAccessRequestResponse{
 		Success: true,
 		Message: "已成功拒絕授權請求",
+	}, nil
+}
+
+// HandleGetInsurerDashboardStats 獲取保險業者儀表板統計資料
+func HandleGetInsurerDashboardStats(
+	ctx context.Context,
+	_ *emptypb.Empty,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.InsurerDashboardStatsResponse, error) {
+
+	// 取得JWT中的使用者ID（保險業者）
+	insurerId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(insurerId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以存取此資料")
+	}
+
+	// 從數據庫查詢統計數據
+	// 1. 已授權報告數量（從區塊鏈獲取）
+	authorizedReports, err := database.GetAuthorizedReportsForInsurer(insurerId)
+	totalAuthorized := len(authorizedReports)
+	if err != nil {
+		log.Printf("❌ 獲取已授權報告時出錯: %v", err)
+		// 出錯時不要中斷，繼續查詢其他統計資料
+		totalAuthorized = 0
+	}
+
+	// 2. 待處理請求數量（從資料庫獲取）
+	pendingRequests, err := database.GetPendingRequestsCountForInsurer(insurerId)
+	if err != nil {
+		log.Printf("❌ 獲取待處理請求數時出錯: %v", err)
+		pendingRequests = 0
+	}
+
+	// 3. 授權病患數量（從資料庫獲取）
+	totalPatients, err := database.GetAuthorizedPatientsCountForInsurer(insurerId)
+	if err != nil {
+		log.Printf("❌ 獲取授權病患數時出錯: %v", err)
+		totalPatients = 0
+	}
+
+	return &pb.InsurerDashboardStatsResponse{
+		TotalAuthorized: int32(totalAuthorized),
+		PendingRequests: int32(pendingRequests),
+		TotalPatients:   int32(totalPatients),
+	}, nil
+}
+
+// HandleListAuthorizedReports 獲取已授權的報告列表
+func HandleListAuthorizedReports(
+	ctx context.Context,
+	_ *emptypb.Empty,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ListAuthorizedReportsResponse, error) {
+
+	// 取得JWT中的使用者ID（保險業者）
+	insurerId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(insurerId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以存取此資料")
+	}
+
+	// 從數據庫獲取已授權報告
+	authorizedReportsData, err := database.GetAuthorizedReportsForInsurer(insurerId)
+	if err != nil {
+		log.Printf("❌ 獲取已授權報告時出錯: %v", err)
+		return nil, status.Error(codes.Internal, "無法獲取已授權報告")
+	}
+
+	// 轉換為 protobuf 格式
+	var reports []*pb.AuthorizedReport
+	for _, r := range authorizedReportsData {
+		report := &pb.AuthorizedReport{
+			ReportId:  r["report_id"].(string),
+			PatientId: r["patient_id"].(string),
+			Content:   r["content"].(string),
+			Date:      r["date"].(string),
+			Expiry:    r["expiry"].(string),
+		}
+		reports = append(reports, report)
+	}
+	log.Printf("[Info] 已授權報告: %v", reports)
+
+	return &pb.ListAuthorizedReportsResponse{
+		Reports: reports,
+	}, nil
+}
+
+// HandleListReportMetaByPatientID 獲取特定病患的報告元數據 (不含健檢數據)
+func HandleListReportMetaByPatientID(
+	ctx context.Context,
+	req *pb.PatientIDRequest,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ListReportMetaResponse, error) {
+
+	// 取得JWT中的使用者ID（保險業者）
+	insurerId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(insurerId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以查詢病患報告元數據")
+	}
+
+	// 檢查請求
+	if req.PatientId == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供病患ID")
+	}
+
+	// 取得保險業者錢包
+	entry, ok := wallet.Get(insurerId)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	// 連接區塊鏈
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "區塊鏈連接失敗")
+	}
+	defer gw.Close()
+
+	// 呼叫智能合約方法
+	result, err := contract.EvaluateTransaction("ListReportMetaByPatientID", req.PatientId)
+	if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢病患報告元數據失敗")
+	}
+
+	// 解析鏈碼回傳的JSON結果
+	type rawReportMeta struct {
+		ReportID  string `json:"reportId"`
+		ClinicID  string `json:"clinicId"`
+		CreatedAt int64  `json:"createdAt"`
+	}
+
+	var rawList []rawReportMeta
+	if err := json.Unmarshal(result, &rawList); err != nil {
+		return nil, status.Errorf(codes.Internal, "回傳格式錯誤: %v", err)
+	}
+
+	// 轉換為 protobuf 格式
+	var reports []*pb.ReportMeta
+	for _, r := range rawList {
+		reports = append(reports, &pb.ReportMeta{
+			ReportId:  r.ReportID,
+			ClinicId:  r.ClinicID,
+			CreatedAt: r.CreatedAt,
+		})
+	}
+
+	log.Printf("[Info] 查詢到病患 %s 的報告元數據 %d 筆", req.PatientId, len(reports))
+	log.Printf("[Info] 數據: %v", reports)
+	return &pb.ListReportMetaResponse{
+		Reports: reports,
 	}, nil
 }

@@ -194,3 +194,66 @@ func GetAccessRequestById(requestId string) (map[string]interface{}, error) {
 		"status": status,
 	}, nil
 }
+
+// 獲取保險業者的待處理請求數量
+func GetPendingRequestsCountForInsurer(insurerId string) (int, error) {
+	var count int
+	err := DB.QueryRow(`
+	SELECT COUNT(*) FROM access_requests 
+	WHERE requester_id = ? AND status = 'PENDING'`, insurerId).Scan(&count)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	return count, nil
+}
+
+// 獲取保險業者的已授權病患數量
+func GetAuthorizedPatientsCountForInsurer(insurerId string) (int, error) {
+	var count int
+	err := DB.QueryRow(`
+	SELECT COUNT(DISTINCT patient_id) FROM access_requests 
+	WHERE requester_id = ? AND status = 'APPROVED'`, insurerId).Scan(&count)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	return count, nil
+}
+
+// 獲取保險業者的已授權報告
+func GetAuthorizedReportsForInsurer(insurerId string) ([]map[string]interface{}, error) {
+	rows, err := DB.Query(`
+	SELECT ar.report_id, ar.patient_id, 'Report content will be fetched from blockchain' as content, 
+	       strftime('%Y-%m-%d', datetime(ar.requested_at, 'unixepoch')) as date, 
+	       strftime('%Y-%m-%d', datetime(ar.expiry, 'unixepoch')) as expiry
+	FROM access_requests ar 
+	WHERE ar.requester_id = ? AND ar.status = 'APPROVED'`, insurerId)
+	
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var reports []map[string]interface{}
+	for rows.Next() {
+		var reportId, patientId, content, date, expiry string
+		
+		if err := rows.Scan(&reportId, &patientId, &content, &date, &expiry); err != nil {
+			return nil, err
+		}
+		
+		report := map[string]interface{}{
+			"report_id": reportId,
+			"patient_id": patientId,
+			"content": content,
+			"date": date,
+			"expiry": expiry,
+		}
+		reports = append(reports, report)
+	}
+	
+	return reports, nil
+}

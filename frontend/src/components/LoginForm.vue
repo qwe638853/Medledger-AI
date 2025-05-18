@@ -82,33 +82,33 @@
               <!-- 操作按鈕區 -->
               <div class="action-section mb-4">
                 <!-- 登入按鈕 -->
-                <v-btn
-                  :loading="loading"
-                  color="primary"
-                  block
-                  type="submit"
-                  :disabled="!valid"
-                  elevation="2"
+              <v-btn
+                :loading="loading"
+                color="primary"
+                block
+                type="submit"
+                :disabled="!valid"
+                elevation="2"
                   height="48"
                   class="mb-4 text-body-1 font-weight-bold"
                   prepend-icon="mdi-login"
-                >
+              >
                   登入系統
-                </v-btn>
-                
+              </v-btn>
+              
                 <!-- 測試功能按鈕 -->
-                <v-btn
-                  color="info"
-                  block
-                  @click="handleTestLogin"
-                  elevation="2"
+              <v-btn
+                color="info"
+                block
+                @click="handleTestLogin"
+                elevation="2"
                   height="48"
-                  class="mb-4"
+                class="mb-4"
                   prepend-icon="mdi-test-tube"
                   variant="outlined"
-                >
-                  測試登入
-                </v-btn>
+              >
+                測試登入
+              </v-btn>
               </div>
               
               <!-- 導航按鈕 -->
@@ -195,13 +195,13 @@ const isDevelopment = import.meta.env.MODE === 'development';
 const debugInfo = computed(() => {
   return {
     formState: {
-      username: username.value,
-      password: password.value ? '******' : '',
-      role: selectedRole.value,
+    username: username.value,
+    password: password.value ? '******' : '',
+    role: selectedRole.value,
       roleText: roles.find(r => r.value === selectedRole.value)?.text || '',
     },
     validation: {
-      valid: valid.value,
+    valid: valid.value,
       loading: loading.value,
       errors: form.value?.errors || []
     },

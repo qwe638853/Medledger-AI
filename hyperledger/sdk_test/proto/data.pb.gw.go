@@ -303,6 +303,81 @@ func local_request_HealthService_RejectAccessRequest_0(ctx context.Context, mars
 	return msg, metadata, err
 }
 
+func request_HealthService_GetInsurerDashboardStats_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.GetInsurerDashboardStats(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_HealthService_GetInsurerDashboardStats_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.GetInsurerDashboardStats(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_HealthService_ListAuthorizedReports_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.ListAuthorizedReports(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_HealthService_ListAuthorizedReports_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.ListAuthorizedReports(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_HealthService_ListReportMetaByPatientID_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq PatientIDRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["patient_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "patient_id")
+	}
+	protoReq.PatientId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "patient_id", err)
+	}
+	msg, err := client.ListReportMetaByPatientID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_HealthService_ListReportMetaByPatientID_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq PatientIDRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["patient_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "patient_id")
+	}
+	protoReq.PatientId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "patient_id", err)
+	}
+	msg, err := server.ListReportMetaByPatientID(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterHealthServiceHandlerServer registers the http handlers for service HealthService to "mux".
 // UnaryRPC     :call HealthServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -528,6 +603,66 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 		forward_HealthService_RejectAccessRequest_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_GetInsurerDashboardStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/GetInsurerDashboardStats", runtime.WithHTTPPathPattern("/v1/dashboard/summary"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_HealthService_GetInsurerDashboardStats_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_GetInsurerDashboardStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListAuthorizedReports_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListAuthorizedReports", runtime.WithHTTPPathPattern("/v1/reports/authorized"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_HealthService_ListAuthorizedReports_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListAuthorizedReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListReportMetaByPatientID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListReportMetaByPatientID", runtime.WithHTTPPathPattern("/v1/reports/meta/{patient_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_HealthService_ListReportMetaByPatientID_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListReportMetaByPatientID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -756,33 +891,90 @@ func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_HealthService_RejectAccessRequest_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_HealthService_GetInsurerDashboardStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/GetInsurerDashboardStats", runtime.WithHTTPPathPattern("/v1/dashboard/summary"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_HealthService_GetInsurerDashboardStats_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_GetInsurerDashboardStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListAuthorizedReports_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListAuthorizedReports", runtime.WithHTTPPathPattern("/v1/reports/authorized"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_HealthService_ListAuthorizedReports_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListAuthorizedReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListReportMetaByPatientID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListReportMetaByPatientID", runtime.WithHTTPPathPattern("/v1/reports/meta/{patient_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_HealthService_ListReportMetaByPatientID_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListReportMetaByPatientID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
 var (
-	pattern_HealthService_UploadReport_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "upload"}, ""))
-	pattern_HealthService_ClaimReport_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "claim"}, ""))
-	pattern_HealthService_ReadReport_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "report", "report_id"}, ""))
-	pattern_HealthService_Login_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "login"}, ""))
-	pattern_HealthService_RegisterUser_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "user"}, ""))
-	pattern_HealthService_RegisterInsurer_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "insurer"}, ""))
-	pattern_HealthService_ListMyReports_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "reports"}, ""))
-	pattern_HealthService_RequestAccess_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "request"}, ""))
-	pattern_HealthService_ListAccessRequests_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "requests"}, ""))
-	pattern_HealthService_ApproveAccessRequest_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "approve"}, ""))
-	pattern_HealthService_RejectAccessRequest_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "reject"}, ""))
+	pattern_HealthService_UploadReport_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "upload"}, ""))
+	pattern_HealthService_ClaimReport_0               = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "claim"}, ""))
+	pattern_HealthService_ReadReport_0                = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "report", "report_id"}, ""))
+	pattern_HealthService_Login_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "login"}, ""))
+	pattern_HealthService_RegisterUser_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "user"}, ""))
+	pattern_HealthService_RegisterInsurer_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "insurer"}, ""))
+	pattern_HealthService_ListMyReports_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "reports"}, ""))
+	pattern_HealthService_RequestAccess_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "request"}, ""))
+	pattern_HealthService_ListAccessRequests_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "requests"}, ""))
+	pattern_HealthService_ApproveAccessRequest_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "approve"}, ""))
+	pattern_HealthService_RejectAccessRequest_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "reject"}, ""))
+	pattern_HealthService_GetInsurerDashboardStats_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dashboard", "summary"}, ""))
+	pattern_HealthService_ListAuthorizedReports_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "reports", "authorized"}, ""))
+	pattern_HealthService_ListReportMetaByPatientID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "reports", "meta", "patient_id"}, ""))
 )
 
 var (
-	forward_HealthService_UploadReport_0         = runtime.ForwardResponseMessage
-	forward_HealthService_ClaimReport_0          = runtime.ForwardResponseMessage
-	forward_HealthService_ReadReport_0           = runtime.ForwardResponseMessage
-	forward_HealthService_Login_0                = runtime.ForwardResponseMessage
-	forward_HealthService_RegisterUser_0         = runtime.ForwardResponseMessage
-	forward_HealthService_RegisterInsurer_0      = runtime.ForwardResponseMessage
-	forward_HealthService_ListMyReports_0        = runtime.ForwardResponseMessage
-	forward_HealthService_RequestAccess_0        = runtime.ForwardResponseMessage
-	forward_HealthService_ListAccessRequests_0   = runtime.ForwardResponseMessage
-	forward_HealthService_ApproveAccessRequest_0 = runtime.ForwardResponseMessage
-	forward_HealthService_RejectAccessRequest_0  = runtime.ForwardResponseMessage
+	forward_HealthService_UploadReport_0              = runtime.ForwardResponseMessage
+	forward_HealthService_ClaimReport_0               = runtime.ForwardResponseMessage
+	forward_HealthService_ReadReport_0                = runtime.ForwardResponseMessage
+	forward_HealthService_Login_0                     = runtime.ForwardResponseMessage
+	forward_HealthService_RegisterUser_0              = runtime.ForwardResponseMessage
+	forward_HealthService_RegisterInsurer_0           = runtime.ForwardResponseMessage
+	forward_HealthService_ListMyReports_0             = runtime.ForwardResponseMessage
+	forward_HealthService_RequestAccess_0             = runtime.ForwardResponseMessage
+	forward_HealthService_ListAccessRequests_0        = runtime.ForwardResponseMessage
+	forward_HealthService_ApproveAccessRequest_0      = runtime.ForwardResponseMessage
+	forward_HealthService_RejectAccessRequest_0       = runtime.ForwardResponseMessage
+	forward_HealthService_GetInsurerDashboardStats_0  = runtime.ForwardResponseMessage
+	forward_HealthService_ListAuthorizedReports_0     = runtime.ForwardResponseMessage
+	forward_HealthService_ListReportMetaByPatientID_0 = runtime.ForwardResponseMessage
 )

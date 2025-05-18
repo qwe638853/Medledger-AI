@@ -87,6 +87,21 @@ func (s *server) RejectAccessRequest(ctx context.Context, req *pb.RejectAccessRe
 	return sc.HandleRejectAccessRequest(ctx, req, s.Wallet, s.Builder)
 }
 
+// 新增 GetInsurerDashboardStats API 方法
+func (s *server) GetInsurerDashboardStats(ctx context.Context, in *emptypb.Empty) (*pb.InsurerDashboardStatsResponse, error) {
+	return sc.HandleGetInsurerDashboardStats(ctx, in, s.Wallet, s.Builder)
+}
+
+// 新增 ListAuthorizedReports API 方法
+func (s *server) ListAuthorizedReports(ctx context.Context, in *emptypb.Empty) (*pb.ListAuthorizedReportsResponse, error) {
+	return sc.HandleListAuthorizedReports(ctx, in, s.Wallet, s.Builder)
+}
+
+// 新增 ListReportMetaByPatientID API 方法
+func (s *server) ListReportMetaByPatientID(ctx context.Context, req *pb.PatientIDRequest) (*pb.ListReportMetaResponse, error) {
+	return sc.HandleListReportMetaByPatientID(ctx, req, s.Wallet, s.Builder)
+}
+
 func main() {
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {

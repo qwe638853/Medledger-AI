@@ -322,6 +322,276 @@ export const uploadJsonHealthData = async (patientId, jsonData, fileName, progre
   }
 };
 
+/**
+ * 獲取特定病患的健康報告元數據（僅報告基本信息，不含健檢數據）
+ * @param {string} patientId - 病患身分證字號
+ * @returns {Promise<Array>} - 包含報告元數據的Promise
+ */
+export const fetchReportMetaByPatientID = async (patientId) => {
+  try {
+    if (!patientId || patientId.trim() === '') {
+      throw new Error('病患身分證字號不能為空');
+    }
+
+    const response = await apiClient.get(`/v1/reports/meta/${patientId}`);
+    console.log(response.data);
+    if (response.data && response.data.reports) {
+      // 格式化回傳的數據以符合前端顯示需求
+      return response.data.reports.map(report => ({
+        id: report.reportId,
+        clinic_id: report.clinicId,
+        content: `健康檢查報告 - ${report.reportId}`, // 不含詳細健檢數據
+        date: new Date(Number(report.createdAt) * 1000).toISOString().split('T')[0], // 先轉換為數字再轉換為日期
+        is_authorized: false // 預設為未授權
+      }));
+    }
+    return [];
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取病患報告元數據');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取已授權的健康報告列表
+ * @returns {Promise<Array>} - 包含已授權報告的Promise
+ */
+export const fetchAuthorizedReports = async () => {
+  try {
+    const response = await apiClient.get('/v1/reports/authorized');
+    
+    if (response.data && response.data.reports) {
+      return response.data.reports.map(report => ({
+        id: report.report_id,
+        patient_id: report.patient_id,
+        content: report.content,
+        date: report.date,
+        expiry: report.expiry
+      }));
+    }
+    return [];
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取已授權報告');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取儀表板統計數據
+ * @returns {Promise<Object>} - 包含統計數據的Promise
+ */
+export const fetchDashboardStats = async () => {
+  try {
+    const response = await apiClient.get('/v1/dashboard/summary');
+    
+    if (response.data) {
+      return {
+        totalAuthorized: response.data.total_authorized,
+        pendingRequests: response.data.pending_requests,
+        totalPatients: response.data.total_patients
+      };
+    }
+    return {
+      totalAuthorized: 0,
+      pendingRequests: 0,
+      totalPatients: 0
+    };
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取儀表板統計數據');
+    notifyError(errorMsg);
+    // 返回默認值，避免UI顯示錯誤
+    return {
+      totalAuthorized: 0,
+      pendingRequests: 0,
+      totalPatients: 0
+    };
+  }
+};
+
+/**
+ * 請求病患健康報告授權
+ * @param {string} reportId - 報告ID
+ * @param {string} patientId - 病患身分證字號
+ * @param {string} reason - 請求授權理由
+ * @param {string} expiry - 授權到期日期
+ * @returns {Promise<Object>} - 請求結果的Promise
+ */
+export const requestReportAccess = async (reportId, patientId, reason, expiry) => {
+  try {
+    const response = await apiClient.post('/v1/access/request', {
+      report_id: reportId,
+      patient_id: patientId,
+      reason: reason,
+      expiry: new Date(expiry).getTime() / 1000  // 轉換為 Unix 時間戳
+    });
+    
+    if (response.data && response.data.success) {
+      notifySuccess('已成功送出授權請求');
+      return {
+        success: true,
+        requestId: response.data.request_id,
+        message: '授權請求已送出'
+      };
+    } else {
+      throw new Error(response.data ? response.data.message : '請求授權失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '請求授權');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取病患(我)收到的訪問請求
+ * @returns {Promise<Array>} - 包含訪問請求的Promise
+ */
+export const fetchAccessRequests = async () => {
+  try {
+    const response = await apiClient.get('/v1/access/requests');
+    console.log('獲取授權請求回應:', response);
+    
+    // 處理可能的空回應
+    if (!response.data) {
+      console.warn('授權請求回應為空');
+      return [];
+    }
+    
+    if (response.data && response.data.requests) {
+      // 適應實際後端回應格式，正確映射欄位
+      return response.data.requests.map(request => ({
+        id: request.requestId , // 使用requesterId作為id
+        reportId: request.reportId , // 使用reportId作為reportId
+        requesterId: request.requesterId , // 使用requesterId作為requesterId
+        requesterName: request.targetHash, // 提供fallback
+        reason: request.reason || '',
+        requestTime: request.requestedAt || request.request_time || 0, // 使用requestedAt作為requestTime
+        status: request.status || 'UNKNOWN',
+        expiry: request.expiry || 0
+      }));
+    }
+    return [];
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取授權請求');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 同意授權請求
+ * @param {string} requestId - 請求ID
+ * @returns {Promise<Object>} - 同意授權結果的Promise
+ */
+export const approveAccessRequest = async (requestId) => {
+  try {
+    console.log('同意授權請求1:', requestId);
+    const response = await apiClient.post('/v1/access/approve', {
+      request_id: requestId
+    });
+    
+    // 改進對回應的處理，處理可能的空回應
+    console.log('授權回應:', response);
+    
+    // 即使後端返回空數據，也視為成功
+    if (!response.data) {
+      notifySuccess('已成功授權報告');
+      return {
+        success: true,
+        message: '授權成功'
+      };
+    }
+    
+    if (response.data && response.data.success) {
+      notifySuccess('已成功授權報告');
+      return {
+        success: true,
+        message: '授權成功'
+      };
+    } else {
+      throw new Error(response.data ? response.data.message : '授權失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '同意授權');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 拒絕授權請求
+ * @param {string} requestId - 請求ID
+ * @returns {Promise<Object>} - 拒絕授權結果的Promise
+ */
+export const rejectAccessRequest = async (requestId) => {
+  try {
+    const response = await apiClient.post('/v1/access/reject', {
+      request_id: requestId
+    });
+    
+    // 改進對回應的處理，處理可能的空回應
+    console.log('拒絕授權回應:', response);
+    
+    // 即使後端返回空數據，也視為成功
+    if (!response.data) {
+      notifySuccess('已拒絕授權請求');
+      return {
+        success: true,
+        message: '已拒絕授權請求'
+      };
+    }
+    
+    if (response.data && response.data.success) {
+      notifySuccess('已拒絕授權請求');
+      return {
+        success: true,
+        message: '已拒絕授權請求'
+      };
+    } else {
+      throw new Error(response.data ? response.data.message : '拒絕授權失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '拒絕授權');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取已授予的授權票據列表
+ * @returns {Promise<Array>} - 包含授權票據的Promise
+ */
+export const fetchGrantedTickets = async () => {
+  try {
+    const response = await apiClient.get('/v1/access/granted');
+    console.log('獲取已授權票據回應:', response);
+    
+    // 處理可能的空回應
+    if (!response.data) {
+      console.warn('已授權票據回應為空');
+      return [];
+    }
+    
+    if (response.data && response.data.tickets) {
+      // 適應實際後端回應格式，正確映射欄位
+      return response.data.tickets.map(ticket => ({
+        reportId: ticket.reportId || ticket.report_id || '',
+        targetId: ticket.targetId || ticket.target_id || ticket.requesterId || '', 
+        targetName: ticket.targetName || ticket.target_name || ticket.targetId || ticket.requesterId || '未知對象',
+        grantTime: ticket.grantedAt || ticket.grant_time || ticket.requestedAt || 0,
+        expiry: ticket.expiry || 0
+      }));
+    }
+    return [];
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取已授權票據');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
@@ -331,5 +601,13 @@ export default {
   fetchOtherHealthData,
   uploadHealthReport,
   batchUploadHealthReports,
-  uploadJsonHealthData
+  uploadJsonHealthData,
+  fetchReportMetaByPatientID,
+  fetchAuthorizedReports,
+  fetchDashboardStats,
+  requestReportAccess,
+  fetchAccessRequests,
+  approveAccessRequest,
+  rejectAccessRequest,
+  fetchGrantedTickets
 }; 

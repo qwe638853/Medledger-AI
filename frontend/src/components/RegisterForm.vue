@@ -32,7 +32,6 @@
                   active: currentStep === String(step.value),
                   completed: Number(currentStep) > step.value
                 }"
-                @click="goToStep(step.value)"
               >
                 <span class="step-circle">{{ step.value }}</span>
                 <span class="step-title">{{ step.title }}</span>
@@ -795,10 +794,6 @@ const steps = [
   { value: 3, title: '帳號設定' },
   { value: 4, title: '身分證上傳' }
 ];
-function goToStep(val) {
-  // 可加驗證，這裡直接切換
-  currentStep.value = String(val);
-}
 </script>
 
 <style scoped>
@@ -914,7 +909,7 @@ function goToStep(val) {
   flex-direction: column;
   align-items: center;
   flex: 1 1 0;
-  cursor: pointer;
+  cursor: default;
   background: #f5f7fa;
   border: 2px solid #b0bec5;
   border-radius: 12px;

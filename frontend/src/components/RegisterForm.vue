@@ -32,7 +32,6 @@
                   active: currentStep === String(step.value),
                   completed: Number(currentStep) > step.value
                 }"
-                @click="goToStep(step.value)"
               >
                 <span class="step-circle">{{ step.value }}</span>
                 <span class="step-title">{{ step.title }}</span>
@@ -914,7 +913,6 @@ function goToStep(val) {
   flex-direction: column;
   align-items: center;
   flex: 1 1 0;
-  cursor: pointer;
   background: #f5f7fa;
   border: 2px solid #b0bec5;
   border-radius: 12px;

@@ -32,7 +32,6 @@
                   active: currentStep === String(step.value),
                   completed: Number(currentStep) > step.value
                 }"
-                @click="goToStep(step.value)"
               >
                 <span class="step-circle">{{ step.value }}</span>
                 <span class="step-title">{{ step.title }}</span>
@@ -603,8 +602,21 @@ const validateAndGoNextAccount = () => {
 
 // 表單提交
 const handleRegister = async () => {
-  if (!accountForm.value.validate()) {
-    showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+  // 修改驗證邏輯，避免在最後步驟重新驗證前面步驟的表單
+  if (currentStep.value !== '4') {
+    // 如果不是最後一步，需要驗證當前表單
+    if (currentStep.value === '3' && accountForm.value && !accountForm.value.validate()) {
+      showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+      return;
+    } else if (currentStep.value === '2' && basicForm.value && !basicForm.value.validate()) {
+      showAlert('error', '請確認所有欄位都已正確填寫', '表單驗證失敗');
+      return;
+    }
+  }
+  
+  // 在最後一步，檢查身份證是否已上傳
+  if (currentStep.value === '4' && (!registerForm.value.idCardFront || !registerForm.value.idCardBack)) {
+    showAlert('error', '請上傳身分證正反面照片', '表單驗證失敗');
     return;
   }
   
@@ -782,10 +794,6 @@ const steps = [
   { value: 3, title: '帳號設定' },
   { value: 4, title: '身分證上傳' }
 ];
-function goToStep(val) {
-  // 可加驗證，這裡直接切換
-  currentStep.value = String(val);
-}
 </script>
 
 <style scoped>
@@ -901,7 +909,7 @@ function goToStep(val) {
   flex-direction: column;
   align-items: center;
   flex: 1 1 0;
-  cursor: pointer;
+  cursor: default;
   background: #f5f7fa;
   border: 2px solid #b0bec5;
   border-radius: 12px;

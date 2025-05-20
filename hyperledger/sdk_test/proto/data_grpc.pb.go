@@ -34,6 +34,7 @@ const (
 	HealthService_GetInsurerDashboardStats_FullMethodName  = "/health.HealthService/GetInsurerDashboardStats"
 	HealthService_ListAuthorizedReports_FullMethodName     = "/health.HealthService/ListAuthorizedReports"
 	HealthService_ListReportMetaByPatientID_FullMethodName = "/health.HealthService/ListReportMetaByPatientID"
+	HealthService_ViewAuthorizedReport_FullMethodName      = "/health.HealthService/ViewAuthorizedReport"
 )
 
 // HealthServiceClient is the client API for HealthService service.
@@ -54,6 +55,7 @@ type HealthServiceClient interface {
 	GetInsurerDashboardStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InsurerDashboardStatsResponse, error)
 	ListAuthorizedReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedReportsResponse, error)
 	ListReportMetaByPatientID(ctx context.Context, in *PatientIDRequest, opts ...grpc.CallOption) (*ListReportMetaResponse, error)
+	ViewAuthorizedReport(ctx context.Context, in *ViewAuthorizedReportRequest, opts ...grpc.CallOption) (*ViewAuthorizedReportResponse, error)
 }
 
 type healthServiceClient struct {
@@ -204,6 +206,16 @@ func (c *healthServiceClient) ListReportMetaByPatientID(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *healthServiceClient) ViewAuthorizedReport(ctx context.Context, in *ViewAuthorizedReportRequest, opts ...grpc.CallOption) (*ViewAuthorizedReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ViewAuthorizedReportResponse)
+	err := c.cc.Invoke(ctx, HealthService_ViewAuthorizedReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HealthServiceServer is the server API for HealthService service.
 // All implementations must embed UnimplementedHealthServiceServer
 // for forward compatibility.
@@ -222,6 +234,7 @@ type HealthServiceServer interface {
 	GetInsurerDashboardStats(context.Context, *emptypb.Empty) (*InsurerDashboardStatsResponse, error)
 	ListAuthorizedReports(context.Context, *emptypb.Empty) (*ListAuthorizedReportsResponse, error)
 	ListReportMetaByPatientID(context.Context, *PatientIDRequest) (*ListReportMetaResponse, error)
+	ViewAuthorizedReport(context.Context, *ViewAuthorizedReportRequest) (*ViewAuthorizedReportResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
 
@@ -273,6 +286,9 @@ func (UnimplementedHealthServiceServer) ListAuthorizedReports(context.Context, *
 }
 func (UnimplementedHealthServiceServer) ListReportMetaByPatientID(context.Context, *PatientIDRequest) (*ListReportMetaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListReportMetaByPatientID not implemented")
+}
+func (UnimplementedHealthServiceServer) ViewAuthorizedReport(context.Context, *ViewAuthorizedReportRequest) (*ViewAuthorizedReportResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ViewAuthorizedReport not implemented")
 }
 func (UnimplementedHealthServiceServer) mustEmbedUnimplementedHealthServiceServer() {}
 func (UnimplementedHealthServiceServer) testEmbeddedByValue()                       {}
@@ -547,6 +563,24 @@ func _HealthService_ListReportMetaByPatientID_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HealthService_ViewAuthorizedReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ViewAuthorizedReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).ViewAuthorizedReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_ViewAuthorizedReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).ViewAuthorizedReport(ctx, req.(*ViewAuthorizedReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HealthService_ServiceDesc is the grpc.ServiceDesc for HealthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -609,6 +643,10 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListReportMetaByPatientID",
 			Handler:    _HealthService_ListReportMetaByPatientID_Handler,
+		},
+		{
+			MethodName: "ViewAuthorizedReport",
+			Handler:    _HealthService_ViewAuthorizedReport_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

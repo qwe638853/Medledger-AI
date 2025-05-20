@@ -1,5 +1,6 @@
 import apiClient, { handleApiError, notifyError, notifySuccess } from './apiService';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 /**
  * 獲取用戶已上傳的健康檢查數據
@@ -363,9 +364,8 @@ export const fetchAuthorizedReports = async () => {
     
     if (response.data && response.data.reports) {
       return response.data.reports.map(report => ({
-        id: report.report_id,
-        patient_id: report.patient_id,
-        content: report.content,
+        id: report.reportId,
+        patient_id: report.patientId,
         date: report.date,
         expiry: report.expiry
       }));
@@ -592,6 +592,21 @@ export const fetchGrantedTickets = async () => {
   }
 };
 
+// 獲取報告詳細內容
+export const fetchReportContent = async (reportId) => {
+  try {
+    const response = await apiClient.get(`/v1/reports/authorized/${reportId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('獲取報告內容失敗:', error);
+    throw error;
+  }
+}
+
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
@@ -609,5 +624,6 @@ export default {
   fetchAccessRequests,
   approveAccessRequest,
   rejectAccessRequest,
-  fetchGrantedTickets
+  fetchGrantedTickets,
+  fetchReportContent
 }; 

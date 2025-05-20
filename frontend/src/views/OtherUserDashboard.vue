@@ -191,6 +191,115 @@ onMounted(() => {
 const handleLogout = () => {
   authStore.logout();
 };
+
+// 查看報告詳情
+const reportDetailDialog = ref(false);
+const selectedReportDetail = ref(null);
+const loadingReportDetail = ref(false);
+
+const goToReportDetail = async (item) => {
+  loadingReportDetail.value = true;
+  try {
+    // 從後端獲取報告詳細內容
+    const response = await healthCheckService.fetchReportContent(item.id);
+    if (!response.success) {
+      throw new Error(response.message || '獲取報告內容失敗');
+    }
+
+    // 解析報告內容
+    let reportContent;
+    try {
+      reportContent = JSON.parse(response.result_json);
+    } catch (e) {
+      reportContent = response.result_json;
+    }
+
+    selectedReportDetail.value = {
+      ...item,
+      rawData: reportContent
+    };
+    reportDetailDialog.value = true;
+  } catch (error) {
+    console.error('獲取報告內容失敗:', error);
+    snackbarMessage.value = '獲取報告內容失敗';
+    snackbarColor.value = 'error';
+    snackbar.value = true;
+  } finally {
+    loadingReportDetail.value = false;
+  }
+};
+
+// 計算指標值（用於圓形進度條）
+const calculateMetricValue = (value) => {
+  // 假設正常值範圍是 0-100
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return 0;
+  return Math.min(Math.max(numValue, 0), 100);
+};
+
+// 獲取指標顏色
+const getMetricColor = (value) => {
+  const numValue = parseFloat(value);
+  if (isNaN(numValue)) return 'grey';
+  
+  if (numValue < 30) return 'red';
+  if (numValue < 70) return 'orange';
+  return 'green';
+};
+
+// 格式化日期
+const formatDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// 獲取授權到期 Chip 的顏色
+const getExpiryChipColor = (expiry) => {
+  if (!expiry) return 'green-lighten-4';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return 'red-lighten-4';
+  if (daysUntilExpiry <= 7) return 'orange-lighten-4';
+  return 'green-lighten-4';
+};
+
+// 獲取授權到期 Chip 的文字顏色
+const getExpiryTextColor = (expiry) => {
+  if (!expiry) return 'green-darken-2';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return 'red-darken-2';
+  if (daysUntilExpiry <= 7) return 'orange-darken-2';
+  return 'green-darken-2';
+};
+
+// 格式化授權到期日期
+const formatExpiryDate = (expiry) => {
+  if (!expiry) return '永久';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return '已過期';
+  if (daysUntilExpiry <= 7) return `${daysUntilExpiry} 天後到期`;
+  
+  return expiryDate.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
 </script>
 
 <template>
@@ -501,60 +610,91 @@ const handleLogout = () => {
       <v-row v-if="viewMode === 'authorized'" justify="center">
         <v-col cols="12">
           <v-card class="rounded-lg" elevation="2">
-            <v-card-title class="py-3 px-5 bg-green-lighten-5 d-flex align-center">
-              <v-icon size="24" color="green-darken-2" class="me-2">mdi-folder-account</v-icon>
-              <span class="text-h6 font-weight-bold text-green-darken-3">所有已授權健康報告</span>
-              <v-spacer></v-spacer>
-          <v-btn
-                color="blue-darken-2"
-                variant="text"
+            <v-card-title class="py-4 px-6 bg-green-lighten-5 d-flex align-center">
+              <div class="d-flex align-center flex-grow-1">
+                <v-icon size="28" color="green-darken-2" class="me-3">mdi-folder-account</v-icon>
+                <span class="text-h5 font-weight-bold text-green-darken-3">所有已授權健康報告</span>
+              </div>
+              <v-btn
+                color="grey-darken-1"
+                variant="tonal"
                 size="small"
                 @click="switchToSearchView"
-                prepend-icon="mdi-keyboard-return"
+                prepend-icon="mdi-arrow-left"
+                class="back-btn"
+                elevation="1"
               >
                 返回搜尋
-          </v-btn>
+              </v-btn>
             </v-card-title>
             
             <v-data-table
               :headers="[
-                { title: '報告編號', key: 'id', align: 'start', width: '100px' },
-                { title: '病患 ID', key: 'patient_id', align: 'start', width: '130px' },
-                { title: '健康數據', key: 'content', align: 'start' },
-                { title: '報告日期', key: 'date', align: 'center', width: '120px' },
-                { title: '授權到期', key: 'expiry', align: 'center', width: '120px' }
+                { title: '報告編號', key: 'id', align: 'start', width: '120px' },
+                { title: '病患 ID', key: 'patient_id', align: 'start', width: '150px' },
+                { title: '報告日期', key: 'date', align: 'center', width: '140px' },
+                { title: '授權到期', key: 'expiry', align: 'center', width: '140px' },
+                { title: '查看報告', key: 'actions', align: 'center', width: '100px', sortable: false }
               ]"
               :items="allAuthorizedReports"
               :loading="loadingAuthorizedReports"
               loading-text="正在載入已授權報告..."
-              class="elevation-0"
+              class="elevation-0 authorized-reports-table"
               hover
               item-value="id"
-              density="compact"
+              density="comfortable"
             >
               <template v-slot:item.patient_id="{ item }">
-                <v-chip size="small" color="blue-lighten-4" class="font-weight-medium">
+                <v-chip
+                  size="small"
+                  color="blue-lighten-4"
+                  class="font-weight-medium patient-chip"
+                >
                   {{ item.patient_id }}
                 </v-chip>
               </template>
-              <template v-slot:item.content="{ item }">
-                <div style="max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  {{ item.content }}
-                </div>
-              </template>
+              
               <template v-slot:item.date="{ item }">
-                {{ item.date || '-' }}
-              </template>
-              <template v-slot:item.expiry="{ item }">
-                <v-chip 
-                  size="small" 
-                  :color="new Date(item.expiry) < new Date() ? 'error-lighten-4' : 'green-lighten-4'"
-                  :text-color="new Date(item.expiry) < new Date() ? 'error-darken-2' : 'green-darken-2'"
-                  variant="outlined"
+                <v-chip
+                  size="small"
+                  color="grey-lighten-4"
+                  class="date-chip"
                 >
-                  {{ item.expiry || '永久' }}
+                  {{ formatDate(item.date) }}
                 </v-chip>
               </template>
+              
+              <template v-slot:item.expiry="{ item }">
+                <v-chip
+                  size="small"
+                  :color="getExpiryChipColor(item.expiry)"
+                  :text-color="getExpiryTextColor(item.expiry)"
+                  variant="outlined"
+                  class="expiry-chip"
+                >
+                  {{ formatExpiryDate(item.expiry) }}
+                </v-chip>
+              </template>
+              
+              <template v-slot:item.actions="{ item }">
+                <v-tooltip location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      color="blue-darken-2"
+                      variant="tonal"
+                      size="small"
+                      @click="goToReportDetail(item)"
+                      v-bind="props"
+                      class="view-content-btn"
+                      :loading="loadingReportDetail"
+                    >
+                      <v-icon>mdi-eye</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>查看詳細內容</span>
+                </v-tooltip>
+              </template>
+              
               <template v-slot:no-data>
                 <div class="text-center pa-5">
                   <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-folder-open-outline</v-icon>
@@ -564,8 +704,8 @@ const handleLogout = () => {
               </template>
             </v-data-table>
           </v-card>
-              </v-col>
-            </v-row>
+        </v-col>
+      </v-row>
 
       <!-- 未搜尋或搜尋前的提示 -->
       <v-row v-if="!showSearchResults && viewMode === 'search'" justify="center">
@@ -697,6 +837,102 @@ const handleLogout = () => {
           ></v-btn>
         </template>
       </v-snackbar>
+
+      <!-- 報告詳情對話框 -->
+      <v-dialog v-model="reportDetailDialog" max-width="900" scrollable>
+        <v-card v-if="selectedReportDetail" class="report-detail-card">
+          <v-card-title class="py-4 px-6 bg-blue-lighten-5 d-flex align-center">
+            <v-icon size="28" color="blue-darken-2" class="me-3">mdi-clipboard-pulse</v-icon>
+            <span class="text-h5 font-weight-bold text-blue-darken-3">健康檢查報告詳情</span>
+          </v-card-title>
+          
+          <v-card-subtitle class="px-6 pt-4 pb-2">
+            <div class="d-flex align-center">
+              <v-chip
+                size="small"
+                color="blue-lighten-4"
+                class="me-3"
+              >
+                報告編號：{{ selectedReportDetail.id }}
+              </v-chip>
+              <v-chip
+                size="small"
+                color="grey-lighten-4"
+              >
+                日期：{{ formatDate(selectedReportDetail.date) }}
+              </v-chip>
+            </div>
+          </v-card-subtitle>
+          
+          <v-divider></v-divider>
+          
+          <v-card-text class="pa-6">
+            <v-container>
+              <v-row v-if="!selectedReportDetail.rawData">
+                <v-col cols="12" class="text-center">
+                  <v-alert type="info" variant="tonal" class="mb-0">
+                    <template v-slot:prepend>
+                      <v-icon>mdi-information</v-icon>
+                    </template>
+                    此報告無法解析為視覺化指標，請查看原始數據
+                  </v-alert>
+                </v-col>
+              </v-row>
+              
+              <template v-else>
+                <v-row>
+                  <v-col cols="12">
+                    <h3 class="text-h6 font-weight-bold mb-4">健康指標視覺化</h3>
+                  </v-col>
+                </v-row>
+                
+                <!-- 視覺化圓圈指標 -->
+                <v-row>
+                  <v-col
+                    v-for="(value, key) in selectedReportDetail.rawData"
+                    :key="key"
+                    cols="12"
+                    sm="6"
+                    md="4"
+                    class="mb-4"
+                  >
+                    <div class="metric-container">
+                      <v-progress-circular
+                        :rotate="-90"
+                        :size="120"
+                        :width="15"
+                        :value="calculateMetricValue(value)"
+                        :color="getMetricColor(value)"
+                        class="metric-circle"
+                      >
+                        {{ value }}
+                      </v-progress-circular>
+                      <div class="metric-details mt-2">
+                        <div class="metric-name">{{ key }}</div>
+                        <div class="metric-value">{{ value }}</div>
+                      </div>
+                    </div>
+                  </v-col>
+                </v-row>
+              </template>
+            </v-container>
+          </v-card-text>
+          
+          <v-divider></v-divider>
+          
+          <v-card-actions class="pa-4">
+            <v-spacer></v-spacer>
+            <v-btn
+              color="blue-darken-2"
+              variant="tonal"
+              @click="reportDetailDialog = false"
+              prepend-icon="mdi-close"
+            >
+              關閉
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
   </v-container>
   </div>
 </template>
@@ -912,5 +1148,150 @@ const handleLogout = () => {
 
 :deep(.v-date-picker) {
   border-radius: 12px;
+}
+
+.view-content-btn {
+  min-width: 100px;
+  transition: all 0.3s ease;
+}
+
+.view-content-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 已授權報告表格樣式 */
+.authorized-reports-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.authorized-reports-table .v-data-table-header th) {
+  background-color: #e3f2fd !important;
+  font-weight: 600 !important;
+  color: #1976d2 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.authorized-reports-table .v-data-table-row:hover) {
+  background-color: #f5f9ff !important;
+  transition: background-color 0.3s ease;
+}
+
+:deep(.authorized-reports-table .v-data-table-row td) {
+  padding: 12px 16px !important;
+}
+
+/* 返回按鈕樣式 */
+.back-btn {
+  border-radius: 20px;
+  padding: 0 16px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  transform: translateX(-2px);
+  background-color: #e0e0e0 !important;
+}
+
+/* 查看內容按鈕樣式 */
+.view-content-btn {
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  transition: all 0.3s ease;
+}
+
+.view-content-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 病患 ID Chip 樣式 */
+.patient-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.patient-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 到期 Chip 樣式 */
+.expiry-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.expiry-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 日期 Chip 樣式 */
+.date-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.date-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 報告詳情對話框樣式 */
+.report-detail-card {
+  max-height: 90vh;
+}
+
+.metric-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.metric-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  background-color: #f0f9ff;
+}
+
+.metric-details {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.metric-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.metric-value {
+  font-size: 1.2rem;
+  margin-top: 5px;
+  color: #424242;
+  font-weight: 500;
+}
+
+.metric-circle {
+  transition: all 0.3s ease;
+}
+
+.metric-circle:hover {
+  transform: scale(1.05);
 }
 </style>

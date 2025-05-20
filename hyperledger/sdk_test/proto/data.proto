@@ -96,6 +96,12 @@ service HealthService {
     };
   }
 
+  rpc ViewAuthorizedReport(ViewAuthorizedReportRequest) returns (ViewAuthorizedReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/authorized/{report_id}"
+    };
+  }
+
 }
 
 
@@ -246,7 +252,6 @@ message InsurerDashboardStatsResponse {
 message AuthorizedReport {
   string report_id = 1;
   string patient_id = 2;
-  string content = 3;
   string date = 4;
   string expiry = 5;
 }
@@ -268,4 +273,13 @@ message ReportMeta {
 
 message ListReportMetaResponse {
   repeated ReportMeta reports = 1;
+}
+
+message ViewAuthorizedReportRequest {
+  string report_id = 1;
+}
+
+message ViewAuthorizedReportResponse {
+  bool success = 1;
+  string result_json = 2;        // 報告全文或格式化內容
 }

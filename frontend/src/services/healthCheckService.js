@@ -593,9 +593,9 @@ export const fetchGrantedTickets = async () => {
 };
 
 // 獲取報告詳細內容
-export const fetchReportContent = async (reportId) => {
+export const fetchReportContent = async (reportId, patientId) => {
   try {
-    const response = await apiClient.get(`/v1/reports/authorized/${reportId}`, {
+    const response = await apiClient.get(`/v1/reports/authorized/${patientId}/${reportId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }

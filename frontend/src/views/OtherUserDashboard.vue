@@ -2,12 +2,14 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import healthCheckService from '../services/healthCheckService';
+import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const currentUser = computed(() => authStore.currentUser);
 const token = ref(authStore.token);
 const patientReports = ref([]);
 const loading = ref(false);
+const router = useRouter();
 
 // 分類報告
 const authorizedReports = computed(() => patientReports.value.filter(report => report.is_authorized));
@@ -192,58 +194,93 @@ const handleLogout = () => {
   authStore.logout();
 };
 
-// 查看報告詳情
-const reportDetailDialog = ref(false);
-const selectedReportDetail = ref(null);
-const loadingReportDetail = ref(false);
-
-const goToReportDetail = async (item) => {
-  loadingReportDetail.value = true;
-  try {
-    // 從後端獲取報告詳細內容
-    const response = await healthCheckService.fetchReportContent(item.id);
-    if (!response.success) {
-      throw new Error(response.message || '獲取報告內容失敗');
-    }
-
-    // 解析報告內容
-    let reportContent;
-    try {
-      reportContent = JSON.parse(response.result_json);
-    } catch (e) {
-      reportContent = response.result_json;
-    }
-
-    selectedReportDetail.value = {
-      ...item,
-      rawData: reportContent
-    };
-    reportDetailDialog.value = true;
-  } catch (error) {
-    console.error('獲取報告內容失敗:', error);
-    snackbarMessage.value = '獲取報告內容失敗';
-    snackbarColor.value = 'error';
-    snackbar.value = true;
-  } finally {
-    loadingReportDetail.value = false;
-  }
+// 查看內容按鈕的事件改為：
+const goToReportDetail = (item) => {
+  // 確保 item.report_id 和 item.patient_id 有值，若來源 key 為 id/patientId 也一併處理
+  console.log(item);
+  const report_id = item.id;
+  const patient_id = item.patient_id ;
+  router.push({ name: 'ReportDetail', params: { report_id, patient_id } });
 };
 
 // 計算指標值（用於圓形進度條）
 const calculateMetricValue = (value) => {
-  // 假設正常值範圍是 0-100
-  const numValue = parseFloat(value);
+  if (!value) return 0;
+  
+  // 提取數值部分
+  const numStr = value.toString().match(/[\d.]+/);
+  if (!numStr) return 0;
+  
+  const numValue = parseFloat(numStr[0]);
   if (isNaN(numValue)) return 0;
-  return Math.min(Math.max(numValue, 0), 100);
+  
+  // 根據不同指標類型設定最大值
+  const maxValues = {
+    'Glu-AC': 200,    // 血糖
+    'HbA1c': 10,      // 糖化血色素
+    'LDL-C': 200,     // 低密度脂蛋白膽固醇
+    'HDL-C': 100,     // 高密度脂蛋白膽固醇
+    'TG': 500,        // 三酸甘油脂
+    'T-CHO': 300,     // 總膽固醇
+    'BP': 200,        // 血壓
+    'WBC': 20,        // 白血球
+    'RBC': 8,         // 紅血球
+    'Hb': 20,         // 血紅素
+    'Hct': 60,        // 血球容積比
+    'PLT': 500,       // 血小板
+    'AST（GOT）': 100, // 天門冬胺酸轉胺酶
+    'ALT（GPT）': 100, // 丙胺酸轉胺酶
+    'ALP': 200,       // 鹼性磷酸酶
+    'UN': 50,         // 尿素氮
+    'CRE': 5,         // 肌酸酐
+    'U.A': 10,        // 尿酸
+  };
+
+  // 獲取對應的最大值，如果沒有定義則使用 100 作為預設值
+  const maxValue = maxValues[Object.keys(maxValues).find(key => value.includes(key))] || 100;
+  
+  // 計算百分比值
+  return Math.min(Math.max((numValue / maxValue) * 100, 0), 100);
 };
 
 // 獲取指標顏色
 const getMetricColor = (value) => {
-  const numValue = parseFloat(value);
+  if (!value) return 'grey';
+  
+  // 提取數值部分
+  const numStr = value.toString().match(/[\d.]+/);
+  if (!numStr) return 'grey';
+  
+  const numValue = parseFloat(numStr[0]);
   if (isNaN(numValue)) return 'grey';
   
-  if (numValue < 30) return 'red';
-  if (numValue < 70) return 'orange';
+  // 根據不同指標類型設定正常值範圍
+  const ranges = {
+    'Glu-AC': { min: 70, max: 100 },    // 血糖
+    'HbA1c': { min: 4, max: 5.7 },      // 糖化血色素
+    'LDL-C': { min: 0, max: 130 },      // 低密度脂蛋白膽固醇
+    'HDL-C': { min: 40, max: 60 },      // 高密度脂蛋白膽固醇
+    'TG': { min: 0, max: 150 },         // 三酸甘油脂
+    'T-CHO': { min: 0, max: 200 },      // 總膽固醇
+    'BP': { min: 90, max: 140 },        // 血壓（收縮壓）
+    'WBC': { min: 4, max: 10 },         // 白血球
+    'RBC': { min: 4.5, max: 5.5 },      // 紅血球
+    'Hb': { min: 12, max: 16 },         // 血紅素
+    'Hct': { min: 37, max: 50 },        // 血球容積比
+    'PLT': { min: 150, max: 450 },      // 血小板
+    'AST（GOT）': { min: 0, max: 40 },   // 天門冬胺酸轉胺酶
+    'ALT（GPT）': { min: 0, max: 40 },   // 丙胺酸轉胺酶
+    'ALP': { min: 30, max: 100 },       // 鹼性磷酸酶
+    'UN': { min: 7, max: 20 },          // 尿素氮
+    'CRE': { min: 0.6, max: 1.2 },      // 肌酸酐
+    'U.A': { min: 2.5, max: 7.2 },      // 尿酸
+  };
+
+  // 獲取對應的範圍，如果沒有定義則使用預設範圍
+  const range = ranges[Object.keys(ranges).find(key => value.includes(key))] || { min: 0, max: 100 };
+  
+  if (numValue < range.min) return 'red';
+  if (numValue > range.max) return 'orange';
   return 'green';
 };
 
@@ -686,7 +723,6 @@ const formatExpiryDate = (expiry) => {
                       @click="goToReportDetail(item)"
                       v-bind="props"
                       class="view-content-btn"
-                      :loading="loadingReportDetail"
                     >
                       <v-icon>mdi-eye</v-icon>
                     </v-btn>
@@ -837,102 +873,6 @@ const formatExpiryDate = (expiry) => {
           ></v-btn>
         </template>
       </v-snackbar>
-
-      <!-- 報告詳情對話框 -->
-      <v-dialog v-model="reportDetailDialog" max-width="900" scrollable>
-        <v-card v-if="selectedReportDetail" class="report-detail-card">
-          <v-card-title class="py-4 px-6 bg-blue-lighten-5 d-flex align-center">
-            <v-icon size="28" color="blue-darken-2" class="me-3">mdi-clipboard-pulse</v-icon>
-            <span class="text-h5 font-weight-bold text-blue-darken-3">健康檢查報告詳情</span>
-          </v-card-title>
-          
-          <v-card-subtitle class="px-6 pt-4 pb-2">
-            <div class="d-flex align-center">
-              <v-chip
-                size="small"
-                color="blue-lighten-4"
-                class="me-3"
-              >
-                報告編號：{{ selectedReportDetail.id }}
-              </v-chip>
-              <v-chip
-                size="small"
-                color="grey-lighten-4"
-              >
-                日期：{{ formatDate(selectedReportDetail.date) }}
-              </v-chip>
-            </div>
-          </v-card-subtitle>
-          
-          <v-divider></v-divider>
-          
-          <v-card-text class="pa-6">
-            <v-container>
-              <v-row v-if="!selectedReportDetail.rawData">
-                <v-col cols="12" class="text-center">
-                  <v-alert type="info" variant="tonal" class="mb-0">
-                    <template v-slot:prepend>
-                      <v-icon>mdi-information</v-icon>
-                    </template>
-                    此報告無法解析為視覺化指標，請查看原始數據
-                  </v-alert>
-                </v-col>
-              </v-row>
-              
-              <template v-else>
-                <v-row>
-                  <v-col cols="12">
-                    <h3 class="text-h6 font-weight-bold mb-4">健康指標視覺化</h3>
-                  </v-col>
-                </v-row>
-                
-                <!-- 視覺化圓圈指標 -->
-                <v-row>
-                  <v-col
-                    v-for="(value, key) in selectedReportDetail.rawData"
-                    :key="key"
-                    cols="12"
-                    sm="6"
-                    md="4"
-                    class="mb-4"
-                  >
-                    <div class="metric-container">
-                      <v-progress-circular
-                        :rotate="-90"
-                        :size="120"
-                        :width="15"
-                        :value="calculateMetricValue(value)"
-                        :color="getMetricColor(value)"
-                        class="metric-circle"
-                      >
-                        {{ value }}
-                      </v-progress-circular>
-                      <div class="metric-details mt-2">
-                        <div class="metric-name">{{ key }}</div>
-                        <div class="metric-value">{{ value }}</div>
-                      </div>
-                    </div>
-                  </v-col>
-                </v-row>
-              </template>
-            </v-container>
-          </v-card-text>
-          
-          <v-divider></v-divider>
-          
-          <v-card-actions class="pa-4">
-            <v-spacer></v-spacer>
-            <v-btn
-              color="blue-darken-2"
-              variant="tonal"
-              @click="reportDetailDialog = false"
-              prepend-icon="mdi-close"
-            >
-              關閉
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
   </v-container>
   </div>
 </template>
@@ -1244,54 +1184,5 @@ const formatExpiryDate = (expiry) => {
 .date-chip:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 報告詳情對話框樣式 */
-.report-detail-card {
-  max-height: 90vh;
-}
-
-.metric-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px;
-  border-radius: 12px;
-  background-color: #f9f9f9;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-.metric-container:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  background-color: #f0f9ff;
-}
-
-.metric-details {
-  text-align: center;
-  padding-top: 12px;
-}
-
-.metric-name {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #333;
-}
-
-.metric-value {
-  font-size: 1.2rem;
-  margin-top: 5px;
-  color: #424242;
-  font-weight: 500;
-}
-
-.metric-circle {
-  transition: all 0.3s ease;
-}
-
-.metric-circle:hover {
-  transform: scale(1.05);
 }
 </style>

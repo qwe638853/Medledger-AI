@@ -1611,6 +1611,7 @@ func (x *ListReportMetaResponse) GetReports() []*ReportMeta {
 type ViewAuthorizedReportRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1648,6 +1649,13 @@ func (*ViewAuthorizedReportRequest) Descriptor() ([]byte, []int) {
 func (x *ViewAuthorizedReportRequest) GetReportId() string {
 	if x != nil {
 		return x.ReportId
+	}
+	return ""
+}
+
+func (x *ViewAuthorizedReportRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -1818,9 +1826,10 @@ const file_proto_data_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x03 \x01(\x03R\tcreatedAt\"F\n" +
 	"\x16ListReportMetaResponse\x12,\n" +
-	"\areports\x18\x01 \x03(\v2\x12.health.ReportMetaR\areports\":\n" +
+	"\areports\x18\x01 \x03(\v2\x12.health.ReportMetaR\areports\"S\n" +
 	"\x1bViewAuthorizedReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\"Y\n" +
+	"\treport_id\x18\x01 \x01(\tR\breportId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"Y\n" +
 	"\x1cViewAuthorizedReportResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
 	"\vresult_json\x18\x02 \x01(\tR\n" +
@@ -1828,7 +1837,7 @@ const file_proto_data_proto_rawDesc = "" +
 	"\x13AccessRequestStatus\x12\v\n" +
 	"\aPENDING\x10\x00\x12\f\n" +
 	"\bAPPROVED\x10\x01\x12\f\n" +
-	"\bREJECTED\x10\x022\x8d\r\n" +
+	"\bREJECTED\x10\x022\x97\r\n" +
 	"\rHealthService\x12`\n" +
 	"\fUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/v1/upload\x12\\\n" +
@@ -1845,8 +1854,8 @@ const file_proto_data_proto_rawDesc = "" +
 	"\x13RejectAccessRequest\x12\".health.RejectAccessRequestRequest\x1a#.health.RejectAccessRequestResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/access/reject\x12x\n" +
 	"\x18GetInsurerDashboardStats\x12\x16.google.protobuf.Empty\x1a%.health.InsurerDashboardStatsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/dashboard/summary\x12v\n" +
 	"\x15ListAuthorizedReports\x12\x16.google.protobuf.Empty\x1a%.health.ListAuthorizedReportsResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/reports/authorized\x12|\n" +
-	"\x19ListReportMetaByPatientID\x12\x18.health.PatientIDRequest\x1a\x1e.health.ListReportMetaResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/reports/meta/{patient_id}\x12\x8d\x01\n" +
-	"\x14ViewAuthorizedReport\x12#.health.ViewAuthorizedReportRequest\x1a$.health.ViewAuthorizedReportResponse\"*\x82\xd3\xe4\x93\x02$\x12\"/v1/reports/authorized/{report_id}B\x17Z\x15sdk_test/proto;healthb\x06proto3"
+	"\x19ListReportMetaByPatientID\x12\x18.health.PatientIDRequest\x1a\x1e.health.ListReportMetaResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/reports/meta/{patient_id}\x12\x97\x01\n" +
+	"\x14ViewAuthorizedReport\x12#.health.ViewAuthorizedReportRequest\x1a$.health.ViewAuthorizedReportResponse\"4\x82\xd3\xe4\x93\x02.\x12,/v1/reports/authorized/{user_id}/{report_id}B\x17Z\x15sdk_test/proto;healthb\x06proto3"
 
 var (
 	file_proto_data_proto_rawDescOnce sync.Once

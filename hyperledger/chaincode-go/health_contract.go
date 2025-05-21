@@ -307,7 +307,7 @@ func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.Transact
 }
 
 // 保險業者讀取授權報告
-func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, reportID string) (string, error) {
+func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, patientHash, reportID string) (string, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil || role != "insurer" {
 		return "", fmt.Errorf("only insurer can read report")
@@ -316,7 +316,7 @@ func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionCo
 	targetHash := hashID(userID)
 
 	// 查詢授權票
-	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{"", targetHash, reportID})
+	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
 	if err != nil {
 		return "", fmt.Errorf("error accessing authorization ticket")
 	}

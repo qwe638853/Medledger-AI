@@ -385,7 +385,15 @@ func request_HealthService_ViewAuthorizedReport_0(ctx context.Context, marshaler
 		err      error
 	)
 	io.Copy(io.Discard, req.Body)
-	val, ok := pathParams["report_id"]
+	val, ok := pathParams["user_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_id")
+	}
+	protoReq.UserId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user_id", err)
+	}
+	val, ok = pathParams["report_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "report_id")
 	}
@@ -403,7 +411,15 @@ func local_request_HealthService_ViewAuthorizedReport_0(ctx context.Context, mar
 		metadata runtime.ServerMetadata
 		err      error
 	)
-	val, ok := pathParams["report_id"]
+	val, ok := pathParams["user_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user_id")
+	}
+	protoReq.UserId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user_id", err)
+	}
+	val, ok = pathParams["report_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "report_id")
 	}
@@ -707,7 +723,7 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ViewAuthorizedReport", runtime.WithHTTPPathPattern("/v1/reports/authorized/{report_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ViewAuthorizedReport", runtime.WithHTTPPathPattern("/v1/reports/authorized/{user_id}/{report_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1003,7 +1019,7 @@ func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ViewAuthorizedReport", runtime.WithHTTPPathPattern("/v1/reports/authorized/{report_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ViewAuthorizedReport", runtime.WithHTTPPathPattern("/v1/reports/authorized/{user_id}/{report_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1034,7 +1050,7 @@ var (
 	pattern_HealthService_GetInsurerDashboardStats_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dashboard", "summary"}, ""))
 	pattern_HealthService_ListAuthorizedReports_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "reports", "authorized"}, ""))
 	pattern_HealthService_ListReportMetaByPatientID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "reports", "meta", "patient_id"}, ""))
-	pattern_HealthService_ViewAuthorizedReport_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "reports", "authorized", "report_id"}, ""))
+	pattern_HealthService_ViewAuthorizedReport_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "reports", "authorized", "user_id", "report_id"}, ""))
 )
 
 var (

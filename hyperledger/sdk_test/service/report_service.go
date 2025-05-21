@@ -552,8 +552,8 @@ func HandleViewAuthorizedReport(
 	}
 
 	// 檢查請求
-	if req.ReportId == "" {
-		return nil, status.Error(codes.InvalidArgument, "必須提供報告ID")
+	if req.ReportId == "" || req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供報告ID和病患ID")
 	}
 
 	// 取得保險業者錢包
@@ -569,16 +569,21 @@ func HandleViewAuthorizedReport(
 	}
 	defer gw.Close()
 
+	sum := sha256.Sum256([]byte(req.UserId))
+	hashedUserID := hex.EncodeToString(sum[:])
+
 	// 呼叫智能合約方法
-	result, err := contract.EvaluateTransaction("ReadAuthorizedReport", req.ReportId)
+	result, err := contract.EvaluateTransaction("ReadAuthorizedReport", hashedUserID, req.ReportId)
 	if err != nil {
 		fc.PrintGatewayError(err)
 		return nil, status.Error(codes.Internal, "查詢病患報告元數據失敗")
 	}
 
+	
 	log.Printf("[Info] 查詢到報告: %s", string(result))
 
 	return &pb.ViewAuthorizedReportResponse{
+		Success: true,
 		ResultJson: string(result),
 	}, nil
 }

@@ -98,7 +98,7 @@ service HealthService {
 
   rpc ViewAuthorizedReport(ViewAuthorizedReportRequest) returns (ViewAuthorizedReportResponse) {
     option (google.api.http) = {
-      get: "/v1/reports/authorized/{report_id}"
+      get: "/v1/reports/authorized/{user_id}/{report_id}"
     };
   }
 
@@ -277,6 +277,7 @@ message ListReportMetaResponse {
 
 message ViewAuthorizedReportRequest {
   string report_id = 1;
+  string user_id = 2;
 }
 
 message ViewAuthorizedReportResponse {

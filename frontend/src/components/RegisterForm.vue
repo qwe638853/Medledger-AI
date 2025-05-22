@@ -794,10 +794,6 @@ const steps = [
   { value: 3, title: '帳號設定' },
   { value: 4, title: '身分證上傳' }
 ];
-function goToStep(val) {
-  // 可加驗證，這裡直接切換
-  currentStep.value = String(val);
-}
 </script>
 
 <style scoped>
@@ -913,6 +909,10 @@ function goToStep(val) {
   flex-direction: column;
   align-items: center;
   flex: 1 1 0;
+<<<<<<< HEAD
+=======
+  cursor: default;
+>>>>>>> 6c8f3c08bd3732dddf5d91942a7c702da0473187
   background: #f5f7fa;
   border: 2px solid #b0bec5;
   border-radius: 12px;

@@ -306,6 +306,56 @@ func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.Transact
 	return results, nil
 }
 
+// 保險業者讀取授權報告
+func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, patientHash, reportID string) (string, error) {
+	userID, role, err := getCaller(ctx)
+	if err != nil || role != "insurer" {
+		return "", fmt.Errorf("only insurer can read report")
+	}
+
+	targetHash := hashID(userID)
+
+	// 查詢授權票
+	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
+	if err != nil {
+		return "", fmt.Errorf("error accessing authorization ticket")
+	}
+	defer iter.Close()
+
+	found := false
+	var tk AuthTicket
+	now := nowSec()
+	for iter.HasNext() {
+		kv, _ := iter.Next()
+		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			continue
+		}
+		if tk.ReportID == reportID && now <= tk.Expiry {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("access denied or expired for report %s", reportID)
+	}
+
+	// 查詢報告內容
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	data, err := ctx.GetStub().GetState(repKey)
+	if err != nil || data == nil {
+		return "", fmt.Errorf("report not found")
+	}
+
+	var rep HealthReport
+	if err := json.Unmarshal(data, &rep); err != nil {
+		return "", fmt.Errorf("failed to parse report")
+	}
+
+	return rep.ResultJSON, nil
+}
+
+
 func main() {
 	chaincode, err := contractapi.NewChaincode(&HealthCheckContract{})
 	if err != nil {

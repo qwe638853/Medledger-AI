@@ -102,6 +102,10 @@ func (s *server) ListReportMetaByPatientID(ctx context.Context, req *pb.PatientI
 	return sc.HandleListReportMetaByPatientID(ctx, req, s.Wallet, s.Builder)
 }
 
+func (s *server) ViewAuthorizedReport(ctx context.Context, req *pb.ViewAuthorizedReportRequest) (*pb.ViewAuthorizedReportResponse, error) {
+	return sc.HandleViewAuthorizedReport(ctx, req, s.Wallet, s.Builder)
+}
+
 func main() {
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {

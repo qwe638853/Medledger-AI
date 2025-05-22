@@ -446,7 +446,6 @@ func HandleListAuthorizedReports(
 		report := &pb.AuthorizedReport{
 			ReportId:  r["report_id"].(string),
 			PatientId: r["patient_id"].(string),
-			Content:   r["content"].(string),
 			Date:      r["date"].(string),
 			Expiry:    r["expiry"].(string),
 		}
@@ -529,5 +528,62 @@ func HandleListReportMetaByPatientID(
 	log.Printf("[Info] 數據: %v", reports)
 	return &pb.ListReportMetaResponse{
 		Reports: reports,
+	}, nil
+}
+
+
+// ViewAuthorizedReport 實現保險業者讀取授權報告的服務
+func HandleViewAuthorizedReport(
+	ctx context.Context,
+	req *pb.ViewAuthorizedReportRequest,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ViewAuthorizedReportResponse, error) {
+
+	// 取得JWT中的使用者ID（保險業者）
+	insurerId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(insurerId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以查詢病患報告元數據")
+	}
+
+	// 檢查請求
+	if req.ReportId == "" || req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "必須提供報告ID和病患ID")
+	}
+
+	// 取得保險業者錢包
+	entry, ok := wallet.Get(insurerId)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	// 連接區塊鏈
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "區塊鏈連接失敗")
+	}
+	defer gw.Close()
+
+	sum := sha256.Sum256([]byte(req.UserId))
+	hashedUserID := hex.EncodeToString(sum[:])
+
+	// 呼叫智能合約方法
+	result, err := contract.EvaluateTransaction("ReadAuthorizedReport", hashedUserID, req.ReportId)
+	if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢病患報告元數據失敗")
+	}
+
+	
+	log.Printf("[Info] 查詢到報告: %s", string(result))
+
+	return &pb.ViewAuthorizedReportResponse{
+		Success: true,
+		ResultJson: string(result),
 	}, nil
 }

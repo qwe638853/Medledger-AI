@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import ReportDetailPage from '../views/ReportDetailPage.vue';
 
 // 定義路由
 const routes = [
@@ -38,6 +39,11 @@ const routes = [
     name: 'InsurerDashboard',
     component: () => import('../views/OtherUserDashboard.vue'),
     meta: { requiresAuth: true, roles: ['insurer'] }
+  },
+  {
+    path: '/report/:report_id/:patient_id',
+    name: 'ReportDetail',
+    component: ReportDetailPage
   },
   {
     path: '/:pathMatch(.*)*',

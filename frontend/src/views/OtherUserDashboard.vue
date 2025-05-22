@@ -2,12 +2,14 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import healthCheckService from '../services/healthCheckService';
+import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const currentUser = computed(() => authStore.currentUser);
 const token = ref(authStore.token);
 const patientReports = ref([]);
 const loading = ref(false);
+const router = useRouter();
 
 // 分類報告
 const authorizedReports = computed(() => patientReports.value.filter(report => report.is_authorized));
@@ -190,6 +192,150 @@ onMounted(() => {
 
 const handleLogout = () => {
   authStore.logout();
+};
+
+// 查看內容按鈕的事件改為：
+const goToReportDetail = (item) => {
+  // 確保 item.report_id 和 item.patient_id 有值，若來源 key 為 id/patientId 也一併處理
+  console.log(item);
+  const report_id = item.id;
+  const patient_id = item.patient_id ;
+  router.push({ name: 'ReportDetail', params: { report_id, patient_id } });
+};
+
+// 計算指標值（用於圓形進度條）
+const calculateMetricValue = (value) => {
+  if (!value) return 0;
+  
+  // 提取數值部分
+  const numStr = value.toString().match(/[\d.]+/);
+  if (!numStr) return 0;
+  
+  const numValue = parseFloat(numStr[0]);
+  if (isNaN(numValue)) return 0;
+  
+  // 根據不同指標類型設定最大值
+  const maxValues = {
+    'Glu-AC': 200,    // 血糖
+    'HbA1c': 10,      // 糖化血色素
+    'LDL-C': 200,     // 低密度脂蛋白膽固醇
+    'HDL-C': 100,     // 高密度脂蛋白膽固醇
+    'TG': 500,        // 三酸甘油脂
+    'T-CHO': 300,     // 總膽固醇
+    'BP': 200,        // 血壓
+    'WBC': 20,        // 白血球
+    'RBC': 8,         // 紅血球
+    'Hb': 20,         // 血紅素
+    'Hct': 60,        // 血球容積比
+    'PLT': 500,       // 血小板
+    'AST（GOT）': 100, // 天門冬胺酸轉胺酶
+    'ALT（GPT）': 100, // 丙胺酸轉胺酶
+    'ALP': 200,       // 鹼性磷酸酶
+    'UN': 50,         // 尿素氮
+    'CRE': 5,         // 肌酸酐
+    'U.A': 10,        // 尿酸
+  };
+
+  // 獲取對應的最大值，如果沒有定義則使用 100 作為預設值
+  const maxValue = maxValues[Object.keys(maxValues).find(key => value.includes(key))] || 100;
+  
+  // 計算百分比值
+  return Math.min(Math.max((numValue / maxValue) * 100, 0), 100);
+};
+
+// 獲取指標顏色
+const getMetricColor = (value) => {
+  if (!value) return 'grey';
+  
+  // 提取數值部分
+  const numStr = value.toString().match(/[\d.]+/);
+  if (!numStr) return 'grey';
+  
+  const numValue = parseFloat(numStr[0]);
+  if (isNaN(numValue)) return 'grey';
+  
+  // 根據不同指標類型設定正常值範圍
+  const ranges = {
+    'Glu-AC': { min: 70, max: 100 },    // 血糖
+    'HbA1c': { min: 4, max: 5.7 },      // 糖化血色素
+    'LDL-C': { min: 0, max: 130 },      // 低密度脂蛋白膽固醇
+    'HDL-C': { min: 40, max: 60 },      // 高密度脂蛋白膽固醇
+    'TG': { min: 0, max: 150 },         // 三酸甘油脂
+    'T-CHO': { min: 0, max: 200 },      // 總膽固醇
+    'BP': { min: 90, max: 140 },        // 血壓（收縮壓）
+    'WBC': { min: 4, max: 10 },         // 白血球
+    'RBC': { min: 4.5, max: 5.5 },      // 紅血球
+    'Hb': { min: 12, max: 16 },         // 血紅素
+    'Hct': { min: 37, max: 50 },        // 血球容積比
+    'PLT': { min: 150, max: 450 },      // 血小板
+    'AST（GOT）': { min: 0, max: 40 },   // 天門冬胺酸轉胺酶
+    'ALT（GPT）': { min: 0, max: 40 },   // 丙胺酸轉胺酶
+    'ALP': { min: 30, max: 100 },       // 鹼性磷酸酶
+    'UN': { min: 7, max: 20 },          // 尿素氮
+    'CRE': { min: 0.6, max: 1.2 },      // 肌酸酐
+    'U.A': { min: 2.5, max: 7.2 },      // 尿酸
+  };
+
+  // 獲取對應的範圍，如果沒有定義則使用預設範圍
+  const range = ranges[Object.keys(ranges).find(key => value.includes(key))] || { min: 0, max: 100 };
+  
+  if (numValue < range.min) return 'red';
+  if (numValue > range.max) return 'orange';
+  return 'green';
+};
+
+// 格式化日期
+const formatDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// 獲取授權到期 Chip 的顏色
+const getExpiryChipColor = (expiry) => {
+  if (!expiry) return 'green-lighten-4';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return 'red-lighten-4';
+  if (daysUntilExpiry <= 7) return 'orange-lighten-4';
+  return 'green-lighten-4';
+};
+
+// 獲取授權到期 Chip 的文字顏色
+const getExpiryTextColor = (expiry) => {
+  if (!expiry) return 'green-darken-2';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return 'red-darken-2';
+  if (daysUntilExpiry <= 7) return 'orange-darken-2';
+  return 'green-darken-2';
+};
+
+// 格式化授權到期日期
+const formatExpiryDate = (expiry) => {
+  if (!expiry) return '永久';
+  
+  const expiryDate = new Date(expiry);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return '已過期';
+  if (daysUntilExpiry <= 7) return `${daysUntilExpiry} 天後到期`;
+  
+  return expiryDate.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
 };
 </script>
 
@@ -501,60 +647,90 @@ const handleLogout = () => {
       <v-row v-if="viewMode === 'authorized'" justify="center">
         <v-col cols="12">
           <v-card class="rounded-lg" elevation="2">
-            <v-card-title class="py-3 px-5 bg-green-lighten-5 d-flex align-center">
-              <v-icon size="24" color="green-darken-2" class="me-2">mdi-folder-account</v-icon>
-              <span class="text-h6 font-weight-bold text-green-darken-3">所有已授權健康報告</span>
-              <v-spacer></v-spacer>
-          <v-btn
-                color="blue-darken-2"
-                variant="text"
+            <v-card-title class="py-4 px-6 bg-green-lighten-5 d-flex align-center">
+              <div class="d-flex align-center flex-grow-1">
+                <v-icon size="28" color="green-darken-2" class="me-3">mdi-folder-account</v-icon>
+                <span class="text-h5 font-weight-bold text-green-darken-3">所有已授權健康報告</span>
+              </div>
+              <v-btn
+                color="grey-darken-1"
+                variant="tonal"
                 size="small"
                 @click="switchToSearchView"
-                prepend-icon="mdi-keyboard-return"
+                prepend-icon="mdi-arrow-left"
+                class="back-btn"
+                elevation="1"
               >
                 返回搜尋
-          </v-btn>
+              </v-btn>
             </v-card-title>
             
             <v-data-table
               :headers="[
-                { title: '報告編號', key: 'id', align: 'start', width: '100px' },
-                { title: '病患 ID', key: 'patient_id', align: 'start', width: '130px' },
-                { title: '健康數據', key: 'content', align: 'start' },
-                { title: '報告日期', key: 'date', align: 'center', width: '120px' },
-                { title: '授權到期', key: 'expiry', align: 'center', width: '120px' }
+                { title: '報告編號', key: 'id', align: 'start', width: '120px' },
+                { title: '病患 ID', key: 'patient_id', align: 'start', width: '150px' },
+                { title: '報告日期', key: 'date', align: 'center', width: '140px' },
+                { title: '授權到期', key: 'expiry', align: 'center', width: '140px' },
+                { title: '查看報告', key: 'actions', align: 'center', width: '100px', sortable: false }
               ]"
               :items="allAuthorizedReports"
               :loading="loadingAuthorizedReports"
               loading-text="正在載入已授權報告..."
-              class="elevation-0"
+              class="elevation-0 authorized-reports-table"
               hover
               item-value="id"
-              density="compact"
+              density="comfortable"
             >
               <template v-slot:item.patient_id="{ item }">
-                <v-chip size="small" color="blue-lighten-4" class="font-weight-medium">
+                <v-chip
+                  size="small"
+                  color="blue-lighten-4"
+                  class="font-weight-medium patient-chip"
+                >
                   {{ item.patient_id }}
                 </v-chip>
               </template>
-              <template v-slot:item.content="{ item }">
-                <div style="max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  {{ item.content }}
-                </div>
-              </template>
+              
               <template v-slot:item.date="{ item }">
-                {{ item.date || '-' }}
-              </template>
-              <template v-slot:item.expiry="{ item }">
-                <v-chip 
-                  size="small" 
-                  :color="new Date(item.expiry) < new Date() ? 'error-lighten-4' : 'green-lighten-4'"
-                  :text-color="new Date(item.expiry) < new Date() ? 'error-darken-2' : 'green-darken-2'"
-                  variant="outlined"
+                <v-chip
+                  size="small"
+                  color="grey-lighten-4"
+                  class="date-chip"
                 >
-                  {{ item.expiry || '永久' }}
+                  {{ formatDate(item.date) }}
                 </v-chip>
               </template>
+              
+              <template v-slot:item.expiry="{ item }">
+                <v-chip
+                  size="small"
+                  :color="getExpiryChipColor(item.expiry)"
+                  :text-color="getExpiryTextColor(item.expiry)"
+                  variant="outlined"
+                  class="expiry-chip"
+                >
+                  {{ formatExpiryDate(item.expiry) }}
+                </v-chip>
+              </template>
+              
+              <template v-slot:item.actions="{ item }">
+                <v-tooltip location="top">
+                  <template v-slot:activator="{ props }">
+                    <v-btn
+                      color="blue-darken-2"
+                      variant="tonal"
+                      size="small"
+                      @click="goToReportDetail(item)"
+                      v-bind="props"
+                      class="view-content-btn"
+                    >
+                      <v-icon>mdi-eye</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>查看詳細內容</span>
+                </v-tooltip>
+              </template>
+              
               <template v-slot:no-data>
                 <div class="text-center pa-5">
                   <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-folder-open-outline</v-icon>
@@ -564,8 +740,8 @@ const handleLogout = () => {
               </template>
             </v-data-table>
           </v-card>
-              </v-col>
-            </v-row>
+        </v-col>
+      </v-row>
 
       <!-- 未搜尋或搜尋前的提示 -->
       <v-row v-if="!showSearchResults && viewMode === 'search'" justify="center">
@@ -912,5 +1088,101 @@ const handleLogout = () => {
 
 :deep(.v-date-picker) {
   border-radius: 12px;
+}
+
+.view-content-btn {
+  min-width: 100px;
+  transition: all 0.3s ease;
+}
+
+.view-content-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 已授權報告表格樣式 */
+.authorized-reports-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.authorized-reports-table .v-data-table-header th) {
+  background-color: #e3f2fd !important;
+  font-weight: 600 !important;
+  color: #1976d2 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.authorized-reports-table .v-data-table-row:hover) {
+  background-color: #f5f9ff !important;
+  transition: background-color 0.3s ease;
+}
+
+:deep(.authorized-reports-table .v-data-table-row td) {
+  padding: 12px 16px !important;
+}
+
+/* 返回按鈕樣式 */
+.back-btn {
+  border-radius: 20px;
+  padding: 0 16px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  transform: translateX(-2px);
+  background-color: #e0e0e0 !important;
+}
+
+/* 查看內容按鈕樣式 */
+.view-content-btn {
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  transition: all 0.3s ease;
+}
+
+.view-content-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 病患 ID Chip 樣式 */
+.patient-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.patient-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 到期 Chip 樣式 */
+.expiry-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.expiry-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 日期 Chip 樣式 */
+.date-chip {
+  font-size: 0.875rem;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.date-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

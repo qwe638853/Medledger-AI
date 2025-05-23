@@ -138,6 +138,37 @@ const report = ref({});
 const metrics = ref({});
 const errorMsg = ref('');
 
+// 彈窗控制
+const showAISummary = ref(false);
+const showRisk = ref(false);
+const aiSummary = ref('這是 AI 分析摘要的假資料。');
+const riskLevel = ref('低風險');
+const riskAdvice = ref('您的主要指標均在正常範圍，請持續保持健康生活。');
+
+// 風險評估簡單規則
+function evaluateRisk(metrics = {}) {
+  let high = 0, mid = 0;
+  for (const [key, value] of Object.entries(metrics || {})) {
+    const ref = METRIC_REF_RANGE[key];
+    if (!ref) continue;
+    const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
+    const num = match ? parseFloat(match[0]) : NaN;
+    if (isNaN(num)) continue;
+    if (ref.max !== undefined && num > ref.max) high++;
+    else if (ref.min !== undefined && num < ref.min) mid++;
+  }
+  if (high > 0) {
+    riskLevel.value = '高風險';
+    riskAdvice.value = '部分指標超出正常範圍，建議儘速諮詢醫師。';
+  } else if (mid > 0) {
+    riskLevel.value = '中風險';
+    riskAdvice.value = '部分指標偏低，建議定期追蹤。';
+  } else {
+    riskLevel.value = '低風險';
+    riskAdvice.value = '您的主要指標均在正常範圍，請持續保持健康生活。';
+  }
+}
+
 onMounted(async () => {
   loading.value = true;
   try {
@@ -211,36 +242,37 @@ function getMetricNumber(value) {
 </script>
 
 <template>
-  <v-container class="py-8">
+  <v-container class="py-8 report-detail-bg">
     <v-btn @click="router.back()" prepend-icon="mdi-arrow-left" class="mb-4">返回</v-btn>
     <v-card v-if="loading" class="pa-8 text-center"><v-progress-circular indeterminate color="primary" /></v-card>
     <v-alert v-else-if="errorMsg" type="error">{{ errorMsg }}</v-alert>
     <template v-else>
-      <v-card class="mb-6 pa-6">
+      <!-- 用戶基本資料卡片 -->
+      <v-card class="mb-6 pa-6 user-info-card elevation-3">
         <div class="text-h5 font-weight-bold mb-2">健康檢查報告詳情</div>
-        <div class="mb-2">報告編號：{{ reportId }}</div>
-        <div class="mb-2">病患 ID：{{ patientId }}</div>
-        <div class="mb-2">日期：{{ report.value?.date || '-' }}</div>
+        <v-row>
+          <v-col cols="12" sm="4"><div class="font-weight-bold">報告編號：</div>{{ reportId }}</v-col>
+          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ patientId }}</v-col>
+          <v-col cols="12" sm="4"><div class="font-weight-bold">檢查日期：</div>{{ report.value?.date || '-' }}</v-col>
+        </v-row>
       </v-card>
 
-      <!-- 指標視覺化區塊 -->
-      <div class="text-h6 font-weight-bold mb-4 mt-8">主要健康指標視覺化</div>
-      <v-row>
+      <!-- 主要健康指標卡片區塊 -->
+      <div class="text-h6 font-weight-bold mb-4 mt-8">主要健康指標</div>
+      <v-row class="metric-grid" align="stretch">
         <v-col
           v-for="(value, key) in numericMetrics"
           :key="key"
-          cols="12"
-          sm="6"
-          md="4"
+          cols="12" sm="6" md="4" lg="3"
         >
-          <v-card outlined class="mb-4 metric-visual-card">
-            <v-card-title class="pb-0">{{ METRIC_NAME_MAP[key] || key }}</v-card-title>
+          <v-card class="metric-visual-card elevation-2">
+            <v-card-title class="pb-0 text-center">{{ METRIC_NAME_MAP[key] || key }}</v-card-title>
             <v-card-text class="d-flex flex-column align-center justify-center">
               <v-progress-circular
                 :value="getMetricPercent(key, value)"
                 :color="getMetricColor(key, value)"
-                :size="100"
-                :width="12"
+                :size="90"
+                :width="10"
                 class="mb-2"
               >
                 <span class="text-h6 font-weight-bold">{{ getMetricNumber(value) }}</span>
@@ -270,16 +302,75 @@ function getMetricNumber(value) {
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- 底部主要操作按鈕 -->
+      <div class="d-flex justify-center gap-4 mt-10 mb-6">
+        <v-btn color="primary" size="large" class="px-8" @click="showAISummary = !showAISummary">
+          <v-icon left>mdi-robot</v-icon>AI 分析摘要
+        </v-btn>
+        <v-btn color="deep-orange" size="large" class="px-8" @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }">
+          <v-icon left>mdi-shield-alert</v-icon>風險評估
+        </v-btn>
+      </div>
+
+      <!-- 分析結果與風險評估顯示區域 -->
+      <div class="result-section">
+        <v-card v-if="showAISummary" class="pa-6 mb-4 ai-summary-card">
+          <div class="text-h6 font-weight-bold mb-2">AI 分析摘要</div>
+          <div class="mb-2">{{ aiSummary }}</div>
+        </v-card>
+        <v-card v-if="showRisk" class="pa-6 mb-4 risk-summary-card">
+          <div class="text-h6 font-weight-bold mb-2">風險評估結果</div>
+          <div class="mb-2">風險等級：<span :class="riskLevel === '高風險' ? 'text-error' : riskLevel === '中風險' ? 'text-warning' : 'text-success'">{{ riskLevel }}</span></div>
+          <div class="mb-2">{{ riskAdvice }}</div>
+        </v-card>
+      </div>
     </template>
   </v-container>
 </template>
 
 <style scoped>
+.report-detail-bg {
+  background: #fafbfc;
+  min-height: 100vh;
+}
+.user-info-card {
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
 .metric-visual-card {
   min-height: 220px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+.metric-visual-card:hover {
+  box-shadow: 0 6px 18px rgba(25, 118, 210, 0.13);
+  transform: translateY(-2px) scale(1.03);
+}
+.metric-grid {
+  row-gap: 24px;
+}
+.ai-summary-card, .risk-summary-card {
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.result-section {
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 </style> 

@@ -594,6 +594,24 @@ export const fetchGrantedTickets = async () => {
 
 // 獲取報告詳細內容
 export const fetchReportContent = async (reportId, patientId) => {
+  // [前端測試用] 若為測試假資料，直接回傳
+  if (reportId === 'RPT123456' && patientId === 'A123456789') {
+    return {
+      id: 'RPT123456',
+      patient_id: 'A123456789',
+      date: new Date().toISOString(),
+      content: '血壓: 120/80, 血糖: 90',
+      resultJson: JSON.stringify({
+        'BP': '120/80 mmHg',
+        'Glu-AC': '90 mg/dL',
+        'HbA1c': '5.5 %',
+        'LDL-C': '110 mg/dL',
+        'HDL-C': '55 mg/dL',
+        'T-CHO': '180 mg/dL',
+        'TG': '100 mg/dL'
+      })
+    };
+  }
   try {
     const response = await apiClient.get(`/v1/reports/authorized/${patientId}/${reportId}`, {
       headers: {

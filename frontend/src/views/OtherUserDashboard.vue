@@ -185,9 +185,23 @@ const sendAuthRequest = async () => {
 };
 
 // 初次載入頁面時獲取全局數據
-onMounted(() => {
-  fetchAllAuthorizedReports();
-  fetchDashboardStats();
+onMounted(async () => {
+  // 先取得後端資料
+  await fetchAllAuthorizedReports();
+  await fetchDashboardStats();
+
+  // [前端測試用] 塞一筆假授權報告，繞過後端
+  allAuthorizedReports.value.push({
+    id: 'RPT123456',
+    patient_id: 'A123456789',
+    date: new Date().toISOString(),
+    expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7天後到期
+    content: '血壓: 120/80, 血糖: 90',
+    is_authorized: true
+  });
+  // [前端測試用] 同步更新儀表板數量
+  dashboardStats.value.totalAuthorized += 1;
+  dashboardStats.value.totalPatients += 1;
 });
 
 const handleLogout = () => {

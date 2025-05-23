@@ -230,6 +230,7 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
 		log.Printf("❌ 寫入資料庫失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "寫入資料庫失敗"}, nil
 	}
+	log.Printf("保險業者原始ID: %s, 雜湊後ID (存入資料庫): %s", req.InsurerId, database.HashString(req.InsurerId))
 	log.Printf("保險業者註冊成功: %s", req.InsurerId)
 
 	return &pb.RegisterResponse{Success: true, Message: "保險業者註冊成功"}, nil
@@ -242,13 +243,16 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface
 		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
 	}
 
+	// 先檢查是否為保險業者
 	insurerPw, err := database.GetInsurerPassword(req.UserId)
 	if err != nil {
 		log.Printf("查詢保險業者密碼錯誤: %v", err)
 	}
 	log.Printf("保險業者密碼查詢結果: 密碼=%s, 錯誤=%v", insurerPw, err)
 	
-	if err == nil && insurerPw == req.Password {
+	// 比對雜湊後的密碼
+	hashedPassword := database.HashString(req.Password)
+	if err == nil && insurerPw == hashedPassword {
 		// 保險業者登入成功
 		log.Printf("✅ 保險業者密碼驗證成功: %s", req.UserId)
 		if !w.Exists(req.UserId) {
@@ -276,8 +280,9 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface
 	}
 	log.Printf("普通用戶密碼查詢結果: 密碼=%s, 錯誤=%v", dbPw, err)
 	
-	if err != nil || dbPw != req.Password {
-		log.Printf("❌ 密碼驗證失敗: 用戶密碼=%s, 輸入密碼=%s", dbPw, req.Password)
+	// 比對雜湊後的密碼
+	if err != nil || dbPw != hashedPassword {
+		log.Printf("❌ 密碼驗證失敗: 用戶密碼=%s, 輸入密碼雜湊=%s", dbPw, hashedPassword)
 		return &pb.LoginResponse{Success: false, Message: "帳號或密碼錯誤"}, nil
 	}
 

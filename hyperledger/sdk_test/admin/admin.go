@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
-	userId := "clinic01"
+	userId := "clinic1"
 	password := "clinicpass"
 	name := "健檢中心1"
 	date := "2025-05-13"
@@ -63,7 +63,7 @@ func main() {
 	}
 
 	// ✅ 建立使用者資料夾並儲存檔案
-	baseDir := filepath.Join("msp-data", "users", userId)
+	baseDir := filepath.Join("msp-data", "clinic", userId)
 	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
 	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
 	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)

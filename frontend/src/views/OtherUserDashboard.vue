@@ -190,6 +190,7 @@ onMounted(async () => {
   await fetchAllAuthorizedReports();
   await fetchDashboardStats();
 
+  /*
   // [前端測試用] 塞一筆假授權報告，繞過後端
   allAuthorizedReports.value.push({
     id: 'RPT123456',
@@ -202,6 +203,7 @@ onMounted(async () => {
   // [前端測試用] 同步更新儀表板數量
   dashboardStats.value.totalAuthorized += 1;
   dashboardStats.value.totalPatients += 1;
+  */
 });
 
 const handleLogout = () => {

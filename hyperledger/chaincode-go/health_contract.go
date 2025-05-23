@@ -15,9 +15,10 @@ import (
 const (
 	docHealth = "HealthRecord"
 	docAuth   = "AuthTicket"
-
+	docAccessRequest = "AccessRequest"
 	keyReportNS = "REPORT"
 	keyAuthNS   = "AUTH"
+	keyAccessRequestNS = "ACCESS_REQUEST"
 )
 
 type HealthReport struct {
@@ -38,15 +39,29 @@ type AuthTicket struct {
 	Expiry       int64  `json:"expiry"`
 }
 
+type AccessRequest struct {
+	DocType      string `json:"docType"`
+	RequestID    string `json:"requestId"`
+	ReportID     string `json:"reportId"`
+	PatientHash  string `json:"patientHash"`
+	RequesterHash string `json:"requesterHash"`
+	Reason       string `json:"reason"`
+	RequestedAt  int64  `json:"requestedAt"`
+	Expiry       int64  `json:"expiry"`
+	Status       string `json:"status"`
+}
+
 type HealthCheckContract struct {
 	contractapi.Contract
 }
 
+// 將身分證字號轉為雜湊值
 func hashID(id string) string {
 	hash := sha256.Sum256([]byte(id))
 	return hex.EncodeToString(hash[:])
 }
 
+// 取得調用者身分(internal function)
 func getCaller(ctx contractapi.TransactionContextInterface) (userID, role string, err error) {
 	id, err := cid.New(ctx.GetStub())
 	if err != nil {
@@ -81,6 +96,7 @@ func nowSec() int64 {
 	return time.Now().Unix()
 }
 
+// 上傳報告
 func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInterface, reportID, patientHash, resultJSON string) error {
 	id, err := cid.New(ctx.GetStub())
 	if err != nil {
@@ -106,55 +122,74 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 		CreatedAt:   nowSec(),
 	}
 	bytes, _ := json.Marshal(rec)
+
+
 	return ctx.GetStub().PutState(repKey, bytes)
 }
+func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.TransactionContextInterface, requestID string) error {
+    userID, role, err := getCaller(ctx)
+    if err != nil || role != "patient" {
+        return fmt.Errorf("only patient can approve")
+    }
 
-func (h *HealthCheckContract) AuthorizeAccess(ctx contractapi.TransactionContextInterface, reportID, patientHash, targetHash, expiryStr string) error {
-	userID, role, err := getCaller(ctx)
-	if err != nil || role != "patient" {
-		return fmt.Errorf("only patient can grant access")
-	}
-	expiry, errExp := strconv.ParseInt(expiryStr, 10, 64)
-	if errExp != nil || expiry <= nowSec() {
-		return fmt.Errorf("invalid expiry")
-	}
+    // 1. 取得請求並驗證
+    reqKey, _ := ctx.GetStub().CreateCompositeKey(keyAccessRequestNS, []string{requestID})
+    reqBytes, err := ctx.GetStub().GetState(reqKey)
+    if err != nil || reqBytes == nil {
+        return fmt.Errorf("request not found")
+    }
+    var req AccessRequest
+    if err := json.Unmarshal(reqBytes, &req); err != nil {
+        return fmt.Errorf("failed to unmarshal request: %v", err)
+    }
+    patientHash := hashID(userID)
+    if req.PatientHash != patientHash {
+        return fmt.Errorf("not authorized to approve this request")
+    }
+    if req.Status != "PENDING" {
+        return fmt.Errorf("request already handled")
+    }
 
-	// 驗證用戶身份
-	callerHash := hashID(userID)
-	if callerHash != patientHash {
-		return fmt.Errorf("caller identity does not match patientHash")
-	}
+    // 2. 更新狀態
+    req.Status = "APPROVED"
+    newReqBytes, _ := json.Marshal(req)
+    if err := ctx.GetStub().PutState(reqKey, newReqBytes); err != nil {
+        return fmt.Errorf("failed to update request status")
+    }
 
-	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
-	rb, _ := ctx.GetStub().GetState(repKey)
-	if rb == nil || recPatientHash(rb) != patientHash {
-		return fmt.Errorf("not your report")
-	}
-	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
-	tk := AuthTicket{
-		DocType:     docAuth, 
-		PatientHash: patientHash, 
-		TargetHash:  targetHash, 
-		ReportID:    reportID, 
-		GrantedAt:   nowSec(), 
-		Expiry:      expiry,
-	}
-	tbytes, _ := json.Marshal(tk)
-	return ctx.GetStub().PutState(ticketKey, tbytes)
+    // 3. 產生授權票據
+    ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{req.PatientHash, req.RequesterHash, req.ReportID})
+    tk := AuthTicket{
+        DocType:     docAuth,
+        PatientHash: req.PatientHash,
+        TargetHash:  req.RequesterHash,
+        ReportID:    req.ReportID,
+        GrantedAt:   nowSec(),
+        Expiry:      req.Expiry,
+    }
+    tbytes, _ := json.Marshal(tk)
+	if err := ctx.GetStub().PutState(ticketKey, tbytes); err != nil {
+        return fmt.Errorf("failed to store auth ticket")
+    }
+
+	eventPayload, _ := json.Marshal(map[string]interface{}{
+        "requestId":    req.RequestID,
+        "reportId":     req.ReportID,
+        "patientHash":  req.PatientHash,
+        "requesterHash": req.RequesterHash,
+        "status":       "APPROVED",
+        "grantedAt":    nowSec(),
+        "expiry":       req.Expiry,
+    })
+    if err := ctx.GetStub().SetEvent("AccessApproved", eventPayload); err != nil {
+        return fmt.Errorf("failed to set event")
+    }
+
+    return nil
 }
 
-func (h *HealthCheckContract) RevokeAccess(ctx contractapi.TransactionContextInterface, targetHash, reportID string) error {
-	userID, role, err := getCaller(ctx)
-	if err != nil || role != "patient" {
-		return fmt.Errorf("only patient can revoke")
-	}
 
-	patientHash := hashID(userID)
-
-	ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
-	return ctx.GetStub().DelState(ticketKey)
-}
-
+// 查看自己的報告 
 func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
@@ -198,7 +233,8 @@ func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextIn
 	return results, nil
 }
 
-func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
+// 查看所有已授權的報告
+func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get caller identity: %v", err)
@@ -223,7 +259,7 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 	defer iter.Close()
 
 	now := nowSec()
-	var results []HealthReport
+	var results []map[string]interface{}
 
 	for iter.HasNext() {
 		kv, err := iter.Next()
@@ -251,19 +287,29 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 			continue
 		}
 
-		results = append(results, rep)
+		// 組合報告和授權信息
+		result := map[string]interface{}{
+			"reportId":    rep.ReportID,
+			"clinicId":    rep.ClinicID,
+			"patientHash": rep.PatientHash,
+			"resultJson":  rep.ResultJSON,
+			"createdAt":   rep.CreatedAt,
+			"expiry":      tk.Expiry,
+		}
+		results = append(results, result)
 	}
 
 	return results, nil
 }
 
-// 不含健檢數據的報告元數據
+// 不含健檢數據的其他資訊
 type ReportMeta struct {
 	ReportID  string `json:"reportId"`
 	ClinicID  string `json:"clinicId"`
 	CreatedAt int64  `json:"createdAt"`
 }
 
+//查詢報告(不含健檢數據)
 func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.TransactionContextInterface, patientID string) ([]ReportMeta, error) {
 	_  , role, err := getCaller(ctx)
 	if err != nil || role != "insurer" {
@@ -302,42 +348,57 @@ func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.Transact
 			CreatedAt: report.CreatedAt,
 		})
 	}
-
 	return results, nil
 }
 
 // 保險業者讀取授權報告
 func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, patientHash, reportID string) (string, error) {
 	userID, role, err := getCaller(ctx)
+	fmt.Printf("[DEBUG] ReadAuthorizedReport: userID=%s, role=%s, patientHash=%s, reportID=%s\n", userID, role, patientHash, reportID)
 	if err != nil || role != "insurer" {
 		return "", fmt.Errorf("only insurer can read report")
 	}
 
 	targetHash := hashID(userID)
+	fmt.Printf("[DEBUG] targetHash: %s\n", targetHash)
 
 	// 查詢授權票
 	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
 	if err != nil {
+		fmt.Printf("[DEBUG] failed to get state by partial key: %v\n", err)
 		return "", fmt.Errorf("error accessing authorization ticket")
 	}
 	defer iter.Close()
 
 	found := false
+	expired := false
 	var tk AuthTicket
 	now := nowSec()
 	for iter.HasNext() {
 		kv, _ := iter.Next()
+		fmt.Printf("[DEBUG] kv.Key=%s, kv.Value=%s\n", kv.Key, string(kv.Value))
 		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			fmt.Printf("[DEBUG] failed to unmarshal AuthTicket: %v\n", err)
 			continue
 		}
-		if tk.ReportID == reportID && now <= tk.Expiry {
-			found = true
-			break
+		fmt.Printf("[DEBUG] tk.ReportID=%s, tk.Expiry=%d, now=%d\n", tk.ReportID, tk.Expiry, now)
+		if tk.ReportID == reportID {
+			if now <= tk.Expiry {
+				found = true
+				break
+			} else {
+				expired = true
+			}
 		}
 	}
 
 	if !found {
-		return "", fmt.Errorf("access denied or expired for report %s", reportID)
+		if expired {
+			fmt.Printf("[DEBUG] Access expired for report %s\n", reportID)
+			return "", fmt.Errorf("access expired for report %s", reportID)
+		}
+		fmt.Printf("[DEBUG] Access denied for report %s\n", reportID)
+		return "", fmt.Errorf("access denied for report %s", reportID)
 	}
 
 	// 查詢報告內容
@@ -355,6 +416,83 @@ func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionCo
 	return rep.ResultJSON, nil
 }
 
+// 請求授權
+func (h *HealthCheckContract) RequestAccess(ctx contractapi.TransactionContextInterface, reportID, patientHash, reason, expiryStr string) error {
+	userID, role, err := getCaller(ctx)
+	if err != nil || role != "insurer" {
+		return fmt.Errorf("only insurer can request access")
+	}
+
+	requesterHash := hashID(userID)
+	requestID := fmt.Sprintf("req_%d", nowSec())
+
+	// 檢查報告是否存在
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	rb, _ := ctx.GetStub().GetState(repKey)
+	if rb == nil {
+		return fmt.Errorf("report not found")
+	}
+
+	expiry, errExp := strconv.ParseInt(expiryStr, 10, 64)
+	if errExp != nil || expiry <= nowSec() {
+		return fmt.Errorf("invalid expiry")
+	}
+
+	reqKey, _ := ctx.GetStub().CreateCompositeKey(keyAccessRequestNS, []string{requestID})
+	req := AccessRequest{
+		DocType:       docAccessRequest,
+		RequestID:     requestID,
+		ReportID:      reportID,
+		PatientHash:   patientHash,
+		RequesterHash: requesterHash,
+		Reason:        reason,
+		RequestedAt:   nowSec(),
+		Expiry:        expiry,
+		Status:        "PENDING",
+	}
+
+	reqBytes, _ := json.Marshal(req)
+	return ctx.GetStub().PutState(reqKey, reqBytes)
+}
+
+// 列出待處理的授權請求
+func (h *HealthCheckContract) ListPendingAccessRequests(ctx contractapi.TransactionContextInterface) ([]AccessRequest, error) {
+	userID, role, err := getCaller(ctx)
+	if err != nil || role != "patient" {
+		return nil, fmt.Errorf("only patient can list pending requests")
+	}
+
+	patientHash := hashID(userID)
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"patientHash": "%s",
+			"status": "PENDING"
+		}
+	}`, docAccessRequest, patientHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("query execution failed: %v", err)
+	}
+	defer iter.Close()
+
+	var results []AccessRequest
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+
+		var req AccessRequest
+		if err := json.Unmarshal(kv.Value, &req); err != nil {
+			continue
+		}
+		results = append(results, req)
+	}
+
+	return results, nil
+}
 
 func main() {
 	chaincode, err := contractapi.NewChaincode(&HealthCheckContract{})

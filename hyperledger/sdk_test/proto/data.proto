@@ -196,7 +196,7 @@ message RequestAccessRequest {
 
 message RequestAccessResponse {
   bool success = 1;
-  string request_id = 2; // optional: 回傳申請單 ID
+  string message = 2;
 }
 
 // 🟢 病患查詢自己的待審申請
@@ -204,11 +204,13 @@ message AccessRequest {
   string request_id = 1;
   string report_id = 2;
   string patient_hash = 3;
-  string target_hash = 4;
+  string requester_hash = 4;
   string reason = 5;
   int64 requested_at = 6;
   int64 expiry = 7;
-  string status = 8; // pending / approved / rejected
+  string status = 8;
+  string requester_name = 9;
+  string company_name = 10;
 }
 
 message ListAccessRequestsResponse {

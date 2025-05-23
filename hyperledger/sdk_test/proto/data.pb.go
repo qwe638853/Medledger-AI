@@ -900,7 +900,7 @@ func (x *RequestAccessRequest) GetExpiry() int64 {
 type RequestAccessResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	RequestId     string                 `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // optional: 回傳申請單 ID
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -942,9 +942,9 @@ func (x *RequestAccessResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *RequestAccessResponse) GetRequestId() string {
+func (x *RequestAccessResponse) GetMessage() string {
 	if x != nil {
-		return x.RequestId
+		return x.Message
 	}
 	return ""
 }
@@ -955,11 +955,13 @@ type AccessRequest struct {
 	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	ReportId      string                 `protobuf:"bytes,2,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
 	PatientHash   string                 `protobuf:"bytes,3,opt,name=patient_hash,json=patientHash,proto3" json:"patient_hash,omitempty"`
-	TargetHash    string                 `protobuf:"bytes,4,opt,name=target_hash,json=targetHash,proto3" json:"target_hash,omitempty"`
+	RequesterHash string                 `protobuf:"bytes,4,opt,name=requester_hash,json=requesterHash,proto3" json:"requester_hash,omitempty"`
 	Reason        string                 `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
 	RequestedAt   int64                  `protobuf:"varint,6,opt,name=requested_at,json=requestedAt,proto3" json:"requested_at,omitempty"`
 	Expiry        int64                  `protobuf:"varint,7,opt,name=expiry,proto3" json:"expiry,omitempty"`
-	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"` // pending / approved / rejected
+	Status        string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
+	RequesterName string                 `protobuf:"bytes,9,opt,name=requester_name,json=requesterName,proto3" json:"requester_name,omitempty"`
+	CompanyName   string                 `protobuf:"bytes,10,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1015,9 +1017,9 @@ func (x *AccessRequest) GetPatientHash() string {
 	return ""
 }
 
-func (x *AccessRequest) GetTargetHash() string {
+func (x *AccessRequest) GetRequesterHash() string {
 	if x != nil {
-		return x.TargetHash
+		return x.RequesterHash
 	}
 	return ""
 }
@@ -1046,6 +1048,20 @@ func (x *AccessRequest) GetExpiry() int64 {
 func (x *AccessRequest) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetRequesterName() string {
+	if x != nil {
+		return x.RequesterName
+	}
+	return ""
+}
+
+func (x *AccessRequest) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
 	}
 	return ""
 }
@@ -1774,22 +1790,23 @@ const file_proto_data_proto_rawDesc = "" +
 	"\n" +
 	"patient_id\x18\x02 \x01(\tR\tpatientId\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\x12\x16\n" +
-	"\x06expiry\x18\x04 \x01(\x03R\x06expiry\"P\n" +
+	"\x06expiry\x18\x04 \x01(\x03R\x06expiry\"K\n" +
 	"\x15RequestAccessResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
-	"\n" +
-	"request_id\x18\x02 \x01(\tR\trequestId\"\xfa\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xca\x02\n" +
 	"\rAccessRequest\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1b\n" +
 	"\treport_id\x18\x02 \x01(\tR\breportId\x12!\n" +
-	"\fpatient_hash\x18\x03 \x01(\tR\vpatientHash\x12\x1f\n" +
-	"\vtarget_hash\x18\x04 \x01(\tR\n" +
-	"targetHash\x12\x16\n" +
+	"\fpatient_hash\x18\x03 \x01(\tR\vpatientHash\x12%\n" +
+	"\x0erequester_hash\x18\x04 \x01(\tR\rrequesterHash\x12\x16\n" +
 	"\x06reason\x18\x05 \x01(\tR\x06reason\x12!\n" +
 	"\frequested_at\x18\x06 \x01(\x03R\vrequestedAt\x12\x16\n" +
 	"\x06expiry\x18\a \x01(\x03R\x06expiry\x12\x16\n" +
-	"\x06status\x18\b \x01(\tR\x06status\"O\n" +
+	"\x06status\x18\b \x01(\tR\x06status\x12%\n" +
+	"\x0erequester_name\x18\t \x01(\tR\rrequesterName\x12!\n" +
+	"\fcompany_name\x18\n" +
+	" \x01(\tR\vcompanyName\"O\n" +
 	"\x1aListAccessRequestsResponse\x121\n" +
 	"\brequests\x18\x01 \x03(\v2\x15.health.AccessRequestR\brequests\"<\n" +
 	"\x1bApproveAccessRequestRequest\x12\x1d\n" +

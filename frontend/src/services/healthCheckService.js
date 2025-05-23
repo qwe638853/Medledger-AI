@@ -363,12 +363,21 @@ export const fetchAuthorizedReports = async () => {
     const response = await apiClient.get('/v1/reports/authorized');
     
     if (response.data && response.data.reports) {
-      return response.data.reports.map(report => ({
-        id: report.reportId,
-        patient_id: report.patientId,
-        date: report.date,
-        expiry: report.expiry
-      }));
+      return response.data.reports.map(report => {
+        // 檢查日期是否為空或無效
+        const date = report.date || '無日期';
+        const expiry = report.expiry || '未設定';
+        
+        // 如果日期是 1970-01-01，則顯示為 "未設定"
+        const formattedExpiry = expiry === '1970-01-01' ? '未設定' : expiry;
+        
+        return {
+          id: report.reportId,
+          patient_id: report.patientId,
+          date: date,
+          expiry: formattedExpiry
+        };
+      });
     }
     return [];
   } catch (error) {
@@ -464,8 +473,9 @@ export const fetchAccessRequests = async () => {
       return response.data.requests.map(request => ({
         id: request.requestId , // 使用requesterId作為id
         reportId: request.reportId , // 使用reportId作為reportId
-        requesterId: request.requesterId , // 使用requesterId作為requesterId
-        requesterName: request.targetHash, // 提供fallback
+        requesterId: request.requesterHash , // 使用requesterId作為requesterId
+        requesterName: request.requesterName, // 提供fallback
+        companyName: request.companyName, // 提供fallback
         reason: request.reason || '',
         requestTime: request.requestedAt || request.request_time || 0, // 使用requestedAt作為requestTime
         status: request.status || 'UNKNOWN',

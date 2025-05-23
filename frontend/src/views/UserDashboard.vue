@@ -47,71 +47,127 @@ const healthRanges = {
   'WBC': { min: 4, max: 10, unit: 'x10^3/uL', name: '白血球' }
 };
 
-onMounted(async () => {
-  loading.value = true;
-  try {
-    // 從後端獲取健康數據 - 注意這裡的 API 對應到 HandleListMyReports
-    const healthResponse = await healthCheckService.fetchUserHealthData();
-    console.log('從後端獲取的健康數據:', healthResponse);
-    
-    // 處理來自後端的報告數據
-    healthData.value = healthResponse.map(report => {
-      // 嘗試解析 resultJson 字段 (如果是 JSON 字符串)
-      let parsedResults = {};
-      
-      try {
-        if (report.resultJson) {
-          if (typeof report.resultJson === 'string') {
-            parsedResults = JSON.parse(report.resultJson);
-          } else if (typeof report.resultJson === 'object') {
-            parsedResults = report.resultJson;
-          }
-        } else if (report.testResults) {
-          if (typeof report.testResults === 'string') {
-            parsedResults = JSON.parse(report.testResults);
-          } else if (typeof report.testResults === 'object') {
-            parsedResults = report.testResults;
-          }
-        } else if (report.test_results_json) {
-          if (typeof report.test_results_json === 'string') {
-            parsedResults = JSON.parse(report.test_results_json);
-          } else if (typeof report.test_results_json === 'object') {
-            parsedResults = report.test_results_json;
-          }
-        }
-      } catch (e) {
-        console.error('解析測試結果失敗:', e);
-      }
-      
-      // 生成預覽內容
-      const previewContent = Object.keys(parsedResults).length > 0 
-        ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
-        : (report.content || '無資料').substring(0, 50);
-      
-      return {
-        id: report.reportId || report.report_id || report.id || '未知',
-        content: previewContent,
-        date: report.createdAt || report.timestamp || report.created_at || report.date || new Date().toISOString(),
-        rawData: parsedResults,
-        originalReport: report // 保存原始報告數據
-      };
-    });
-    
-    console.log('處理後的健康數據:', healthData.value);
-    
-    // 載入授權請求和已授權票據
-    await Promise.all([
-      loadAccessRequests(),
-      loadGrantedTickets()
-    ]);
-  } catch (error) {
-    console.error('獲取健康數據失敗:', error);
-    notifyError(`獲取健康數據失敗：${error.message}`);
-    healthData.value = [];
-  } finally {
-    loading.value = false;
-  }
-});
+//健檢報告測試假資料區塊
+ healthData.value = [
+   {
+     id: 'RPT-TEST-001',
+     content: 'Glu-AC: 92, HbA1c: 5.2...',
+     date: '2024-05-01T10:00:00Z',
+     rawData: {
+       'Glu-AC': 92,
+       'HbA1c': 5.2,
+       'LDL-C': 98,
+       'HDL-C': 55,
+       'BP': '118/76',
+       'T-CHO': 180,
+       'TG': 110,
+       'U.A': 5.8,
+       'AST（GOT）': 28,
+       'ALT（GPT）': 22,
+       'CRE': 1.0,
+       'Hb': 14.2,
+       'PLT': 250,
+       'WBC': 6.5,
+       '備註': '一切正常'
+     },
+     originalReport: {}
+   },
+   {
+     id: 'RPT-TEST-002',
+     content: 'Glu-AC: 110, HbA1c: 6.1...',
+     date: '2024-04-15T09:30:00Z',
+     rawData: {
+       'Glu-AC': 110,
+       'HbA1c': 6.1,
+       'LDL-C': 130,
+       'HDL-C': 38,
+       'BP': '135/88',
+       'T-CHO': 210,
+       'TG': 180,
+       'U.A': 7.2,
+       'AST（GOT）': 45,
+       'ALT（GPT）': 40,
+       'CRE': 1.4,
+       'Hb': 11.8,
+       'PLT': 180,
+       'WBC': 11.2,
+       '備註': '需追蹤血壓與血糖'
+     },
+     originalReport: {}
+   }
+ ];
+
+//健檢報告測試假資料區塊 end
+
+/* === 以下 onMounted 會覆蓋測試資料，測試時請保持註解 ===
+
+// onMounted(async () => {
+//   loading.value = true;
+//   try {
+//     // 從後端獲取健康數據 - 注意這裡的 API 對應到 HandleListMyReports
+//     const healthResponse = await healthCheckService.fetchUserHealthData();
+//     console.log('從後端獲取的健康數據:', healthResponse);
+//     
+//     // 處理來自後端的報告數據
+//     healthData.value = healthResponse.map(report => {
+//       // 嘗試解析 resultJson 字段 (如果是 JSON 字符串)
+//       let parsedResults = {};
+//       
+//       try {
+//         if (report.resultJson) {
+//           if (typeof report.resultJson === 'string') {
+//             parsedResults = JSON.parse(report.resultJson);
+//           } else if (typeof report.resultJson === 'object') {
+//             parsedResults = report.resultJson;
+//           }
+//         } else if (report.testResults) {
+//           if (typeof report.testResults === 'string') {
+//             parsedResults = JSON.parse(report.testResults);
+//           } else if (typeof report.testResults === 'object') {
+//             parsedResults = report.testResults;
+//           }
+//         } else if (report.test_results_json) {
+//           if (typeof report.test_results_json === 'string') {
+//             parsedResults = JSON.parse(report.test_results_json);
+//           } else if (typeof report.test_results_json === 'object') {
+//             parsedResults = report.test_results_json;
+//           }
+//         }
+//       } catch (e) {
+//         console.error('解析測試結果失敗:', e);
+//       }
+//       
+//       // 生成預覽內容
+//       const previewContent = Object.keys(parsedResults).length > 0 
+//         ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
+//         : (report.content || '無資料').substring(0, 50);
+//       
+//       return {
+//         id: report.reportId || report.report_id || report.id || '未知',
+//         content: previewContent,
+//         date: report.createdAt || report.timestamp || report.created_at || report.date || new Date().toISOString(),
+//         rawData: parsedResults,
+//         originalReport: report // 保存原始報告數據
+//       };
+//     });
+//     
+//     console.log('處理後的健康數據:', healthData.value);
+//     
+//     // 載入授權請求和已授權票據
+//     await Promise.all([
+//       loadAccessRequests(),
+//       loadGrantedTickets()
+//     ]);
+//   } catch (error) {
+//     console.error('獲取健康數據失敗:', error);
+//     notifyError(`獲取健康數據失敗：${error.message}`);
+//     healthData.value = [];
+//   } finally {
+//     loading.value = false;
+//   }
+// });
+
+=== onMounted 註解結束，測試假資料生效 ===*/
 
 // 載入授權請求
 const loadAccessRequests = async () => {

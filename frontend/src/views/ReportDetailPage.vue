@@ -239,6 +239,9 @@ function getMetricNumber(value) {
   const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
   return match ? match[0] : value;
 }
+
+const aiBtnHover = ref(false);
+const riskBtnHover = ref(false);
 </script>
 
 <template>
@@ -305,24 +308,55 @@ function getMetricNumber(value) {
 
       <!-- 底部主要操作按鈕 -->
       <div class="d-flex justify-center gap-4 mt-10 mb-6">
-        <v-btn color="primary" size="large" class="px-8" @click="showAISummary = !showAISummary">
+        <v-btn
+          :style="{
+            backgroundColor: aiBtnHover ? '#0056b3' : '#007BFF',
+            color: '#fff',
+            boxShadow: aiBtnHover ? '0 4px 16px rgba(0,123,255,0.18)' : '0 2px 8px rgba(0,123,255,0.10)'
+          }"
+          size="large"
+          class="px-8 custom-btn"
+          @click="showAISummary = !showAISummary"
+          @mouseover="aiBtnHover = true"
+          @mouseleave="aiBtnHover = false"
+        >
           <v-icon left>mdi-robot</v-icon>AI 分析摘要
         </v-btn>
-        <v-btn color="deep-orange" size="large" class="px-8" @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }">
+        <v-btn
+          :style="{
+            backgroundColor: riskBtnHover ? '#e64a19' : '#FF5722',
+            color: '#fff',
+            boxShadow: riskBtnHover ? '0 4px 16px rgba(255,87,34,0.18)' : '0 2px 8px rgba(255,87,34,0.10)'
+          }"
+          size="large"
+          class="px-8 custom-btn"
+          @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }"
+          @mouseover="riskBtnHover = true"
+          @mouseleave="riskBtnHover = false"
+        >
           <v-icon left>mdi-shield-alert</v-icon>風險評估
         </v-btn>
       </div>
 
       <!-- 分析結果與風險評估顯示區域 -->
       <div class="result-section">
-        <v-card v-if="showAISummary" class="pa-6 mb-4 ai-summary-card">
-          <div class="text-h6 font-weight-bold mb-2">AI 分析摘要</div>
-          <div class="mb-2">{{ aiSummary }}</div>
+        <v-card
+          v-if="showAISummary"
+          class="custom-popup mb-4 ai-summary-card"
+        >
+          <div class="text-h6 font-weight-bold mb-2 text-center">AI 分析摘要</div>
+          <div class="mb-2 text-left">{{ aiSummary }}</div>
         </v-card>
-        <v-card v-if="showRisk" class="pa-6 mb-4 risk-summary-card">
-          <div class="text-h6 font-weight-bold mb-2">風險評估結果</div>
-          <div class="mb-2">風險等級：<span :class="riskLevel === '高風險' ? 'text-error' : riskLevel === '中風險' ? 'text-warning' : 'text-success'">{{ riskLevel }}</span></div>
-          <div class="mb-2">{{ riskAdvice }}</div>
+        <v-card
+          v-if="showRisk"
+          class="custom-popup mb-4 risk-summary-card"
+        >
+          <div class="text-h6 font-weight-bold mb-2 text-center">風險評估結果</div>
+          <div class="mb-2 text-center">
+            風險等級：
+            <span :class="riskLevel === '高風險' ? 'text-error' : riskLevel === '中風險' ? 'text-warning' : 'text-success'">{{ riskLevel }}</span>
+          </div>
+          <div class="mb-2 text-left">{{ riskAdvice }}</div>
         </v-card>
       </div>
     </template>
@@ -331,7 +365,8 @@ function getMetricNumber(value) {
 
 <style scoped>
 .report-detail-bg {
-  background: #fafbfc;
+  /* 背景漸層 */
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
 }
 .user-info-card {
@@ -357,13 +392,33 @@ function getMetricNumber(value) {
 .metric-grid {
   row-gap: 24px;
 }
-.ai-summary-card, .risk-summary-card {
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  max-width: 600px;
+.custom-btn {
+  transition: background 0.2s, box-shadow 0.2s;
+  font-weight: bold;
+  border-radius: 8px;
+}
+.custom-popup {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  padding: 16px !important;
+  text-align: left;
+  max-width: 500px;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.text-center {
+  text-align: center !important;
+}
+.text-left {
+  text-align: left !important;
+}
+.ai-summary-card, .risk-summary-card {
+  background: #fff;
 }
 .result-section {
   max-width: 700px;
@@ -372,5 +427,7 @@ function getMetricNumber(value) {
   flex-direction: column;
   align-items: center;
   gap: 24px;
+  justify-content: flex-start;
+  min-height: 320px;
 }
 </style> 

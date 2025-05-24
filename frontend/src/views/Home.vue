@@ -1,67 +1,58 @@
 <template>
-  <div>
+  <div class="landing-page">
     <!-- Hero Section -->
     <section class="hero-section">
-      <v-container class="py-16">
+      <v-container>
         <v-row align="center">
-          <v-col cols="12" md="6">
-            <h1 class="display-1 font-weight-bold mb-6 hero-title-xl">
-              健康檢查數據平台
-            </h1>
-            <p class="text-h5 mb-8 hero-subtitle">
-              安全、簡單地管理您的健康數據，守護您的健康生活
-            </p>
+          <v-col cols="12" md="6" class="hero-content">
+            <v-img src="@/assets/logo.png" alt="logo" max-width="64" class="mb-4" />
+            <h1 class="hero-title mb-2">智慧守護，健康鏈結</h1>
+            <div class="hero-slogan mb-4">結合 AI 與區塊鏈技術，打造安全可信的健康數據平台</div>
           </v-col>
-          <v-col cols="12" md="6">
-            <v-img
-              src="@/assets/hero-image.jpg"
-              class="rounded-lg hero-img"
-              max-height="350"
-              contain
-              lazy-src="@/assets/placeholder.jpg"
-            />
+          <v-col cols="12" md="6" class="text-center">
           </v-col>
         </v-row>
       </v-container>
+      <!-- 浮動幾何背景元素 -->
+      <div class="floating-bg"></div>
     </section>
 
     <!-- Features Section -->
-    <section class="features-section">
-      <v-container class="py-12">
-        <v-row justify="center" align="stretch">
+    <section class="features-section" id="features">
+      <v-container>
+        <v-row justify="center" align="stretch" class="feature-row">
           <v-col cols="12" sm="6" md="3" v-for="feature in features" :key="feature.title">
-            <v-card class="pa-8 text-center feature-card" elevation="2">
-              <v-icon size="56" color="info" class="mb-4">{{ feature.icon }}</v-icon>
-              <h2 class="text-h5 font-weight-bold mb-3 feature-title">{{ feature.title }}</h2>
-              <p class="text-h6 feature-desc">{{ feature.desc }}</p>
+            <v-card class="feature-card" elevation="2">
+              <v-card-text class="text-center">
+                <v-icon size="40" color="primary" class="mb-3">{{ feature.icon }}</v-icon>
+                <h3 class="feature-title mb-2">{{ feature.title }}</h3>
+                <p class="feature-desc">{{ feature.desc }}</p>
+              </v-card-text>
             </v-card>
           </v-col>
         </v-row>
       </v-container>
     </section>
 
-    <!-- Vision/Mission Section -->
-    <section class="vision-section">
-      <v-container class="py-12">
-        <v-row justify="center">
-          <v-col cols="12" md="8">
-            <v-card class="pa-8 text-center vision-card" elevation="1">
-              <h2 class="text-h4 font-weight-bold mb-4 vision-title">平台願景與任務</h2>
-              <p class="text-h6 vision-desc mb-0">
-                我們致力於打造一個安全、易用的健康數據管理平台，協助每一位用戶輕鬆管理個人健康資訊，促進健康生活，並推動台灣健康大數據的永續發展。
-              </p>
-            </v-card>
+    <!-- About Us Section -->
+    <section class="about-section" id="about">
+      <v-container>
+        <v-row align="center">
+          <v-col cols="12" md="6" class="text-center mb-4 mb-md-0">
+          </v-col>
+          <v-col cols="12" md="6">
+            <h2 class="about-title mb-4">關於智療鏈</h2>
+            <p class="about-desc mb-3">
+              智療鏈致力於結合 AI 與區塊鏈，讓每一位用戶都能安全、便捷地管理個人健康數據。
+            </p>
+            <p class="about-desc mb-3">
+              我們相信，數據的自主權與隱私保護是健康科技的核心。平台以高標準加密與權限控管，確保您的資訊安全無虞。
+            </p>
+            <p class="about-desc">
+              智療鏈團隊持續創新，推動健康數據上鏈，攜手用戶共創智慧健康新未來。
+            </p>
           </v-col>
         </v-row>
-      </v-container>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <v-container class="py-12 text-center">
-        <h2 class="text-h4 font-weight-bold mb-6 cta-title">立即加入我們，開始守護您的健康！</h2>
-        <v-btn color="info" class="cta-btn mr-4" size="x-large" :to="{ path: '/register' }">註冊</v-btn>
-        <v-btn color="primary" class="cta-btn" size="x-large" :to="{ path: '/login' }">登入</v-btn>
       </v-container>
     </section>
   </div>
@@ -84,98 +75,132 @@ const emit = defineEmits([
 ]);
 
 const features = ref([
-  { icon: 'mdi-shield-check', title: '數據安全', desc: '採用高等級加密技術，確保您的健康數據安全無虞。' },
-  { icon: 'mdi-chart-line', title: '即時追蹤', desc: '隨時查看與追蹤您的健康檢查數據，掌握健康趨勢。' },
-  { icon: 'mdi-brain', title: '智能分析', desc: '運用智能分析工具，協助您理解健康數據，預防疾病。' },
-  { icon: 'mdi-account-circle', title: '簡易操作', desc: '介面簡單明瞭，適合所有年齡層輕鬆上手。' }
+  { icon: 'mdi-shield-check', title: '資料安全', desc: '高等級加密與權限控管，守護您的健康數據隱私。' },
+  { icon: 'mdi-chart-timeline-variant', title: '即時記錄', desc: '隨時掌握健康數據，動態追蹤健康趨勢。' },
+  { icon: 'mdi-gesture-tap-button', title: '簡單操作', desc: '直覺介面設計，所有年齡層都能輕鬆上手。' },
+  { icon: 'mdi-trending-up', title: '健康趨勢掌握', desc: 'AI 智能分析，協助您洞察健康風險與改善建議。' }
 ]);
 </script>
 
 <style scoped>
+.landing-page {
+  background: #A7E2E3;
+  min-height: 100vh;
+}
+.nav-bar {
+  box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.08);
+  border-radius: 0 0 24px 24px;
+}
+.brand-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #A7E2E3;
+  letter-spacing: 1.5px;
+}
+.nav-link {
+  font-size: 1.1rem;
+  color: #1565c0 !important;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
 .hero-section {
-  background: linear-gradient(135deg, #e3f2fd 60%, #ffffff 100%);
-  animation: fadeIn 1s ease-in-out;
+  background: linear-gradient(120deg, #A7E2E3 30%, #ffffff 110%);
+  position: relative;
+  padding: 64px 0 48px 0;
+  overflow: hidden;
 }
-.hero-title-xl {
-  font-size: 4rem;
+.hero-content {
+  z-index: 2;
+}
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #1565c0;
   letter-spacing: 2px;
-  animation: slideInLeft 0.8s ease-out;
+  text-shadow: 0 2px 8px rgba(33, 150, 243, 0.08);
 }
-.hero-subtitle {
-  font-size: 1.5rem;
+.hero-slogan {
+  font-size: 1.2rem;
   color: #1976d2;
-  animation: slideInRight 0.8s ease-out;
+  font-weight: 500;
+  letter-spacing: 1px;
 }
-.hero-img {
-  box-shadow: 0 4px 24px 0 rgba(33, 150, 243, 0.15);
-  animation: zoomIn 1s ease-out;
+.hero-cta {
+  font-size: 1.15rem;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px 0 rgba(33, 150, 243, 0.10);
+}
+.hero-illustration {
+  z-index: 2;
+}
+.floating-bg {
+  position: absolute;
+  top: -60px;
+  right: -120px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle at 60% 40%, #42a5f5 0%, #e3f2fd 100%);
+  opacity: 0.25;
+  border-radius: 50%;
+  z-index: 1;
+  filter: blur(12px);
 }
 .features-section {
-  background-color: #f4faff;
+  background: #f9f7f4;
+  padding: 64px 0 48px 0;
+}
+.feature-row {
+  row-gap: 32px;
 }
 .feature-card {
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 2px 8px 0 rgba(33, 150, 243, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 20px;
+  background: #f8fafc;
+  box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.10);
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
 }
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px 0 rgba(33, 150, 243, 0.18);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 8px 32px 0 rgba(33, 150, 243, 0.18);
 }
 .feature-title {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+  color: #1565c0;
+  font-weight: 700;
 }
 .feature-desc {
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: #1976d2;
 }
-.vision-section {
-  background: #e3f2fd;
+.about-section {
+  background: linear-gradient(90deg, #f9f7f4 60%);
+  padding: 64px 0 48px 0;
 }
-.vision-card {
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 2px 8px 0 rgba(33, 150, 243, 0.08);
-  animation: fadeIn 1s ease-in-out;
-}
-.vision-title {
+.about-title {
   font-size: 1.5rem;
+  color: #1565c0;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
 }
-.vision-desc {
-  font-size: 1.15rem;
+.about-desc {
+  font-size: 1.1rem;
   color: #1976d2;
+  line-height: 1.8;
 }
-.cta-section {
-  background: linear-gradient(135deg, #e3f2fd 60%, #ffffff 100%);
+.about-illustration {
+  border-radius: 20px;
+  box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.10);
 }
-.cta-title {
-  font-size: 1.5rem;
-}
-.cta-btn {
-  font-size: 1.25rem;
-  font-weight: bold;
-  border-radius: 8px;
-  transition: transform 0.2s ease;
-}
-.cta-btn:hover {
-  transform: scale(1.05);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideInLeft {
-  from { transform: translateX(-50px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideInRight {
-  from { transform: translateX(50px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes zoomIn {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+@media (max-width: 960px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  .about-title {
+    font-size: 1.2rem;
+  }
+  .feature-title {
+    font-size: 1rem;
+  }
 }
 </style>

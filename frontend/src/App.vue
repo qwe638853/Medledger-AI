@@ -86,20 +86,22 @@ body, #app, .v-application, .v-app {
 }
 
 .brand-app-bar {
-  background: #f9f7f4 !important;
+  background: #F9F7F4 !important;
   color: #222 !important;
   box-shadow: none;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid #e5e7eb;
+  height: 80px !important;
 }
+
 .brand-title {
   font-size: 1.8rem;
   font-weight: 900;
-  color: #080808;
-  letter-spacing: 1.5px;
+  color: #111827;
+  letter-spacing: -0.5px;
   line-height: 1.2;
-  text-shadow: none;
-  font-family: 'Montserrat', 'Noto Sans TC', 'Arial', sans-serif;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
+
 .brand-slogan {
   color: #080808;
   font-size: 1.1rem;
@@ -107,53 +109,77 @@ body, #app, .v-application, .v-app {
   letter-spacing: 1.2px;
   line-height: 1.2;
 }
+
 .footer-brand {
-  background: linear-gradient(90deg, #f9f7f4);
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1rem;
+  background: #f3f2ef !important;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 0.875rem;
   padding: 0;
 }
+
 .footer-title {
-  color: #080808;
-  font-weight: bold;
-  letter-spacing: 1.2px;
-  font-size: 1.1rem;
+  color: #6b7280;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-size: 0.875rem;
 }
 
 .v-icon {
-  color: #1565c0 !important;
+  color: #111827 !important;
 }
+
 .brand-item {
   margin-bottom: 8px;
 }
+
 .nav-item {
   margin: 4px 0;
   transition: all 0.3s ease;
   color: #1565c0 !important;
 }
+
 .nav-item:hover {
   background: #f9f7f4;
 }
+
 .main-content {
   background: #f9f7f4;
 }
+
 .nav-link {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #6b7280 !important;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin-right: 24px;
-  font-family: 'Montserrat', 'Noto Sans TC', 'Arial', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-right: 32px;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
+  transition: all 0.2s ease;
+  position: relative;
 }
-.nav-link:last-child {
-  margin-right: 0;
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #111827;
+  transition: width 0.2s ease;
 }
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
 .v-btn.nav-link {
   min-width: unset;
   padding: 0 8px;
 }
+
 .v-img {
   filter: grayscale(100%) contrast(1.1);
 }

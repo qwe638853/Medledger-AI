@@ -14,14 +14,18 @@
 
     <v-app-bar app class="brand-app-bar" flat>
       <v-container class="d-flex align-center pa-0">
-        <div>
-          <div class="brand-title">智療鏈</div>
-          <div class="brand-slogan">智慧守護，鏈接健康未來</div>
-        </div>
+        <v-img
+          src="@/assets/logo.png"
+          alt="智療鏈 Logo"
+          class="mr-3"
+          max-width="44"
+          max-height="44"
+          style="border-radius: 12px; background: #e3f2fd;"
+        />
+        <span class="brand-title mr-8">智療鏈</span>
+        <v-btn text class="nav-link mr-2" to="#about">關於我們</v-btn>
+        <v-btn text class="nav-link" to="#contact">聯絡資訊</v-btn>
         <v-spacer />
-        <v-btn v-if="!authStore.isLoggedIn" color="primary" variant="outlined" class="mx-1" :to="{ path: '/register' }">註冊</v-btn>
-        <v-btn v-if="!authStore.isLoggedIn" color="primary" variant="flat" class="mx-1" :to="{ path: '/login' }">登入</v-btn>
-        <v-btn v-if="authStore.isLoggedIn" color="primary" variant="text" class="mx-1" @click="authStore.logout">登出</v-btn>
       </v-container>
     </v-app-bar>
 
@@ -77,58 +81,48 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+body, #app, .v-application, .v-app {
+  background: #f9f7f4 !important;
+}
+
 .brand-app-bar {
-  background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%) !important;
-  color: #fff !important;
-  box-shadow: 0 2px 8px 0 rgba(21,101,192,0.08);
+  background: #f9f7f4 !important;
+  color: #222 !important;
+  box-shadow: none;
+  border-bottom: 1px solid #222;
 }
 .brand-title {
   font-size: 1.8rem;
   font-weight: 900;
-  color: #fff;
+  color: #080808;
   letter-spacing: 1.5px;
   line-height: 1.2;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  text-shadow: none;
+  font-family: 'Montserrat', 'Noto Sans TC', 'Arial', sans-serif;
 }
 .brand-slogan {
-  color: #e3f2fd;
+  color: #080808;
   font-size: 1.1rem;
   font-weight: 500;
   letter-spacing: 1.2px;
   line-height: 1.2;
 }
 .footer-brand {
-  background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%);
+  background: linear-gradient(90deg, #f9f7f4);
   color: #fff;
   font-weight: 600;
   font-size: 1.1rem;
   padding: 0;
 }
 .footer-title {
+  color: #080808;
   font-weight: bold;
   letter-spacing: 1.2px;
   font-size: 1.1rem;
 }
-.v-btn {
-  background: #1565c0 !important;
-  color: #fff !important;
-  border: none;
-}
-.v-btn[variant="outlined"], .v-btn[outlined] {
-  background: #fff !important;
-  color: #1565c0 !important;
-  border: 2px solid #1565c0 !important;
-}
+
 .v-icon {
   color: #1565c0 !important;
-}
-.sidebar {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-}
-.sidebar-list {
-  padding: 8px;
 }
 .brand-item {
   margin-bottom: 8px;
@@ -139,9 +133,28 @@ onUnmounted(() => {
   color: #1565c0 !important;
 }
 .nav-item:hover {
-  background: rgba(33, 150, 243, 0.1);
+  background: #f9f7f4;
 }
 .main-content {
-  background: #f8fafc;
+  background: #f9f7f4;
+}
+.nav-link {
+  font-size: 1.1rem;
+  color: #6b7280 !important;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-right: 24px;
+  font-family: 'Montserrat', 'Noto Sans TC', 'Arial', sans-serif;
+}
+.nav-link:last-child {
+  margin-right: 0;
+}
+.v-btn.nav-link {
+  min-width: unset;
+  padding: 0 8px;
+}
+.v-img {
+  filter: grayscale(100%) contrast(1.1);
 }
 </style>

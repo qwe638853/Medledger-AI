@@ -347,7 +347,7 @@ const handleTestLogin = async () => {
 <style scoped>
 .fill-height {
   min-height: calc(100vh - 64px);
-  background-color: #f8f9fa;
+  background-color: #f9f7f4;
 }
 
 .v-card {
@@ -356,8 +356,8 @@ const handleTestLogin = async () => {
 }
 
 .debug-info {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background-color: #f9f7f4;
+  border: 1px solid #f9f7f4;
   border-radius: 4px;
   font-family: monospace;
   font-size: 12px;

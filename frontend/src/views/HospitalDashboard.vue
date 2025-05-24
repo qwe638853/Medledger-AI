@@ -373,543 +373,686 @@ const formatJSONDisplay = (data) => {
 </script>
 
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <v-card class="mb-6">
-          <v-card-title class="text-h5 primary--text">
-            <v-icon large color="primary" class="mr-2">mdi-hospital-building</v-icon>
-            健檢中心儀表板
-          </v-card-title>
-          <v-card-subtitle>
-            歡迎，{{ currentUser }}
-          </v-card-subtitle>
-          <v-card-text>
-            <!-- 病人身分證字號輸入 -->
-            <v-row>
+  <div class="dashboard-page">
+    <v-container class="py-8">
+      <v-row>
+        <v-col cols="12">
+          <!-- 主要卡片容器 -->
+          <v-card class="main-card" elevation="0">
+            <!-- 頂部標題區 -->
+            <div class="header-section">
+              <div class="d-flex align-center mb-6">
+                <v-icon size="32" class="header-icon">mdi-hospital-building</v-icon>
+                <div>
+                  <h1 class="header-title">健檢中心儀表板</h1>
+                  <p class="header-subtitle">歡迎，{{ currentUser }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 病人身分證字號輸入區 -->
+            <v-row class="mb-8">
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="patientId"
                   label="病人身分證字號"
                   placeholder="例：A123456789"
                   :rules="patientIdRules"
-                  outlined
-                  dense
-                  hint="請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字"
-                  persistent-hint
+                  variant="outlined"
+                  density="comfortable"
+                  bg-color="#f5f5f5"
+                  class="id-input"
+                  hide-details="auto"
                 >
                   <template v-slot:prepend>
-                    <v-icon>mdi-account-badge</v-icon>
+                    <v-icon size="20">mdi-account-outline</v-icon>
                   </template>
                 </v-text-field>
+                <div class="input-hint">請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字</div>
               </v-col>
             </v-row>
-            
-            <v-row>
-              <v-col cols="12">
-                <!-- 文件上傳區域 -->
-                <v-card
-                  class="file-drop-zone"
-                  :class="{ 'dragging': isDragging }"
-                  @dragover.prevent="isDragging = true"
-                  @dragleave.prevent="isDragging = false"
-                  @drop="handleFileDrop"
-                >
-                  <div class="d-flex flex-column align-center justify-center pa-6">
-                    <v-icon size="64" color="primary">mdi-cloud-upload</v-icon>
-                    <h3 class="text-h5 mt-4 primary--text">拖曳健檢報告至此處上傳</h3>
-                    <p class="text-body-1 text-center my-4">
-                      或者
-                      <v-btn
-                        color="primary"
-                        rounded
-                        prepend-icon="mdi-file-plus"
-                        @click="$refs.fileInput.click()"
-                      >
-                        選擇檔案
-                      </v-btn>
-                    </p>
-                    <p class="text-caption text-grey">支援 Excel、CSV、PDF 與 JSON 格式</p>
-                    <input
-                      ref="fileInput"
-                      type="file"
-                      multiple
-                      class="d-none"
-                      accept=".xlsx,.xls,.csv,.pdf,.json"
-                      @change="handleFileSelect"
-                    />
-                  </div>
-                </v-card>
-              </v-col>
-            </v-row>
-            
-            <!-- 已選擇文件列表 -->
-            <v-row v-if="files.length > 0" class="mt-4">
-              <v-col cols="12">
-                <v-card outlined>
-                  <v-card-title class="text-h6">
-                    <v-icon left>mdi-file-multiple</v-icon>
-                    已選擇 {{ files.length }} 個檔案
-                    <v-spacer></v-spacer>
-                    <v-btn color="error" variant="text" @click="clearFiles">
-                      <v-icon>mdi-delete</v-icon>
-                      清除
-                    </v-btn>
-                  </v-card-title>
-                  <v-list>
-                    <v-list-item v-for="(file, index) in files" :key="index">
-                      <template v-slot:prepend>
-                        <v-icon :color="
-                          file.name.toLowerCase().endsWith('.json') ? 'deep-purple' : 
-                          getFileIcon(file) === 'mdi-file-pdf' ? 'red' : 'green'
-                        ">
-                          {{ getFileIcon(file) }}
-                        </v-icon>
-                      </template>
-                      <v-list-item-title>{{ file.name }}</v-list-item-title>
-                      <v-list-item-subtitle>{{ formatFileSize(file.size) }}</v-list-item-subtitle>
-                    </v-list-item>
-                  </v-list>
-                  
-                  <!-- 解析錯誤提示 -->
-                  <v-alert
-                    v-if="parseError"
-                    type="error"
-                    class="ma-3"
-                    dense
+
+            <!-- 文件上傳區域 -->
+            <v-card
+              class="upload-zone mb-8"
+              :class="{ 'dragging': isDragging }"
+              elevation="0"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop="handleFileDrop"
+            >
+              <div class="upload-content">
+                <v-icon size="48" class="upload-icon">mdi-cloud-upload-outline</v-icon>
+                <h3 class="upload-title">拖曳健檢報告至此處上傳</h3>
+                <p class="upload-text">
+                  或者
+                  <v-btn
+                    class="select-btn"
+                    elevation="0"
+                    @click="$refs.fileInput.click()"
                   >
-                    {{ parseError }}
-                  </v-alert>
-                  
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <!-- 修改為預覽按鈕 -->
-                    <v-btn
-                      color="info"
-                      :disabled="!files.length || !patientId"
-                      @click="previewFiles"
-                      class="mr-2"
-                    >
-                      <v-icon left>mdi-eye</v-icon>
-                      預覽
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-col>
-            </v-row>
-            
+                    <v-icon start size="20">mdi-file-plus-outline</v-icon>
+                    選擇檔案
+                  </v-btn>
+                </p>
+                <p class="upload-hint">支援 Excel、CSV、PDF 與 JSON 格式</p>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  multiple
+                  class="d-none"
+                  accept=".xlsx,.xls,.csv,.pdf,.json"
+                  @change="handleFileSelect"
+                />
+              </div>
+            </v-card>
+
+            <!-- 已選擇文件列表 -->
+            <v-expand-transition>
+              <v-card
+                v-if="files.length > 0"
+                class="selected-files mb-8"
+                elevation="0"
+              >
+                <div class="d-flex align-center justify-space-between pa-4">
+                  <div class="d-flex align-center">
+                    <v-icon size="24" class="mr-2">mdi-file-multiple-outline</v-icon>
+                    <span class="selected-title">已選擇 {{ files.length }} 個檔案</span>
+                  </div>
+                  <v-btn
+                    class="clear-btn"
+                    elevation="0"
+                    @click="clearFiles"
+                  >
+                    <v-icon size="20">mdi-close</v-icon>
+                    清除
+                  </v-btn>
+                </div>
+
+                <v-divider class="mx-4"></v-divider>
+
+                <v-list class="file-list">
+                  <v-list-item
+                    v-for="(file, index) in files"
+                    :key="index"
+                    class="file-item"
+                  >
+                    <template v-slot:prepend>
+                      <v-icon
+                        :color="file.name.toLowerCase().endsWith('.json') ? '#6B7280' : '#374151'"
+                        size="20"
+                      >
+                        {{ getFileIcon(file) }}
+                      </v-icon>
+                    </template>
+                    <v-list-item-title class="file-name">{{ file.name }}</v-list-item-title>
+                    <v-list-item-subtitle class="file-size">{{ formatFileSize(file.size) }}</v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+
+                <v-alert
+                  v-if="parseError"
+                  type="error"
+                  class="mx-4 mt-4"
+                  variant="tonal"
+                  density="comfortable"
+                >
+                  {{ parseError }}
+                </v-alert>
+
+                <v-card-actions class="pa-4">
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    class="preview-btn"
+                    :disabled="!files.length || !patientId"
+                    @click="previewFiles"
+                  >
+                    <v-icon start size="20">mdi-eye-outline</v-icon>
+                    預覽
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-expand-transition>
+
             <!-- 已上傳數據列表 -->
-            <v-row class="mt-4">
-              <v-col cols="12">
-                <v-card outlined>
-                  <v-card-title class="text-h6">
-                    <v-icon left>mdi-clipboard-text</v-icon>
-                    已上傳健檢報告
-                  </v-card-title>
-                  <v-card-text>
-                    <div v-if="loading">
-                      <v-progress-circular
-                        indeterminate
-                        color="primary"
-                      ></v-progress-circular>
-                      加載中...
-                    </div>
-                    <v-list v-else-if="uploadedData.length > 0">
-                      <v-list-item v-for="(item, index) in uploadedData" :key="index">
-                        <template v-slot:prepend>
-                          <v-icon color="primary">mdi-file-check</v-icon>
-                        </template>
-                        <v-list-item-title>
-                          病人：{{ item.userId || item.patient_hash || '未知' }}
-                        </v-list-item-title>
-                        <v-list-item-subtitle>
-                          檔案：{{ item.fileName || '未命名' }}
-                        </v-list-item-subtitle>
-                        <v-list-item-subtitle>
-                          時間：{{ item.uploadTime || new Date().toLocaleString() }}
-                        </v-list-item-subtitle>
-                      </v-list-item>
-                    </v-list>
-                    <div v-else class="text-center pa-4">
-                      <v-icon large color="grey">mdi-folder-open</v-icon>
-                      <p class="text-body-1 mt-2">暫無已上傳資料</p>
-                    </div>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" variant="outlined" @click="handleLogout">
-              <v-icon left>mdi-logout</v-icon>
-              登出
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-    
+            <v-card class="uploaded-list" elevation="0">
+              <div class="d-flex align-center mb-4">
+                <v-icon size="24" class="mr-2">mdi-text-box-check-outline</v-icon>
+                <h3 class="uploaded-title">已上傳健檢報告</h3>
+              </div>
+
+              <div v-if="loading" class="d-flex align-center justify-center pa-8">
+                <v-progress-circular
+                  indeterminate
+                  color="#111827"
+                  size="32"
+                ></v-progress-circular>
+                <span class="ml-4 text-body-1">載入中...</span>
+              </div>
+
+              <template v-else>
+                <v-list v-if="uploadedData.length > 0" class="report-list">
+                  <v-list-item
+                    v-for="(item, index) in uploadedData"
+                    :key="index"
+                    class="report-item"
+                  >
+                    <template v-slot:prepend>
+                      <v-icon size="20">mdi-file-check-outline</v-icon>
+                    </template>
+                    <v-list-item-title class="report-patient">
+                      病人：{{ item.userId || item.patient_hash || '未知' }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="report-info">
+                      {{ item.fileName || '未命名' }} · {{ item.uploadTime || new Date().toLocaleString() }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+
+                <div v-else class="empty-state">
+                  <v-icon size="48" class="empty-icon">mdi-text-box-outline</v-icon>
+                  <p class="empty-text">目前沒有已上傳的報告</p>
+                  <p class="empty-hint">拖曳檔案或點擊上方按鈕開始上傳</p>
+                </div>
+              </template>
+            </v-card>
+
+            <!-- 底部操作區 -->
+            <div class="d-flex justify-end mt-8">
+              <v-btn
+                class="logout-btn"
+                elevation="0"
+                @click="handleLogout"
+              >
+                <v-icon start size="20">mdi-logout-variant</v-icon>
+                登出
+              </v-btn>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+
     <!-- 預覽對話框 -->
-    <v-dialog v-model="previewDialog" max-width="800" persistent>
-      <v-card>
-        <v-card-title class="text-h5">
-          <v-icon left>mdi-eye</v-icon>
+    <v-dialog
+      v-model="previewDialog"
+      max-width="800"
+      persistent
+      class="preview-dialog"
+    >
+      <v-card class="preview-card">
+        <v-card-title class="preview-header">
+          <v-icon start size="24">mdi-eye-outline</v-icon>
           預覽健檢報告
         </v-card-title>
-        <v-card-subtitle>
+        
+        <v-card-subtitle class="preview-subtitle">
           病人身分證：{{ patientId }}
         </v-card-subtitle>
-        <v-card-text>
+
+        <v-card-text class="preview-content">
           <v-expansion-panels v-if="parsedData">
-            <v-expansion-panel v-for="(fileData, index) in parsedData" :key="index">
-              <v-expansion-panel-title>
-                <v-icon class="mr-2" :color="
-                  fileData.fileType === 'json' ? 'deep-purple' : 
-                  fileData.fileType === 'pdf' ? 'red' : 'green'
-                ">
+            <v-expansion-panel
+              v-for="(fileData, index) in parsedData"
+              :key="index"
+              class="preview-panel"
+            >
+              <v-expansion-panel-title class="preview-panel-title">
+                <v-icon
+                  class="mr-2"
+                  size="20"
+                  :color="fileData.fileType === 'json' ? '#6B7280' : '#374151'"
+                >
                   {{ fileData.fileType === 'json' ? 'mdi-code-json' : 
-                     fileData.fileType === 'pdf' ? 'mdi-file-pdf' : 
-                     fileData.fileType === 'csv' ? 'mdi-file-delimited' : 
-                     'mdi-file-excel' }}
+                     fileData.fileType === 'pdf' ? 'mdi-file-pdf-outline' : 
+                     fileData.fileType === 'csv' ? 'mdi-file-delimited-outline' : 
+                     'mdi-file-excel-outline' }}
                 </v-icon>
-                {{ fileData.fileName }} ({{ fileData.fileSize }})
+                {{ fileData.fileName }}
+                <span class="preview-file-size">({{ fileData.fileSize }})</span>
               </v-expansion-panel-title>
+
               <v-expansion-panel-text>
-                <v-simple-table>
-                  <template v-slot:default>
-                    <thead>
-                      <tr>
-                        <th>項目</th>
-                        <th>數值</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(value, key) in formatJSONDisplay(fileData.reportData)" :key="key">
-                        <td>{{ key }}</td>
-                        <td>{{ value }}</td>
-                      </tr>
-                    </tbody>
-                  </template>
-                </v-simple-table>
+                <v-table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>項目</th>
+                      <th>數值</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(value, key) in formatJSONDisplay(fileData.reportData)" :key="key">
+                      <td>{{ key }}</td>
+                      <td>{{ value }}</td>
+                    </tr>
+                  </tbody>
+                </v-table>
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
         </v-card-text>
-        <v-card-actions>
+
+        <v-divider></v-divider>
+
+        <v-card-actions class="preview-actions">
           <v-spacer></v-spacer>
-          <v-btn color="grey" text @click="previewDialog = false">
+          <v-btn
+            class="cancel-btn"
+            elevation="0"
+            @click="previewDialog = false"
+          >
             取消
           </v-btn>
           <v-btn
-            color="primary"
+            class="confirm-btn"
+            elevation="0"
             :loading="isUploading"
             :disabled="isUploading"
             @click="handleFileUpload"
           >
-            <v-icon left>mdi-cloud-upload</v-icon>
+            <v-icon start size="20">mdi-cloud-upload-outline</v-icon>
             確認上傳
           </v-btn>
         </v-card-actions>
+
         <v-progress-linear
           v-if="isUploading"
           :value="uploadProgress"
-          height="10"
-          color="primary"
-          striped
+          height="4"
+          color="#111827"
+          class="upload-progress"
         ></v-progress-linear>
       </v-card>
     </v-dialog>
-    
+
     <!-- 通知提示 -->
     <v-snackbar
       v-model="snackbar.show"
-      :color="snackbar.color"
-      timeout="5000"
+      :color="snackbar.color === 'success' ? '#111827' : '#EF4444'"
+      timeout="3000"
+      location="top"
+      class="notification"
     >
       {{ snackbar.message }}
       <template v-slot:actions>
         <v-btn
           variant="text"
+          class="notification-close"
           @click="snackbar.show = false"
         >
           關閉
         </v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <style scoped>
-.file-drop-zone {
-  border: 2px dashed #1976d2;
-  border-radius: 8px;
-  background-color: #f5f9ff;
-  transition: all 0.3s ease;
-  min-height: 250px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.file-drop-zone:hover {
-  background-color: #e3f2fd;
-  border-color: #0d47a1;
-}
-
-.file-drop-zone.dragging {
-  background-color: #bbdefb;
-  border-color: #1565c0;
-  box-shadow: 0 0 10px rgba(25, 118, 210, 0.2);
-}
-
-.dashboard-container {
-  padding: 2rem;
-  background: var(--background-color);
+/* 全局樣式 */
+.dashboard-page {
+  background-color: #F9F7F4;
   min-height: 100vh;
 }
 
-.dashboard-header {
-  margin-bottom: 2rem;
+/* 主卡片容器 */
+.main-card {
+  border-radius: 28px !important;
+  background: white !important;
+  padding: 2rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-.dashboard-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 1rem;
+/* 頂部標題區 */
+.header-icon {
+  color: #111827;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #111827;
+  margin: 0;
   letter-spacing: -0.5px;
 }
 
-.upload-section {
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 2rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.upload-section:hover {
-  box-shadow: var(--shadow-lg);
-}
-
-.drop-zone {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  text-align: center;
-  background: var(--background-color);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.drop-zone.dragging {
-  border-color: var(--primary-color);
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.drop-zone-text {
-  font-size: 1.125rem;
-  color: var(--muted-color);
-  margin-bottom: 1rem;
-}
-
-.file-list {
-  margin-top: 1.5rem;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  background: var(--white);
-  border-radius: var(--border-radius-md);
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.file-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
-}
-
-.file-icon {
-  margin-right: 1rem;
-  color: var(--primary-color);
-}
-
-.file-name {
-  flex: 1;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.file-size {
-  color: var(--muted-color);
-  font-size: 0.875rem;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.btn {
-  font-family: 'Inter', sans-serif;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-lg);
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: var(--white);
-  border: none;
-}
-
-.btn-secondary {
-  background: var(--white);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.preview-dialog {
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-}
-
-.preview-header {
-  padding: 1.5rem;
-  background: var(--background-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.preview-content {
-  padding: 2rem;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.preview-item {
-  background: var(--white);
-  border-radius: var(--border-radius-md);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border-color);
-}
-
-.preview-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.preview-item-title {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.preview-item-subtitle {
-  color: var(--muted-color);
-  font-size: 0.875rem;
-}
-
-.input-field {
-  margin-bottom: 1.5rem;
-}
-
-.input-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
+.header-subtitle {
   font-size: 1rem;
-  transition: all 0.2s ease;
+  color: #6B7280;
+  margin: 0.25rem 0 0;
 }
 
-.input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+/* 身分證輸入區 */
+.id-input {
+  border-radius: 16px !important;
 }
 
-.error-message {
-  color: #ef4444;
+.id-input :deep(.v-field__outline) {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.input-hint {
   font-size: 0.875rem;
+  color: #888;
   margin-top: 0.5rem;
 }
 
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 1rem;
-  }
-  
-  .dashboard-title {
-    font-size: 1.75rem;
-  }
-  
-  .upload-section {
-    padding: 1.5rem;
-  }
-  
-  .drop-zone {
-    padding: 1.5rem;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
+/* 上傳區域 */
+.upload-zone {
+  border: 2px dashed #E5E7EB !important;
+  border-radius: 24px !important;
+  background: white !important;
+  transition: all 0.2s ease !important;
+  min-height: 280px;
 }
 
-/* 動畫效果 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.upload-zone:hover {
+  border-color: #111827 !important;
+  background: #FAFAFA !important;
 }
 
-.fade-enter-active {
-  animation: slideIn 0.3s ease-out;
+.upload-zone.dragging {
+  border-color: #111827 !important;
+  background: #F9FAFB !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
-.dashboard-header-icon, .v-icon.dashboard-header-icon {
-  vertical-align: middle;
-  font-size: 2.2rem !important;
-  margin-right: 0.5rem;
-  display: inline-flex;
+.upload-content {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.upload-icon {
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.upload-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.upload-text {
+  font-size: 1rem;
+  color: #6B7280;
+  margin-bottom: 1rem;
+}
+
+.upload-hint {
+  font-size: 0.875rem;
+  color: #888;
+  margin: 0;
+}
+
+/* 選擇檔案按鈕 */
+.select-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  margin: 0 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.select-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+  background-color: #F9F650 !important;
+}
+
+/* 已選擇文件列表 */
+.selected-files {
+  border-radius: 24px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.selected-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.clear-btn {
+  color: #6B7280 !important;
+}
+
+.file-list {
+  padding: 0.5rem 0 !important;
+}
+
+.file-item {
+  padding: 0.75rem 1rem !important;
+}
+
+.file-name {
+  font-size: 0.875rem !important;
+  color: #111827 !important;
+}
+
+.file-size {
+  font-size: 0.75rem !important;
+  color: #6B7280 !important;
+}
+
+/* 預覽按鈕 */
+.preview-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  transition: all 0.2s ease !important;
+}
+
+.preview-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+}
+
+/* 已上傳列表 */
+.uploaded-list {
+  border-radius: 24px !important;
+  padding: 2rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.uploaded-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.report-list {
+  padding: 0 !important;
+}
+
+.report-item {
+  padding: 1rem !important;
+  border-bottom: 1px solid #E5E7EB !important;
+}
+
+.report-item:last-child {
+  border-bottom: none !important;
+}
+
+.report-patient {
+  font-size: 0.875rem !important;
+  color: #111827 !important;
+}
+
+.report-info {
+  font-size: 0.75rem !important;
+  color: #6B7280 !important;
+}
+
+/* 空狀態 */
+.empty-state {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.empty-icon {
+  color: #9CA3AF;
+  margin-bottom: 1rem;
+}
+
+.empty-text {
+  font-size: 1.125rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* 登出按鈕 */
+.logout-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  transition: all 0.2s ease !important;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+}
+
+/* 預覽對話框 */
+.preview-dialog :deep(.v-overlay__content) {
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.preview-card {
+  border-radius: 28px !important;
+}
+
+.preview-header {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  padding: 1.5rem !important;
+}
+
+.preview-subtitle {
+  color: #6B7280 !important;
+  padding: 0 1.5rem 1rem !important;
+}
+
+.preview-content {
+  padding: 1.5rem !important;
+}
+
+.preview-panel {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid #E5E7EB !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.preview-panel-title {
+  font-size: 0.875rem !important;
+  color: #111827 !important;
+}
+
+.preview-file-size {
+  color: #6B7280;
+  margin-left: 0.5rem;
+}
+
+.preview-table {
+  border: 1px solid #E5E7EB !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.preview-table th {
+  background: #F9FAFB !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.preview-table td {
+  padding: 0.75rem 1rem !important;
+  color: #111827 !important;
+  font-size: 0.875rem !important;
+}
+
+.preview-actions {
+  padding: 1rem 1.5rem !important;
+}
+
+.cancel-btn {
+  color: #6B7280 !important;
+}
+
+.confirm-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  margin-left: 0.5rem !important;
+}
+
+.upload-progress {
+  border-radius: 0 0 28px 28px !important;
+}
+
+/* RWD 適配 */
+@media (max-width: 960px) {
+  .main-card {
+    padding: 1.5rem !important;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
+  }
+  
+  .upload-content {
+    padding: 2rem;
+  }
+  
+  .upload-title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .upload-zone {
+    min-height: 240px;
+  }
+  
+  .upload-content {
+    padding: 1.5rem;
+  }
+  
+  .select-btn,
+  .preview-btn,
+  .logout-btn {
+    width: 100%;
+  }
+  
+  .preview-dialog :deep(.v-overlay__content) {
+    width: 90vw !important;
+  }
 }
 </style>

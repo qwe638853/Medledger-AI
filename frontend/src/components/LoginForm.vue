@@ -1,146 +1,151 @@
 <template>
-  <v-container class="fill-height">
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="6" lg="4">
-        <v-card class="elevation-3">
-          <v-toolbar :style="'background-color: #8A817C !important;'" dark flat>
-            <v-toolbar-title class="text-h5 font-weight-bold">企業健康數據管理平台</v-toolbar-title>
-          </v-toolbar>
-          
-          <!-- 系統訊息提示 -->
-          <v-alert
-            v-if="alertInfo.show"
-            :type="alertInfo.type"
-            :title="alertInfo.title"
-            :icon="alertInfo.icon"
-            closable
-            border
-            class="ma-4"
-            @click:close="alertInfo.show = false"
-          >
-            {{ alertInfo.message }}
-          </v-alert>
-          
-          <v-card-text class="pt-6">
+  <div class="login-page">
+    <v-container class="fill-height">
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="8" md="6" lg="4">
+          <!-- 主要登入卡片 -->
+          <v-card class="login-card" elevation="0">
+            <!-- 頂部標題區 -->
+            <div class="header-section">
+              <h1 class="header-title">企業健康數據管理平台</h1>
+              <p class="header-subtitle">安全、便捷的醫療數據管理解決方案</p>
+            </div>
+            
+            <!-- 系統訊息提示 -->
+            <v-alert
+              v-if="alertInfo.show"
+              :type="alertInfo.type"
+              :title="alertInfo.title"
+              density="comfortable"
+              variant="tonal"
+              class="alert-message"
+              closable
+              @click:close="alertInfo.show = false"
+            >
+              {{ alertInfo.message }}
+            </v-alert>
+            
+            <!-- 登入表單 -->
             <v-form
               @submit.prevent="handleSubmit"
               ref="form"
               v-model="valid"
               lazy-validation
+              class="login-form"
             >
-              <!-- 帳號資訊區塊 -->
-              <div class="section-title mb-3">
-                <h3 class="text-subtitle-1 text-blue-grey-darken-1 font-weight-bold mb-0">
-                  <v-icon color="primary" class="mr-1">mdi-account-key</v-icon>
-                  帳號資訊
-                </h3>
-                <v-divider class="mt-2"></v-divider>
-              </div>
-              
-              <!-- 選擇角色 -->
+              <!-- 角色選擇 -->
               <v-select
                 v-model="selectedRole"
                 :items="roles"
                 item-title="text"
                 item-value="value"
                 label="選擇角色"
-                prepend-inner-icon="mdi-account-group"
+                prepend-inner-icon="mdi-account-outline"
                 variant="outlined"
                 :rules="[rules.required]"
-                class="mb-4"
+                class="form-field"
+                bg-color="white"
                 density="comfortable"
               />
               
-              <!-- 身分證號/醫療機構ID/保險業者ID -->
+              <!-- 帳號輸入 -->
               <v-text-field
                 v-model="username"
                 :label="usernameLabel"
-                prepend-inner-icon="mdi-account"
+                prepend-inner-icon="mdi-identifier"
                 variant="outlined"
                 :rules="[rules.required]"
-                class="mb-4"
+                class="form-field"
+                bg-color="white"
                 density="comfortable"
                 :placeholder="usernamePlaceholder"
                 clearable
               />
               
-              <!-- 密碼 -->
+              <!-- 密碼輸入 -->
               <v-text-field
                 v-model="password"
                 label="密碼"
-                prepend-inner-icon="mdi-lock"
+                prepend-inner-icon="mdi-lock-outline"
                 :type="showPassword ? 'text' : 'password'"
-                :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                 @click:append-inner="showPassword = !showPassword"
                 variant="outlined"
                 :rules="[rules.required, rules.minLength]"
-                class="mb-6"
+                class="form-field"
+                bg-color="white"
                 density="comfortable"
                 clearable
               />
               
-              <!-- 操作按鈕區 -->
-              <div class="action-section mb-4">
-                <!-- 登入按鈕 -->
+              <!-- 主要登入按鈕 -->
               <v-btn
                 :loading="loading"
-                style="background-color: #F8F441; color: #111827;"
+                class="login-btn"
                 block
                 type="submit"
                 :disabled="!valid"
-                elevation="2"
-                  height="48"
-                  class="mb-4 text-body-1 font-weight-bold"
-                  prepend-icon="mdi-login"
+                elevation="0"
+                height="48"
+                prepend-icon="mdi-login-variant"
               >
-                  登入系統
+                登入系統
               </v-btn>
               
-                <!-- 測試功能按鈕 -->
+              <!-- 測試登入按鈕 -->
               <v-btn
-                style="background-color: #F8F441; color: #111827;"
+                class="test-btn"
                 block
                 @click="handleTestLogin"
-                variant="flat"
-                class="mb-4"
-                prepend-icon="mdi-test-tube"
+                elevation="0"
+                height="48"
+                prepend-icon="mdi-test-tube-outline"
               >
                 測試登入
               </v-btn>
-              </div>
               
-              <!-- 導航按鈕 -->
-              <div class="d-flex justify-space-between mb-4">
-                <v-btn text style="background-color: #FCAb10; color: #111827;" @click="goToHome" prepend-icon="mdi-home">
+              <!-- 導航按鈕組 -->
+              <div class="nav-buttons">
+                <v-btn
+                  class="nav-btn"
+                  elevation="0"
+                  @click="goToHome"
+                  prepend-icon="mdi-home-outline"
+                >
                   返回首頁
                 </v-btn>
-                <v-btn text style="background-color: #FCAb10; color: #111827;" @click="goToRegister" prepend-icon="mdi-account-plus">
+                <v-btn
+                  class="nav-btn"
+                  elevation="0"
+                  @click="goToRegister"
+                  prepend-icon="mdi-account-plus-outline"
+                >
                   註冊帳號
                 </v-btn>
               </div>
               
-              <!-- 可展開的調試資訊 -->
+              <!-- 開發調試資訊 -->
               <v-expand-transition>
-                <div v-if="isDevelopment">
-                  <v-divider class="my-3"></v-divider>
-                  <v-expansion-panels variant="accordion" class="mt-4">
-                    <v-expansion-panel
-                      title="開發調試資訊"
-                      bg-color="grey-lighten-4"
-                    >
+                <div v-if="isDevelopment" class="debug-section">
+                  <v-divider class="divider"></v-divider>
+                  <v-expansion-panels>
+                    <v-expansion-panel class="debug-panel">
+                      <v-expansion-panel-title class="debug-title">
+                        開發調試資訊
+                      </v-expansion-panel-title>
                       <v-expansion-panel-text>
-                        <pre class="debug-info pa-2">{{ JSON.stringify(debugInfo, null, 2) }}</pre>
+                        <pre class="debug-info">{{ JSON.stringify(debugInfo, null, 2) }}</pre>
                       </v-expansion-panel-text>
                     </v-expansion-panel>
                   </v-expansion-panels>
                 </div>
               </v-expand-transition>
             </v-form>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -343,44 +348,173 @@ const handleTestLogin = async () => {
 </script>
 
 <style scoped>
-.fill-height {
-  min-height: calc(100vh - 64px);
-  background-color: #f9f7f4;
+/* 全局樣式 */
+.login-page {
+  background-color: #F9F7F4;
+  min-height: 100vh;
 }
 
-.v-card {
-  border-radius: 12px !important;
-  overflow: hidden;
+/* 登入卡片 */
+.login-card {
+  border-radius: 24px !important;
+  background: white !important;
+  padding: 2.5rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* 頂部標題區 */
+.header-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  font-size: 1rem;
+  color: #6B7280;
+  margin: 0.5rem 0 0;
+}
+
+/* 表單樣式 */
+.login-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.form-field {
+  margin-bottom: 1.25rem !important;
+}
+
+.form-field :deep(.v-field) {
+  border-radius: 16px !important;
+  border-color: #E5E7EB !important;
+}
+
+.form-field :deep(.v-field__outline) {
+  border-color: #E5E7EB !important;
+}
+
+.form-field :deep(.v-field--focused) {
+  border-color: #111827 !important;
+}
+
+/* 按鈕樣式 */
+.login-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+  background-color: #F9F650 !important;
+}
+
+.test-btn {
+  background-color: #F3F4F6 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 500 !important;
+  margin-bottom: 1.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.test-btn:hover {
+  transform: translateY(-2px);
+  background-color: #E5E7EB !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 導航按鈕 */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nav-btn {
+  flex: 1;
+  background-color: white !important;
+  color: #6B7280 !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  color: #111827 !important;
+  border-color: #9CA3AF !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 提示訊息 */
+.alert-message {
+  margin-bottom: 1.5rem !important;
+  border-radius: 16px !important;
+}
+
+/* 分隔線 */
+.divider {
+  border-color: #E5E7EB !important;
+  margin: 1.5rem 0 !important;
+}
+
+/* 調試面板 */
+.debug-section {
+  margin-top: 1.5rem;
+}
+
+.debug-panel {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid #E5E7EB !important;
+}
+
+.debug-title {
+  font-size: 0.875rem !important;
+  color: #6B7280 !important;
 }
 
 .debug-info {
-  background-color: #f9f7f4;
-  border: 1px solid #f9f7f4;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  overflow: auto;
-  max-height: 300px;
-  white-space: pre-wrap;
-  word-break: break-all;
+  background-color: #F9FAFB !important;
+  border-radius: 8px !important;
+  padding: 1rem !important;
+  font-family: monospace !important;
+  font-size: 12px !important;
+  color: #374151 !important;
 }
 
-.section-title {
-  position: relative;
-}
-
-.action-section {
-  margin-top: 12px;
-}
-
-/* 統一按鈕高度與間距 */
-.v-btn {
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-}
-
-.v-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* RWD 適配 */
+@media (max-width: 600px) {
+  .login-card {
+    padding: 1.5rem !important;
+    margin: 1rem;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
+  }
+  
+  .nav-buttons {
+    flex-direction: column;
+  }
+  
+  .nav-btn {
+    width: 100%;
+  }
 }
 </style>

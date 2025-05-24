@@ -2,11 +2,12 @@
   <v-container class="fill-height">
     <v-row align="center" justify="center">
       <v-col cols="12" sm="10" md="8" lg="7" xl="6">
-        <v-card class="elevation-3 register-card">
-          <!-- 註冊頁面頂部藍色區塊，改為 #8A817C -->
-          <v-toolbar :style="'background-color: #8A817C !important;'" dark flat>
-            <v-toolbar-title class="text-h5 font-weight-bold">企業帳號註冊</v-toolbar-title>
-          </v-toolbar>
+        <v-card class="register-card">
+          <!-- 移除藍色頂部，改為簡潔的標題 -->
+          <div class="header-section">
+            <h1 class="header-title">企業帳號註冊</h1>
+            <p class="header-subtitle">安全、便捷的醫療數據管理解決方案</p>
+          </div>
           
           <!-- 系統訊息提示 -->
           <v-alert
@@ -23,19 +24,23 @@
           </v-alert>
           
           <v-card-text class="pt-6">
-            <!-- 自訂步驟條 -->
-            <div class="custom-stepper">
+            <!-- 優化步驟條設計 -->
+            <div class="stepper-container">
               <div
                 v-for="(step, idx) in steps"
                 :key="step.value"
-                class="step-btn"
+                class="step-item"
                 :class="{
-                  active: currentStep === String(step.value),
-                  completed: Number(currentStep) > step.value
+                  'active': currentStep === String(step.value),
+                  'completed': Number(currentStep) > step.value
                 }"
               >
-                <span class="step-circle">{{ step.value }}</span>
+                <div class="step-circle">
+                  <span class="step-number">{{ step.value }}</span>
+                  <span v-if="Number(currentStep) > step.value" class="step-check">✓</span>
+                </div>
                 <span class="step-title">{{ step.title }}</span>
+                <div v-if="idx < steps.length - 1" class="step-line"></div>
               </div>
             </div>
 
@@ -73,10 +78,8 @@
                 </v-radio-group>
                 <div class="mt-6 text-center">
                   <v-btn
-                    style="background-color: #F8F441; color: #111827;"
-                    variant="flat"
+                    class="primary-btn"
                     size="large"
-                    width="180"
                     @click="nextStep"
                     :disabled="!registerForm.selectedRole"
                   >
@@ -200,10 +203,15 @@
                     </v-col>
                   </v-row>
                   <div class="mt-6 d-flex justify-space-between">
-                    <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
+                    <v-btn class="secondary-btn" @click="previousStep">
+                      <v-icon class="me-2">mdi-arrow-left</v-icon>
+                      返回
+                    </v-btn>
                     <v-btn
-                      style="background-color: #F8F441; color: #111827;"
-                      variant="flat" @click="validateAndGoNext" :disabled="!basicFormValid">
+                      class="primary-btn"
+                      @click="validateAndGoNext"
+                      :disabled="!basicFormValid"
+                    >
                       下一步
                       <v-icon class="ms-2">mdi-arrow-right</v-icon>
                     </v-btn>
@@ -269,10 +277,15 @@
                     </v-col>
                   </v-row>
                   <div class="mt-6 d-flex justify-space-between">
-                    <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
+                    <v-btn class="secondary-btn" @click="previousStep">
+                      <v-icon class="me-2">mdi-arrow-left</v-icon>
+                      返回
+                    </v-btn>
                     <v-btn
-                      style="background-color: #F8F441; color: #111827;"
-                      variant="flat" @click="validateAndGoNextAccount" :disabled="!accountFormValid">
+                      class="primary-btn"
+                      @click="validateAndGoNextAccount"
+                      :disabled="!accountFormValid"
+                    >
                       下一步
                       <v-icon class="ms-2">mdi-arrow-right</v-icon>
                     </v-btn>
@@ -285,8 +298,8 @@
             <div v-if="currentStep === '4'">
               <v-card flat class="mt-6 pa-4 rounded-lg">
                 <div class="section-title mb-4">
-                  <h3 class="text-subtitle-1 text-primary font-weight-bold mb-0">
-                    <v-icon color="primary" class="me-2">mdi-credit-card</v-icon>
+                  <h3 class="text-subtitle-1 font-weight-bold mb-0">
+                    <v-icon class="me-2">mdi-card-account-details-outline</v-icon>
                     身分證上傳
                   </h3>
                   <div class="text-caption text-grey mt-1">請上傳身分證正反面照片（JPG/PNG, 5MB以內）</div>
@@ -294,57 +307,65 @@
                 </div>
                 <v-row>
                   <v-col cols="12" md="6">
-                    <v-file-input
-                      v-model="registerForm.idCardFront"
-                      label="上傳身分證正面"
-                      accept="image/jpeg, image/png"
-                      prepend-icon="mdi-upload"
-                      show-size
-                      :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
-                      @change="onFileInputChange('idCardFront')"
-                      outlined
-                      dense
-                    ></v-file-input>
-                    <div v-if="registerForm.idCardFront">
-                      <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardFront.name }}</div>
-                      <v-img
-                        :src="frontPreviewUrl"
-                        aspect-ratio="1.6"
-                        max-height="180"
-                        class="mt-2 id-card-preview"
-                        cover
-                      ></v-img>
+                    <div class="upload-area" :class="{ 'upload-area-active': registerForm.idCardFront }">
+                      <v-file-input
+                        v-model="registerForm.idCardFront"
+                        label="上傳身分證正面"
+                        accept="image/jpeg, image/png"
+                        prepend-icon="mdi-upload-outline"
+                        show-size
+                        :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
+                        @change="onFileInputChange('idCardFront')"
+                        hide-details
+                      ></v-file-input>
+                      <div v-if="registerForm.idCardFront" class="preview-container">
+                        <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardFront.name }}</div>
+                        <v-img
+                          :src="frontPreviewUrl"
+                          aspect-ratio="1.6"
+                          max-height="180"
+                          class="mt-2 preview-image"
+                          cover
+                        ></v-img>
+                      </div>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
-                    <v-file-input
-                      v-model="registerForm.idCardBack"
-                      label="上傳身分證反面"
-                      accept="image/jpeg, image/png"
-                      prepend-icon="mdi-upload"
-                      show-size
-                      :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
-                      @change="onFileInputChange('idCardBack')"
-                      outlined
-                      dense
-                    ></v-file-input>
-                    <div v-if="registerForm.idCardBack">
-                      <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardBack.name }}</div>
-                      <v-img
-                        :src="backPreviewUrl"
-                        aspect-ratio="1.6"
-                        max-height="180"
-                        class="mt-2 id-card-preview"
-                        cover
-                      ></v-img>
+                    <div class="upload-area" :class="{ 'upload-area-active': registerForm.idCardBack }">
+                      <v-file-input
+                        v-model="registerForm.idCardBack"
+                        label="上傳身分證反面"
+                        accept="image/jpeg, image/png"
+                        prepend-icon="mdi-upload-outline"
+                        show-size
+                        :rules="[v => !v || (v && ['image/jpeg','image/png'].includes(v.type)) || '只接受 JPG/PNG']"
+                        @change="onFileInputChange('idCardBack')"
+                        hide-details
+                      ></v-file-input>
+                      <div v-if="registerForm.idCardBack" class="preview-container">
+                        <div class="mt-2 text-caption">已選檔案：{{ registerForm.idCardBack.name }}</div>
+                        <v-img
+                          :src="backPreviewUrl"
+                          aspect-ratio="1.6"
+                          max-height="180"
+                          class="mt-2 preview-image"
+                          cover
+                        ></v-img>
+                      </div>
                     </div>
                   </v-col>
                 </v-row>
                 <div class="mt-6 d-flex justify-space-between">
-                  <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">上一步</v-btn>
+                  <v-btn class="secondary-btn" @click="previousStep">
+                    <v-icon class="me-2">mdi-arrow-left</v-icon>
+                    返回
+                  </v-btn>
                   <v-btn
-                    style="background-color: #F8F441; color: #111827;"
-                    variant="flat" :loading="loading" @click="handleRegister" :disabled="!registerForm.idCardFront || !registerForm.idCardBack">
+                    class="primary-btn"
+                    :loading="loading"
+                    @click="handleRegister"
+                    :disabled="!registerForm.idCardFront || !registerForm.idCardBack"
+                  >
                     完成註冊
                     <v-icon class="ms-2">mdi-check</v-icon>
                   </v-btn>
@@ -355,29 +376,27 @@
             <!-- 導航按鈕 -->
             <div class="d-flex justify-space-between mb-4 mt-4">
               <v-btn
-                style="background-color: #FCAb10; color: #111827;"
-                variant="flat"
+                class="secondary-btn"
                 @click="goToHome"
               >
+                <v-icon class="me-2">mdi-home-outline</v-icon>
                 返回首頁
               </v-btn>
               <v-btn
-                style="background-color: #FCAb10; color: #111827;"
-                variant="flat"
+                class="secondary-btn"
                 @click="goToLogin"
               >
+                <v-icon class="me-2">mdi-login-variant</v-icon>
                 已有帳號？登入
               </v-btn>
             </div>
             
             <!-- 測試按鈕 -->
             <v-btn
-              style="background-color: #F8F441; color: #111827;"
+              class="secondary-btn mb-4"
               block
               @click="handleTestRegister"
-              variant="flat"
-              class="mb-4"
-              prepend-icon="mdi-test-tube"
+              prepend-icon="mdi-test-tube-outline"
             >
               測試註冊
             </v-btn>
@@ -812,180 +831,289 @@ const steps = [
 </script>
 
 <style scoped>
+/* 全局樣式 */
 .fill-height {
   min-height: calc(100vh - 64px);
-  background-color: #f9f7f4;
+  background-color: #F9F7F4;
+  padding: 2rem 1rem;
 }
 
+/* 註冊卡片 */
 .register-card {
-  max-width: 720px;
-  margin: auto;
+  border-radius: 24px !important;
+  background: white !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+  padding: 2rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
-.register-stepper {
-  min-width: 0;
-}
-
-:deep(.v-stepper-header) {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  min-width: 0;
-  overflow-x: hidden;
-  width: 100%;
-}
-:deep(.v-stepper-item) {
-  flex: 1 1 0%;
-  min-width: 0;
-  max-width: 100%;
+/* 頂部標題區 */
+.header-section {
   text-align: center;
-}
-:deep(.v-divider) {
-  margin: 0 0.5rem;
-}
-
-@media (max-width: 900px) {
-  .register-card {
-    max-width: 98vw;
-  }
-  :deep(.v-stepper-header) {
-    font-size: 15px;
-  }
-}
-@media (max-width: 600px) {
-  .register-card {
-    max-width: 100vw;
-    border-radius: 0 !important;
-  }
-  :deep(.v-stepper-header) {
-    font-size: 13px;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  :deep(.v-stepper-item) {
-    font-size: 13px;
-    padding-left: 0.1rem;
-    padding-right: 0.1rem;
-  }
+  margin-bottom: 3rem;
+  padding: 1rem;
 }
 
-.v-card {
-  border-radius: 12px !important;
-  overflow: hidden;
+.header-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
 }
 
-.debug-info {
-  background-color: #f9f7f4;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  overflow: auto;
-  max-height: 300px;
-  white-space: pre-wrap;
-  word-break: break-all;
+.header-subtitle {
+  font-size: 1rem;
+  color: #888;
+  margin: 0;
 }
 
-.section-title {
-  position: relative;
-}
-
-/* 統一按鈕高度與間距 */
-.v-btn {
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-}
-
-.v-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Stepper 樣式優化 */
-:deep(.v-stepper) {
-  box-shadow: none !important;
-  border: none !important;
-}
-
-:deep(.v-stepper-header) {
-  box-shadow: none !important;
-}
-
-.custom-stepper {
+/* 步驟條設計 */
+.stepper-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  margin: 2rem 0 3rem;
+  padding: 0 1rem;
+  position: relative;
 }
-.step-btn {
+
+.step-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 0;
-  cursor: default;
-  background: #f5f7fa;
-  border: 2px solid #b0bec5;
-  border-radius: 12px;
-  padding: 12px 8px 8px 8px;
-  transition: border 0.2s, background 0.2s;
-  min-width: 80px;
-  max-width: 160px;
-  margin: 0 2px;
-  user-select: none;
+  position: relative;
+  flex: 1;
 }
-.step-btn .step-circle {
+
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #b0bec5;
-  color: #fff;
-  font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 6px;
-  transition: background 0.2s;
+  margin-bottom: 0.5rem;
+  position: relative;
+  transition: all 0.3s ease;
 }
-.step-btn .step-title {
-  font-size: 15px;
-  color: #607d8b;
-  font-weight: 500;
+
+.step-number {
+  color: #888;
+  font-weight: 600;
+}
+
+.step-check {
+  color: #111827;
+  font-weight: 600;
+}
+
+.step-title {
+  font-size: 0.875rem;
+  color: #888;
   text-align: center;
-  white-space: nowrap;
+  font-weight: 500;
 }
-.step-btn.active {
-  border-color: #1976d2;
-  background: #e3f2fd;
+
+.step-line {
+  position: absolute;
+  top: 18px;
+  right: calc(-50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 0;
 }
-.step-btn.active .step-circle {
-  background: #1976d2;
+
+/* 活動步驟樣式 */
+.step-item.active .step-circle {
+  border-color: #F8F441;
+  background: #F8F441;
 }
-.step-btn.completed {
-  border-color: #4caf50;
-  background: #e8f5e9;
+
+.step-item.active .step-number {
+  color: #111827;
 }
-.step-btn.completed .step-circle {
-  background: #4caf50;
+
+.step-item.active .step-title {
+  color: #111827;
+  font-weight: 600;
 }
-@media (max-width: 700px) {
-  .custom-stepper {
-    gap: 0.2rem;
+
+/* 已完成步驟樣式 */
+.step-item.completed .step-circle {
+  border-color: #111827;
+  background: #111827;
+}
+
+.step-item.completed .step-check {
+  color: white;
+}
+
+.step-item.completed .step-line {
+  background: #111827;
+}
+
+/* 表單樣式 */
+:deep(.v-text-field) {
+  border-radius: 16px !important;
+}
+
+:deep(.v-text-field .v-field) {
+  border-radius: 16px !important;
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+:deep(.v-text-field .v-field--focused) {
+  border-color: #111827 !important;
+}
+
+:deep(.v-text-field .v-label) {
+  color: #888 !important;
+}
+
+/* Radio 按鈕樣式 */
+:deep(.v-radio) {
+  margin-right: 1rem;
+}
+
+:deep(.v-radio .v-selection-control) {
+  border-color: #e5e7eb !important;
+}
+
+:deep(.v-radio .v-selection-control--active) {
+  color: #F8F441 !important;
+  border-color: #F8F441 !important;
+}
+
+/* 按鈕樣式 */
+.v-btn {
+  border-radius: 16px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  height: 48px !important;
+  min-width: 120px !important;
+}
+
+.v-btn.primary-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border: none !important;
+}
+
+.v-btn.primary-btn:hover {
+  background-color: #f9f650 !important;
+  transform: translateY(-2px);
+}
+
+.v-btn.secondary-btn {
+  background-color: white !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.v-btn.secondary-btn:hover {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+  transform: translateY(-2px);
+}
+
+/* 文件上傳區域 */
+:deep(.v-file-input) {
+  border-radius: 16px !important;
+}
+
+.upload-area {
+  border: 2px dashed #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  background: white;
+  transition: all 0.3s ease;
+  min-height: 120px;
+}
+
+.upload-area:hover {
+  border-color: #F8F441;
+  background-color: #FEFEF5;
+}
+
+.upload-area-active {
+  border-color: #111827;
+  border-style: solid;
+}
+
+.preview-container {
+  margin-top: 1rem;
+}
+
+.preview-image {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+:deep(.v-file-input) {
+  border: none;
+  padding: 0;
+}
+
+:deep(.v-file-input .v-field) {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:deep(.v-file-input .v-field__field) {
+  padding: 0;
+}
+
+:deep(.v-file-input .v-label) {
+  opacity: 0.7;
+}
+
+/* RWD 適配 */
+@media (max-width: 768px) {
+  .register-card {
+    padding: 1.5rem !important;
   }
-  .step-btn {
-    min-width: 60px;
-    max-width: 100px;
-    padding: 8px 2px 6px 2px;
+  
+  .header-title {
+    font-size: 1.5rem;
   }
-  .step-btn .step-title {
-    font-size: 13px;
+  
+  .stepper-container {
+    flex-direction: column;
+    gap: 1.5rem;
   }
-  .step-btn .step-circle {
-    width: 26px;
-    height: 26px;
-    font-size: 15px;
+  
+  .step-line {
+    width: 2px;
+    height: 24px;
+    top: 36px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
   }
+  
+  .v-btn {
+    width: 100%;
+  }
+}
+
+/* Alert 訊息樣式 */
+:deep(.v-alert) {
+  border-radius: 16px !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* 分隔線樣式 */
+:deep(.v-divider) {
+  border-color: #e5e7eb !important;
+  margin: 1.5rem 0 !important;
+  opacity: 0.5;
 }
 </style>

@@ -83,21 +83,25 @@ onUnmounted(() => {
 <style scoped>
 body, #app, .v-application, .v-app {
   background: #f9f7f4 !important;
+
 }
 
 .brand-app-bar {
-  background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%) !important;
-  color: #fff !important;
-  box-shadow: 0 2px 8px 0 rgba(21,101,192,0.08);
+  background: #F9F7F4 !important;
+  color: #222 !important;
+  box-shadow: none;
+  border-bottom: 1px solid #e5e7eb;
+  height: 80px !important;
 }
 
+>>>>>>> 56a3e8d34a9523f27a697194858ce2fe641a2be5
 .brand-title {
   font-size: 1.8rem;
   font-weight: 900;
-  color: #fff;
-  letter-spacing: 1.5px;
+  color: #111827;
+  letter-spacing: -0.5px;
   line-height: 1.2;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
 }
 
 .brand-slogan {
@@ -109,30 +113,29 @@ body, #app, .v-application, .v-app {
 }
 
 .footer-brand {
-  background: linear-gradient(90deg, #1565c0 60%, #42a5f5 100%);
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.1rem;
+  background: #f3f2ef !important;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 0.875rem;
   padding: 0;
 }
 
 .footer-title {
-  font-weight: bold;
-  letter-spacing: 1.2px;
-  font-size: 1.1rem;
+
+  color: #6b7280;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+
 }
 
 .v-icon {
   color: #111827 !important;
+
+
 }
-.sidebar {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.3);
-}
-.sidebar-list {
-  padding: 8px;
-}
+
 .brand-item {
   margin-bottom: 8px;
 }
@@ -148,6 +151,42 @@ body, #app, .v-application, .v-app {
 }
 
 .main-content {
-  background: #f8fafc;
+  background: #f9f7f4;
+}
+
+.nav-link {
+  font-size: 1rem;
+  color: #6b7280 !important;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-right: 32px;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #111827;
+  transition: width 0.2s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.v-btn.nav-link {
+  min-width: unset;
+  padding: 0 8px;
+}
+
+.v-img {
+  filter: grayscale(100%) contrast(1.1);
 }
 </style>

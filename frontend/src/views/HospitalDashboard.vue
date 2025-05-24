@@ -903,4 +903,13 @@ const formatJSONDisplay = (data) => {
 .fade-enter-active {
   animation: slideIn 0.3s ease-out;
 }
+
+.dashboard-header-icon, .v-icon.dashboard-header-icon {
+  vertical-align: middle;
+  font-size: 2.2rem !important;
+  margin-right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>

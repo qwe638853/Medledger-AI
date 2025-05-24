@@ -127,16 +127,21 @@ function getMetricColor(key, value) {
 
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import healthCheckService from '../services/healthCheckService';
+import { healthCheckService } from '../services';
+import { useAuthStore } from '../stores';
+import { useUserStore } from '../stores/user';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+const userStore = useUserStore();
+const loading = ref(true);
+const errorMsg = ref('');
+const report = ref(null);
+
 const reportId = route.params.report_id;
 const patientId = route.params.patient_id;
-const loading = ref(true);
-const report = ref({});
-const metrics = ref({});
-const errorMsg = ref('');
+const userRole = computed(() => route.query.role || authStore.userRole || 'patient');
 
 // 彈窗控制
 const showAISummary = ref(false);
@@ -169,43 +174,61 @@ function evaluateRisk(metrics = {}) {
   }
 }
 
-onMounted(async () => {
+// 根據不同角色使用不同的 API endpoint
+const fetchReportData = async () => {
   loading.value = true;
+  errorMsg.value = '';
+  
   try {
-    const response = await healthCheckService.fetchReportContent(reportId, patientId);
-    if (response && response.resultJson) {
-      try {
-        metrics.value = JSON.parse(response.resultJson);
-      } catch (e) {
-        metrics.value = {};
+    let response;
+    // 只有保險公司角色需要調用 API
+    if (userRole.value === 'insurance') {
+      response = await healthCheckService.fetchInsuranceReportDetail(reportId);
+      if (!response) {
+        throw new Error('無法獲取報告數據');
       }
-    } else if (typeof response === 'object') {
-      metrics.value = response;
+      report.value = response;
+    } else {
+      // 一般用戶直接使用 store 中的數據
+      report.value = userStore.currentReport;
     }
-    report.value = response;
-  } catch (e) {
-    errorMsg.value = '獲取報告內容失敗';
+    
+    // 如果有數據，進行風險評估
+    if (report.value?.rawData) {
+      evaluateRisk(report.value.rawData);
+    }
+  } catch (error) {
+    console.error('獲取報告詳情失敗:', error);
+    errorMsg.value = error.message || '獲取報告詳情失敗';
   } finally {
     loading.value = false;
   }
-});
+};
 
+// 計算屬性：數值型指標
 const numericMetrics = computed(() => {
-  const result = {};
-  for (const [key, value] of Object.entries(metrics.value)) {
-    const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
-    if (match) result[key] = value;
-  }
-  return result;
+  if (!report.value?.rawData) return {};
+  
+  const metrics = {};
+  Object.entries(report.value.rawData).forEach(([key, value]) => {
+    if (typeof value === 'number' || !isNaN(parseFloat(value))) {
+      metrics[key] = value;
+    }
+  });
+  return metrics;
 });
 
+// 計算屬性：文字型指標
 const textMetrics = computed(() => {
-  const result = {};
-  for (const [key, value] of Object.entries(metrics.value)) {
-    const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
-    if (!match) result[key] = value;
-  }
-  return result;
+  if (!report.value?.rawData) return {};
+  
+  const metrics = {};
+  Object.entries(report.value.rawData).forEach(([key, value]) => {
+    if (typeof value === 'string' && isNaN(parseFloat(value))) {
+      metrics[key] = value;
+    }
+  });
+  return metrics;
 });
 
 function isNumericMetric(value) {
@@ -242,6 +265,10 @@ function getMetricNumber(value) {
 
 const aiBtnHover = ref(false);
 const riskBtnHover = ref(false);
+
+onMounted(() => {
+  fetchReportData();
+});
 </script>
 
 <template>
@@ -255,7 +282,7 @@ const riskBtnHover = ref(false);
         <div class="text-h5 font-weight-bold mb-2">健康檢查報告詳情</div>
         <v-row>
           <v-col cols="12" sm="4"><div class="font-weight-bold">報告編號：</div>{{ reportId }}</v-col>
-          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ patientId }}</v-col>
+          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ userRole === 'patient' ? '患者' : '保險公司' }}</v-col>
           <v-col cols="12" sm="4"><div class="font-weight-bold">檢查日期：</div>{{ report.value?.date || '-' }}</v-col>
         </v-row>
       </v-card>
@@ -364,6 +391,255 @@ const riskBtnHover = ref(false);
 </template>
 
 <style scoped>
+.report-container {
+  padding: 2rem;
+  background: var(--background-color);
+  min-height: 100vh;
+}
+
+.report-header {
+  margin-bottom: 2rem;
+}
+
+.report-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.report-meta {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted-color);
+  font-size: 0.875rem;
+}
+
+.report-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.report-section {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.report-section:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 1.5rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.metric-card {
+  background: var(--background-color);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.metric-name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.metric-unit {
+  font-size: 0.875rem;
+  color: var(--muted-color);
+  margin-left: 0.25rem;
+}
+
+.metric-range {
+  font-size: 0.875rem;
+  color: var(--muted-color);
+  margin-top: 0.5rem;
+}
+
+.normal { color: #10B981; }
+.warning { color: #F59E0B; }
+.danger { color: #EF4444; }
+
+.risk-section {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.risk-card {
+  flex: 1;
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.risk-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.risk-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.risk-level {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.risk-advice {
+  color: var(--muted-color);
+  line-height: 1.6;
+}
+
+.btn {
+  font-family: 'Inter', sans-serif;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dialog {
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.dialog-header {
+  padding: 1.5rem;
+  background: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dialog-content {
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .report-container {
+    padding: 1rem;
+  }
+  
+  .report-title {
+    font-size: 1.75rem;
+  }
+  
+  .report-meta {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .report-actions {
+    flex-direction: column;
+  }
+  
+  .report-section {
+    padding: 1.5rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .risk-section {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* 動畫效果 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active {
+  animation: slideIn 0.3s ease-out;
+}
+
 .report-detail-bg {
   /* 背景漸層 */
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);

@@ -7,7 +7,13 @@ import router from '../router';
 export const useUserStore = defineStore('user', () => {
   // 狀態
   const healthData = ref([]);
+  const currentReport = ref(null);
   const loading = ref(false);
+
+  // 設置當前報告
+  const setCurrentReport = (report) => {
+    currentReport.value = report;
+  };
 
   // 忘記密碼
   const forgotPassword = async (data) => {
@@ -78,7 +84,9 @@ export const useUserStore = defineStore('user', () => {
 
   return {
     healthData,
+    currentReport,
     loading,
+    setCurrentReport,
     forgotPassword,
     fetchHealthData,
     fetchUserProfile,

@@ -635,6 +635,28 @@ export const fetchReportContent = async (reportId, patientId) => {
   }
 }
 
+// 病患查看自己的報告詳情
+const fetchPatientReportDetail = async (reportId) => {
+  try {
+    const response = await apiClient.get(`/api/v1/patient/reports/${reportId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// 保險業者查看授權的報告詳情
+const fetchInsuranceReportDetail = async (reportId) => {
+  try {
+    const response = await apiClient.get(`/api/v1/insurance/reports/${reportId}`);
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
@@ -653,5 +675,7 @@ export default {
   approveAccessRequest,
   rejectAccessRequest,
   fetchGrantedTickets,
-  fetchReportContent
+  fetchReportContent,
+  fetchPatientReportDetail,
+  fetchInsuranceReportDetail
 }; 

@@ -1,14 +1,21 @@
 /* src/style.css */
 /* 全局樣式文件 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --primary-color: #007bff; /* 主色：藍色 */
-  --secondary-color: #28a745; /* 輔助色：綠色 */
+  --primary-color: #3B82F6; /* 主色：藍色 */
+  --accent-color: #FFD600; /* 強調色：黃色 */
   --background-color: #F9F7F4; /* 背景色 */
-  --text-color: #2c3e50; /* 主要文字顏色 */
-  --muted-color: #6c757d; /* 次要文字顏色 */
+  --text-color: #1F2937; /* 主要文字顏色 */
+  --muted-color: #6B7280; /* 次要文字顏色 */
   --white: #fff; /* 白色 */
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 陰影 */
-  --border-radius: 8px; /* 圓角 */
+  --border-color: #E5E7EB; /* 邊框顏色 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05); /* 小陰影 */
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07); /* 中陰影 */
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1); /* 大陰影 */
+  --border-radius-lg: 24px; /* 大圓角 */
+  --border-radius-md: 16px; /* 中圓角 */
+  --border-radius-sm: 8px; /* 小圓角 */
 }
 
 /* 重置所有元素的默認樣式 */
@@ -20,81 +27,129 @@
 
 /* 設置頁面基本樣式 */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
 }
 
 /* 設置標題樣式 */
-h1, h2, h3 {
+h1, h2, h3, h4, h5, h6 {
   color: var(--text-color);
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-/* 角色選擇容器的樣式 */
-.role-selection-container {
-  background-color: var(--white);
-  padding: 40px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  max-width: 800px;
-  margin: 40px auto;
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+/* 卡片基本樣式 */
+.card {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* 角色選擇容器標題樣式 */
-.role-selection-container h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 24px;
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* 按鈕基本樣式 */
-button {
+.btn {
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-  min-width: 200px;
-  padding: 12px 24px;
-  white-space: nowrap;
-  display: flex;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-md);
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 8px;
-  border-radius: var(--border-radius);
-  border: none;
-  font-size: 16px;
+  gap: 0.5rem;
+}
+
+.btn-primary {
   background-color: var(--primary-color);
   color: var(--white);
 }
 
-/* 按鈕懸停效果 */
-button:hover {
-  transform: translateY(-2px);
-  opacity: 0.9;
+.btn-accent {
+  background-color: var(--accent-color);
+  color: var(--text-color);
 }
 
-/* 角色按鈕容器樣式 */
-.role-buttons-container {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin: 20px 0;
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 導航欄和頁尾樣式 */
+.navbar, .footer {
+  background-color: var(--white);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+}
+
+.footer {
+  border-top: 1px solid var(--border-color);
+  border-bottom: none;
+  font-size: 0.875rem;
+  color: var(--muted-color);
 }
 
 /* 輸入框基本樣式 */
-input {
-  padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: var(--border-radius);
-  font-size: 16px;
+.input {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
   width: 100%;
-  transition: border-color 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-/* 輸入框聚焦效果 */
-input:focus {
+.input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 動畫效果 */
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+/* RWD 斷點 */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Material Icons 基本樣式 */
+.material-icons {
+  font-size: 1.5rem;
+  vertical-align: middle;
 }

@@ -663,4 +663,244 @@ const formatJSONDisplay = (data) => {
   border-color: #1565c0;
   box-shadow: 0 0 10px rgba(25, 118, 210, 0.2);
 }
+
+.dashboard-container {
+  padding: 2rem;
+  background: var(--background-color);
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.upload-section {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.upload-section:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  text-align: center;
+  background: var(--background-color);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.drop-zone.dragging {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.drop-zone-text {
+  font-size: 1.125rem;
+  color: var(--muted-color);
+  margin-bottom: 1rem;
+}
+
+.file-list {
+  margin-top: 1.5rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: var(--white);
+  border-radius: var(--border-radius-md);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.file-icon {
+  margin-right: 1rem;
+  color: var(--primary-color);
+}
+
+.file-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.file-size {
+  color: var(--muted-color);
+  font-size: 0.875rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  font-family: 'Inter', sans-serif;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.preview-dialog {
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: 1.5rem;
+  background: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.preview-content {
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.preview-item {
+  background: var(--white);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.preview-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.preview-item-title {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.preview-item-subtitle {
+  color: var(--muted-color);
+  font-size: 0.875rem;
+}
+
+.input-field {
+  margin-bottom: 1.5rem;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.75rem;
+  }
+  
+  .upload-section {
+    padding: 1.5rem;
+  }
+  
+  .drop-zone {
+    padding: 1.5rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* 動畫效果 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-enter-active {
+  animation: slideIn 0.3s ease-out;
+}
 </style>

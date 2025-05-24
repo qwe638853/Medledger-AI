@@ -272,438 +272,457 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-container class="py-8 report-detail-bg">
-    <v-btn @click="router.back()" prepend-icon="mdi-arrow-left" class="mb-4">返回</v-btn>
-    <v-card v-if="loading" class="pa-8 text-center"><v-progress-circular indeterminate color="primary" /></v-card>
-    <v-alert v-else-if="errorMsg" type="error">{{ errorMsg }}</v-alert>
-    <template v-else>
-      <!-- 用戶基本資料卡片 -->
-      <v-card class="mb-6 pa-6 user-info-card elevation-3">
-        <div class="text-h5 font-weight-bold mb-2">健康檢查報告詳情</div>
-        <v-row>
-          <v-col cols="12" sm="4"><div class="font-weight-bold">報告編號：</div>{{ reportId }}</v-col>
-          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ userRole === 'patient' ? '患者' : '保險公司' }}</v-col>
-          <v-col cols="12" sm="4"><div class="font-weight-bold">檢查日期：</div>{{ report.value?.date || '-' }}</v-col>
-        </v-row>
+  <div class="report-page">
+    <v-container class="py-8">
+      <!-- 返回按鈕 -->
+      <v-btn
+        @click="router.back()"
+        class="back-btn mb-8"
+        elevation="0"
+      >
+        <v-icon start size="20">mdi-arrow-left</v-icon>
+        返回
+      </v-btn>
+
+      <v-card v-if="loading" class="loader-card">
+        <v-progress-circular indeterminate color="#111827" />
       </v-card>
+      
+      <v-alert v-else-if="errorMsg" type="error" class="error-alert">
+        {{ errorMsg }}
+      </v-alert>
 
-      <!-- 主要健康指標卡片區塊 -->
-      <div class="text-h6 font-weight-bold mb-4 mt-8">主要健康指標</div>
-      <v-row class="metric-grid" align="stretch">
-        <v-col
-          v-for="(value, key) in numericMetrics"
-          :key="key"
-          cols="12" sm="6" md="4" lg="3"
-        >
-          <v-card class="metric-visual-card elevation-2">
-            <v-card-title class="pb-0 text-center">{{ METRIC_NAME_MAP[key] || key }}</v-card-title>
-            <v-card-text class="d-flex flex-column align-center justify-center">
-              <v-progress-circular
-                :value="getMetricPercent(key, value)"
-                :color="getMetricColor(key, value)"
-                :size="90"
-                :width="10"
-                class="mb-2"
-              >
-                <span class="text-h6 font-weight-bold">{{ getMetricNumber(value) }}</span>
-              </v-progress-circular>
-              <div class="mt-2 text-caption grey--text">參考值：
-                <span v-if="METRIC_REF_RANGE[key]">
-                  <template v-if="METRIC_REF_RANGE[key].min !== undefined">{{ METRIC_REF_RANGE[key].min }}</template>
-                  <template v-if="METRIC_REF_RANGE[key].max !== undefined"> - {{ METRIC_REF_RANGE[key].max }}</template>
-                  <template v-if="METRIC_REF_RANGE[key].unit"> {{ METRIC_REF_RANGE[key].unit }}</template>
-                </span>
-                <span v-else>--</span>
-              </div>
-            </v-card-text>
+      <template v-else>
+        <!-- 底部操作按鈕 -->
+        <div class="action-buttons">
+          <v-btn
+            class="action-btn ai-btn"
+            elevation="0"
+            @click="showAISummary = !showAISummary"
+          >
+            <v-icon start size="20">mdi-robot-outline</v-icon>
+            AI 分析摘要
+          </v-btn>
+          
+          <v-btn
+            class="action-btn risk-btn"
+            elevation="0"
+            @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }"
+          >
+            <v-icon start size="20">mdi-shield-outline</v-icon>
+            風險評估
+          </v-btn>
+        </div>
+
+        <!-- 分析結果區域 -->
+        <div class="analysis-section" v-if="showAISummary || showRisk">
+          <v-card v-if="showAISummary" class="analysis-card ai-card" elevation="0">
+            <h3 class="analysis-title">AI 分析摘要</h3>
+            <p class="analysis-content">{{ aiSummary }}</p>
           </v-card>
-        </v-col>
-      </v-row>
 
-      <!-- 其他指標（非數值型） -->
-      <div class="text-h6 font-weight-bold mb-4 mt-8">其他檢查項目</div>
-      <v-row>
-        <v-col v-for="(value, key) in textMetrics" :key="key + '-text'" cols="12" sm="6" md="4">
-          <v-card outlined class="mb-2">
-            <v-card-text>
-              <span class="font-weight-bold">{{ METRIC_NAME_MAP[key] || key }}：</span>
-              <span>{{ value }}</span>
-            </v-card-text>
+          <v-card v-if="showRisk" class="analysis-card risk-card" elevation="0">
+            <h3 class="analysis-title">風險評估結果</h3>
+            <div class="risk-level" :class="riskLevel === '高風險' ? 'high' : riskLevel === '中風險' ? 'medium' : 'low'">
+              {{ riskLevel }}
+            </div>
+            <p class="analysis-content">{{ riskAdvice }}</p>
           </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- 底部主要操作按鈕 -->
-      <div class="d-flex justify-center gap-4 mt-10 mb-6">
-        <v-btn
-          :style="{
-            backgroundColor: aiBtnHover ? '#0056b3' : '#007BFF',
-            color: '#fff',
-            boxShadow: aiBtnHover ? '0 4px 16px rgba(0,123,255,0.18)' : '0 2px 8px rgba(0,123,255,0.10)'
-          }"
-          size="large"
-          class="px-8 custom-btn"
-          @click="showAISummary = !showAISummary"
-          @mouseover="aiBtnHover = true"
-          @mouseleave="aiBtnHover = false"
-        >
-          <v-icon left>mdi-robot</v-icon>AI 分析摘要
-        </v-btn>
-        <v-btn
-          :style="{
-            backgroundColor: riskBtnHover ? '#e64a19' : '#FF5722',
-            color: '#fff',
-            boxShadow: riskBtnHover ? '0 4px 16px rgba(255,87,34,0.18)' : '0 2px 8px rgba(255,87,34,0.10)'
-          }"
-          size="large"
-          class="px-8 custom-btn"
-          @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }"
-          @mouseover="riskBtnHover = true"
-          @mouseleave="riskBtnHover = false"
-        >
-          <v-icon left>mdi-shield-alert</v-icon>風險評估
-        </v-btn>
-      </div>
-
-      <!-- 分析結果與風險評估顯示區域 -->
-      <div class="result-section">
-        <v-card
-          v-if="showAISummary"
-          class="custom-popup mb-4 ai-summary-card"
-        >
-          <div class="text-h6 font-weight-bold mb-2 text-center">AI 分析摘要</div>
-          <div class="mb-2 text-left">{{ aiSummary }}</div>
-        </v-card>
-        <v-card
-          v-if="showRisk"
-          class="custom-popup mb-4 risk-summary-card"
-        >
-          <div class="text-h6 font-weight-bold mb-2 text-center">風險評估結果</div>
-          <div class="mb-2 text-center">
-            風險等級：
-            <span :class="riskLevel === '高風險' ? 'text-error' : riskLevel === '中風險' ? 'text-warning' : 'text-success'">{{ riskLevel }}</span>
+        </div>
+        <!-- 報告總覽卡片 -->
+        <v-card class="overview-card mb-8" elevation="0">
+          <div class="d-flex flex-column">
+            <h1 class="report-title">健康檢查報告</h1>
+            <p class="report-subtitle">{{ formatDate(report?.date) || '尚未設定日期' }}</p>
           </div>
-          <div class="mb-2 text-left">{{ riskAdvice }}</div>
+          
+          <v-divider class="my-6" />
+          
+          <v-row class="report-meta">
+            <v-col cols="12" sm="4">
+              <div class="meta-label">報告編號</div>
+              <div class="meta-value">{{ reportId }}</div>
+            </v-col>
+            <v-col cols="12" sm="4">
+              <div class="meta-label">檢查對象</div>
+              <div class="meta-value">{{ patientId }}</div>
+            </v-col>
+            <v-col cols="12" sm="4">
+              <div class="meta-label">檢查類型</div>
+              <div class="meta-value">常規健康檢查</div>
+            </v-col>
+          </v-row>
         </v-card>
-      </div>
-    </template>
-  </v-container>
+
+        <!-- 主要指標區域 -->
+        <section class="metrics-section mb-12">
+          <h2 class="section-title mb-6">主要健康指標</h2>
+          <v-row>
+            <v-col
+              v-for="(value, key) in numericMetrics"
+              :key="key"
+              cols="12" sm="6" md="4" lg="3"
+              class="metric-col"
+            >
+              <v-card class="metric-card" elevation="0">
+                <div class="metric-content">
+                  <!-- 圓環進度指示器 -->
+                  <div class="metric-ring">
+                    <svg class="ring" viewBox="0 0 100 100">
+                      <!-- 背景圓環 -->
+                      <circle
+                        class="ring-bg"
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        fill="none"
+                        stroke="#f1f1f1"
+                        stroke-width="4"
+                      />
+                      <!-- 進度圓環 -->
+                      <circle
+                        class="ring-progress"
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        fill="none"
+                        :stroke="getMetricColor(key, value)"
+                        stroke-width="4"
+                        :stroke-dasharray="`${getMetricPercent(key, value) * 2.83} 283`"
+                        transform="rotate(-90 50 50)"
+                      />
+                      <!-- 中心數值 -->
+                      <text
+                        x="50"
+                        y="50"
+                        text-anchor="middle"
+                        dominant-baseline="middle"
+                        :fill="getMetricColor(key, value)"
+                        class="ring-value"
+                      >
+                        {{ getMetricNumber(value) }}
+                      </text>
+                      <!-- 單位 -->
+                      <text
+                        x="50"
+                        y="65"
+                        text-anchor="middle"
+                        class="ring-unit"
+                        fill="#888"
+                      >
+                        {{ METRIC_REF_RANGE[key]?.unit || '' }}
+                      </text>
+                    </svg>
+                  </div>
+                  
+                  <h3 class="metric-name">{{ METRIC_NAME_MAP[key] || key }}</h3>
+                  <p class="metric-range">
+                    參考值：
+                    <template v-if="METRIC_REF_RANGE[key]">
+                      {{ METRIC_REF_RANGE[key].min || '0' }} - 
+                      {{ METRIC_REF_RANGE[key].max || '∞' }}
+                      {{ METRIC_REF_RANGE[key].unit }}
+                    </template>
+                    <template v-else>--</template>
+                  </p>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </section>
+
+        <!-- 其他指標區域 -->
+        <section class="other-metrics-section mb-12">
+          <h2 class="section-title mb-6">其他檢查項目</h2>
+          <v-row>
+            <v-col
+              v-for="(value, key) in textMetrics"
+              :key="key"
+              cols="12" sm="6" md="4"
+            >
+              <v-card class="text-metric-card" elevation="0">
+                <div class="text-metric-content">
+                  <span class="text-metric-name">{{ METRIC_NAME_MAP[key] || key }}</span>
+                  <span class="text-metric-value">{{ value }}</span>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </section>
+
+        
+      </template>
+    </v-container>
+  </div>
 </template>
 
 <style scoped>
-.report-container {
-  padding: 2rem;
-  background: var(--background-color);
+/* 全局樣式 */
+.report-page {
+  background-color: #F9F7F4;
   min-height: 100vh;
 }
 
-.report-header {
-  margin-bottom: 2rem;
+/* 返回按鈕 */
+.back-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0 24px !important;
+  height: 44px !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 卡片基礎樣式 */
+:deep(.v-card) {
+  border-radius: 28px !important;
+  background: white !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* 報告總覽區域 */
+.overview-card {
+  padding: 2.5rem !important;
 }
 
 .report-title {
-  font-family: 'Inter', sans-serif;
   font-size: 2rem;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.report-subtitle {
+  font-size: 1rem;
+  color: #888;
+  margin: 0.5rem 0 0;
+}
+
+.meta-label {
+  font-size: 0.875rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.meta-value {
+  font-size: 1.125rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* 分隔線 */
+:deep(.v-divider) {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 區塊標題 */
+.section-title {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 1rem;
+  color: #111827;
   letter-spacing: -0.5px;
 }
 
-.report-meta {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted-color);
-  font-size: 0.875rem;
-}
-
-.report-actions {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.report-section {
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 2rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.report-section:hover {
-  box-shadow: var(--shadow-lg);
-}
-
-.section-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 1.5rem;
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+/* 指標卡片 */
+.metric-col {
+  padding: 12px;
 }
 
 .metric-card {
-  background: var(--background-color);
-  border-radius: var(--border-radius-md);
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
+  height: 100%;
+  padding: 2rem !important;
   transition: all 0.2s ease;
 }
 
 .metric-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
 }
 
-.metric-header {
+.metric-content {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* SVG 圓環樣式 */
+.metric-ring {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  stroke: #f1f1f1;
+}
+
+.ring-progress {
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.ring-value {
+  font-size: 24px;
+  font-weight: 600;
+  transform: rotate(90deg);
+}
+
+.ring-unit {
+  font-size: 12px;
+  transform: rotate(90deg);
 }
 
 .metric-name {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.metric-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.metric-unit {
-  font-size: 0.875rem;
-  color: var(--muted-color);
-  margin-left: 0.25rem;
+  font-size: 1rem;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
 .metric-range {
   font-size: 0.875rem;
-  color: var(--muted-color);
-  margin-top: 0.5rem;
+  color: #888;
+  margin: 0;
 }
 
-.normal { color: #10B981; }
-.warning { color: #F59E0B; }
-.danger { color: #EF4444; }
+/* 文字型指標卡片 */
+.text-metric-card {
+  padding: 1.5rem !important;
+}
 
-.risk-section {
+.text-metric-content {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.text-metric-name {
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.text-metric-value {
+  font-size: 1rem;
+  color: #111827;
+}
+
+/* 操作按鈕 */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
   margin-bottom: 2rem;
 }
 
-.risk-card {
-  flex: 1;
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+.action-btn {
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0 32px !important;
+  height: 48px !important;
+  transition: all 0.2s ease !important;
 }
 
-.risk-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+.ai-btn {
+  background-color: #F8F441 !important;
+  color: #111827 !important;
 }
 
-.risk-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-color);
+.risk-btn {
+  background-color: white !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 分析結果卡片 */
+.analysis-section {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.analysis-card {
+  padding: 2rem !important;
   margin-bottom: 1rem;
 }
 
+.analysis-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.analysis-content {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
 .risk-level {
-  font-size: 2rem;
+  text-align: center;
+  font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
 }
 
-.risk-advice {
-  color: var(--muted-color);
-  line-height: 1.6;
-}
+.risk-level.high { color: #ef4444; }
+.risk-level.medium { color: #f59e0b; }
+.risk-level.low { color: #10b981; }
 
-.btn {
-  font-family: 'Inter', sans-serif;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-lg);
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: var(--white);
-  border: none;
-}
-
-.btn-secondary {
-  background: var(--white);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.dialog {
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-}
-
-.dialog-header {
-  padding: 1.5rem;
-  background: var(--background-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dialog-content {
-  padding: 2rem;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .report-container {
-    padding: 1rem;
+/* RWD 適配 */
+@media (max-width: 960px) {
+  .overview-card {
+    padding: 1.5rem !important;
   }
   
   .report-title {
     font-size: 1.75rem;
   }
   
-  .report-meta {
-    flex-direction: column;
-    gap: 1rem;
+  .section-title {
+    font-size: 1.25rem;
   }
   
-  .report-actions {
-    flex-direction: column;
+  .metric-ring {
+    width: 100px;
+    height: 100px;
   }
-  
-  .report-section {
-    padding: 1.5rem;
-  }
-  
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .risk-section {
+}
+
+@media (max-width: 600px) {
+  .action-buttons {
     flex-direction: column;
   }
   
-  .btn {
+  .action-btn {
     width: 100%;
   }
-}
-
-/* 動畫效果 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  
+  .metric-card {
+    padding: 1.5rem !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .ring-value {
+    font-size: 20px;
   }
-}
-
-.fade-enter-active {
-  animation: slideIn 0.3s ease-out;
-}
-
-.report-detail-bg {
-  /* 背景漸層 */
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: 100vh;
-}
-.user-info-card {
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-}
-.metric-visual-card {
-  min-height: 220px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  transition: box-shadow 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.metric-visual-card:hover {
-  box-shadow: 0 6px 18px rgba(25, 118, 210, 0.13);
-  transform: translateY(-2px) scale(1.03);
-}
-.metric-grid {
-  row-gap: 24px;
-}
-.custom-btn {
-  transition: background 0.2s, box-shadow 0.2s;
-  font-weight: bold;
-  border-radius: 8px;
-}
-.custom-popup {
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  padding: 16px !important;
-  text-align: left;
-  max-width: 500px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.text-center {
-  text-align: center !important;
-}
-.text-left {
-  text-align: left !important;
-}
-.ai-summary-card, .risk-summary-card {
-  background: #fff;
-}
-.result-section {
-  max-width: 700px;
-  margin: 0 auto 40px auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  justify-content: flex-start;
-  min-height: 320px;
 }
 </style> 

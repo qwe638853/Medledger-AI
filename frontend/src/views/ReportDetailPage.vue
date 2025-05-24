@@ -127,16 +127,21 @@ function getMetricColor(key, value) {
 
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import healthCheckService from '../services/healthCheckService';
+import { healthCheckService } from '../services';
+import { useAuthStore } from '../stores';
+import { useUserStore } from '../stores/user';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+const userStore = useUserStore();
+const loading = ref(true);
+const errorMsg = ref('');
+const report = ref(null);
+
 const reportId = route.params.report_id;
 const patientId = route.params.patient_id;
-const loading = ref(true);
-const report = ref({});
-const metrics = ref({});
-const errorMsg = ref('');
+const userRole = computed(() => route.query.role || authStore.userRole || 'patient');
 
 // 彈窗控制
 const showAISummary = ref(false);
@@ -169,43 +174,61 @@ function evaluateRisk(metrics = {}) {
   }
 }
 
-onMounted(async () => {
+// 根據不同角色使用不同的 API endpoint
+const fetchReportData = async () => {
   loading.value = true;
+  errorMsg.value = '';
+  
   try {
-    const response = await healthCheckService.fetchReportContent(reportId, patientId);
-    if (response && response.resultJson) {
-      try {
-        metrics.value = JSON.parse(response.resultJson);
-      } catch (e) {
-        metrics.value = {};
+    let response;
+    // 只有保險公司角色需要調用 API
+    if (userRole.value === 'insurance') {
+      response = await healthCheckService.fetchInsuranceReportDetail(reportId);
+      if (!response) {
+        throw new Error('無法獲取報告數據');
       }
-    } else if (typeof response === 'object') {
-      metrics.value = response;
+      report.value = response;
+    } else {
+      // 一般用戶直接使用 store 中的數據
+      report.value = userStore.currentReport;
     }
-    report.value = response;
-  } catch (e) {
-    errorMsg.value = '獲取報告內容失敗';
+    
+    // 如果有數據，進行風險評估
+    if (report.value?.rawData) {
+      evaluateRisk(report.value.rawData);
+    }
+  } catch (error) {
+    console.error('獲取報告詳情失敗:', error);
+    errorMsg.value = error.message || '獲取報告詳情失敗';
   } finally {
     loading.value = false;
   }
-});
+};
 
+// 計算屬性：數值型指標
 const numericMetrics = computed(() => {
-  const result = {};
-  for (const [key, value] of Object.entries(metrics.value)) {
-    const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
-    if (match) result[key] = value;
-  }
-  return result;
+  if (!report.value?.rawData) return {};
+  
+  const metrics = {};
+  Object.entries(report.value.rawData).forEach(([key, value]) => {
+    if (typeof value === 'number' || !isNaN(parseFloat(value))) {
+      metrics[key] = value;
+    }
+  });
+  return metrics;
 });
 
+// 計算屬性：文字型指標
 const textMetrics = computed(() => {
-  const result = {};
-  for (const [key, value] of Object.entries(metrics.value)) {
-    const match = (value || '').toString().match(/-?\d+(\.\d+)?/);
-    if (!match) result[key] = value;
-  }
-  return result;
+  if (!report.value?.rawData) return {};
+  
+  const metrics = {};
+  Object.entries(report.value.rawData).forEach(([key, value]) => {
+    if (typeof value === 'string' && isNaN(parseFloat(value))) {
+      metrics[key] = value;
+    }
+  });
+  return metrics;
 });
 
 function isNumericMetric(value) {
@@ -242,6 +265,10 @@ function getMetricNumber(value) {
 
 const aiBtnHover = ref(false);
 const riskBtnHover = ref(false);
+
+onMounted(() => {
+  fetchReportData();
+});
 </script>
 
 <template>
@@ -255,7 +282,7 @@ const riskBtnHover = ref(false);
         <div class="text-h5 font-weight-bold mb-2">健康檢查報告詳情</div>
         <v-row>
           <v-col cols="12" sm="4"><div class="font-weight-bold">報告編號：</div>{{ reportId }}</v-col>
-          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ patientId }}</v-col>
+          <v-col cols="12" sm="4"><div class="font-weight-bold">病患 ID：</div>{{ userRole === 'patient' ? '患者' : '保險公司' }}</v-col>
           <v-col cols="12" sm="4"><div class="font-weight-bold">檢查日期：</div>{{ report.value?.date || '-' }}</v-col>
         </v-row>
       </v-card>

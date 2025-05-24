@@ -2,12 +2,15 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../stores';
 import { healthCheckService, notifyError, notifySuccess } from '../services';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/user';
 
 // 假設有這些服務
 // import { authorizeService, llmSummaryService } from '../services';
 
 const authStore = useAuthStore();
 const currentUser = computed(() => authStore.currentUser);
+const userRole = computed(() => authStore.userRole);
 const healthData = ref([]);
 const loading = ref(false);
 
@@ -47,6 +50,7 @@ const healthRanges = {
   'WBC': { min: 4, max: 10, unit: 'x10^3/uL', name: '白血球' }
 };
 
+/*
 //健檢報告測試假資料區塊
  healthData.value = [
    {
@@ -96,78 +100,77 @@ const healthRanges = {
      originalReport: {}
    }
  ];
+*/
 
 //健檢報告測試假資料區塊 end
 
-/* === 以下 onMounted 會覆蓋測試資料，測試時請保持註解 ===
 
-// onMounted(async () => {
-//   loading.value = true;
-//   try {
-//     // 從後端獲取健康數據 - 注意這裡的 API 對應到 HandleListMyReports
-//     const healthResponse = await healthCheckService.fetchUserHealthData();
-//     console.log('從後端獲取的健康數據:', healthResponse);
-//     
-//     // 處理來自後端的報告數據
-//     healthData.value = healthResponse.map(report => {
-//       // 嘗試解析 resultJson 字段 (如果是 JSON 字符串)
-//       let parsedResults = {};
-//       
-//       try {
-//         if (report.resultJson) {
-//           if (typeof report.resultJson === 'string') {
-//             parsedResults = JSON.parse(report.resultJson);
-//           } else if (typeof report.resultJson === 'object') {
-//             parsedResults = report.resultJson;
-//           }
-//         } else if (report.testResults) {
-//           if (typeof report.testResults === 'string') {
-//             parsedResults = JSON.parse(report.testResults);
-//           } else if (typeof report.testResults === 'object') {
-//             parsedResults = report.testResults;
-//           }
-//         } else if (report.test_results_json) {
-//           if (typeof report.test_results_json === 'string') {
-//             parsedResults = JSON.parse(report.test_results_json);
-//           } else if (typeof report.test_results_json === 'object') {
-//             parsedResults = report.test_results_json;
-//           }
-//         }
-//       } catch (e) {
-//         console.error('解析測試結果失敗:', e);
-//       }
-//       
-//       // 生成預覽內容
-//       const previewContent = Object.keys(parsedResults).length > 0 
-//         ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
-//         : (report.content || '無資料').substring(0, 50);
-//       
-//       return {
-//         id: report.reportId || report.report_id || report.id || '未知',
-//         content: previewContent,
-//         date: report.createdAt || report.timestamp || report.created_at || report.date || new Date().toISOString(),
-//         rawData: parsedResults,
-//         originalReport: report // 保存原始報告數據
-//       };
-//     });
-//     
-//     console.log('處理後的健康數據:', healthData.value);
-//     
-//     // 載入授權請求和已授權票據
-//     await Promise.all([
-//       loadAccessRequests(),
-//       loadGrantedTickets()
-//     ]);
-//   } catch (error) {
-//     console.error('獲取健康數據失敗:', error);
-//     notifyError(`獲取健康數據失敗：${error.message}`);
-//     healthData.value = [];
-//   } finally {
-//     loading.value = false;
-//   }
-// });
+onMounted(async () => {
+  loading.value = true;
+  try {
+    // 從後端獲取健康數據 - 注意這裡的 API 對應到 HandleListMyReports
+    const healthResponse = await healthCheckService.fetchUserHealthData();
+    console.log('從後端獲取的健康數據:', healthResponse);
+    
+    // 處理來自後端的報告數據
+    healthData.value = healthResponse.map(report => {
+      // 嘗試解析 resultJson 字段 (如果是 JSON 字符串)
+      let parsedResults = {};
+      
+      try {
+        if (report.resultJson) {
+          if (typeof report.resultJson === 'string') {
+            parsedResults = JSON.parse(report.resultJson);
+          } else if (typeof report.resultJson === 'object') {
+            parsedResults = report.resultJson;
+          }
+        } else if (report.testResults) {
+          if (typeof report.testResults === 'string') {
+            parsedResults = JSON.parse(report.testResults);
+          } else if (typeof report.testResults === 'object') {
+            parsedResults = report.testResults;
+          }
+        } else if (report.test_results_json) {
+          if (typeof report.test_results_json === 'string') {
+            parsedResults = JSON.parse(report.test_results_json);
+          } else if (typeof report.test_results_json === 'object') {
+            parsedResults = report.test_results_json;
+          }
+        }
+      } catch (e) {
+        console.error('解析測試結果失敗:', e);
+      }
+      
+      // 生成預覽內容
+      const previewContent = Object.keys(parsedResults).length > 0 
+        ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
+        : (report.content || '無資料').substring(0, 50);
+      
+      return {
+        id: report.reportId || report.report_id || report.id || '未知',
+        content: previewContent,
+        date: report.createdAt || report.timestamp || report.created_at || report.date || new Date().toISOString(),
+        rawData: parsedResults,
+        originalReport: report // 保存原始報告數據
+      };
+    });
+    
+    console.log('處理後的健康數據:', healthData.value);
+    
+    // 載入授權請求和已授權票據
+    await Promise.all([
+      loadAccessRequests(),
+      loadGrantedTickets()
+    ]);
+  } catch (error) {
+    console.error('獲取健康數據失敗:', error);
+    notifyError(`獲取健康數據失敗：${error.message}`);
+    healthData.value = [];
+  } finally {
+    loading.value = false;
+  }
+});
 
-=== onMounted 註解結束，測試假資料生效 ===*/
 
 // 載入授權請求
 const loadAccessRequests = async () => {
@@ -321,109 +324,22 @@ function parseReportContent(content) {
   }
 }
 
+const router = useRouter();
+
 // 處理查看詳細資料
 function viewReportDetail(item) {
   console.log('查看報告詳情:', item);
-  selectedReport.value = item;
-  
-  // 解析報告數據為可用格式
-  const reportData = item.rawData || {};
-  console.log('解析後的報告數據:', reportData);
-  
-  // 將數據轉換為視覺化指標
-  reportMetrics.value = [];
-  
-  // 處理血糖、血脂等常規指標
-  Object.keys(healthRanges).forEach(key => {
-    // 特殊處理血壓，它可能是格式為 "120/80 mmHg" 的字符串
-    if (key === 'BP-sys' || key === 'BP-dia') {
-      const bpKey = 'BP';
-      if (reportData[bpKey]) {
-        const bpStr = reportData[bpKey].toString();
-        const bpParts = bpStr.split('/');
-        if (bpParts.length === 2) {
-          const systolic = parseInt(bpParts[0].trim());
-          const diastolic = parseInt(bpParts[1].trim());
-          
-          if (key === 'BP-sys' && !isNaN(systolic)) {
-            addMetric(key, systolic);
-          } else if (key === 'BP-dia' && !isNaN(diastolic)) {
-            addMetric(key, diastolic);
-          }
-        }
-      }
-    } else if (reportData[key]) {
-      // 處理一般指標，提取數值
-      const valueStr = reportData[key].toString();
-      const numValue = parseFloat(valueStr.replace(/[^\d.-]/g, ''));
-      
-      if (!isNaN(numValue)) {
-        addMetric(key, numValue);
-      }
+  const report_id = item.id;
+  const reportData = healthData.value.find(report => report.id === report_id);
+  const userStore = useUserStore();
+  userStore.setCurrentReport(reportData);
+  router.push({ 
+    name: 'ReportDetail', 
+    params: { 
+      report_id,
+      patient_id: currentUser.value
     }
   });
-  
-  // 處理可能存在的其他重要指標
-  const importantKeys = [
-    'Glu-PC', 'Alb', 'TP', 'D-Bil', 'ALP', 'T-Bil', 'UN', 
-    'Hct', 'RBC', 'hsCRP', 'AFP', 'CEA', 'CA-125', 'CA19-9'
-  ];
-  
-  importantKeys.forEach(key => {
-    if (reportData[key] && !reportMetrics.value.some(m => m.key === key)) {
-      const valueStr = reportData[key].toString();
-      const numValue = parseFloat(valueStr.replace(/[^\d.-]/g, ''));
-      
-      if (!isNaN(numValue)) {
-        // 為這些額外指標設置默認範圍
-        reportMetrics.value.push({
-          key,
-          name: key,
-          value: numValue,
-          unit: valueStr.replace(/[\d.-]/g, '').trim() || '',
-          percentage: 50, // 未知範圍，預設中間值
-          color: 'blue',
-          status: '參考值'
-        });
-      }
-    }
-  });
-  
-  // 處理其他餘下的指標
-  Object.keys(reportData).forEach(key => {
-    // 確保不重複處理已處理的指標
-    if (!healthRanges[key] && 
-        key !== 'BP' && 
-        !importantKeys.includes(key) &&
-        !reportMetrics.value.some(m => m.key === key)) {
-      const valueStr = reportData[key].toString();
-      const numValue = parseFloat(valueStr.replace(/[^\d.-]/g, ''));
-      
-      if (!isNaN(numValue)) {
-        // 對於未定義的指標，使用通用展示
-        reportMetrics.value.push({
-          key,
-          name: key,
-          value: numValue,
-          unit: valueStr.replace(/[\d.-]/g, '').trim() || '',
-          percentage: 50, // 未知範圍，預設中間值
-          color: 'grey',
-          status: '其他數據'
-        });
-      } else {
-        // 非數值類型的健康數據
-        reportMetrics.value.push({
-          key,
-          name: key,
-          textValue: valueStr,
-          isText: true
-        });
-      }
-    }
-  });
-  
-  console.log('生成的視覺化指標:', reportMetrics.value);
-  detailDialog.value = true;
 }
 
 // 添加健康指標到視覺化列表

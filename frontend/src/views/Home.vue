@@ -94,12 +94,12 @@ const features = ref([
     desc: '高等級加密與權限控管，守護您的健康數據隱私。'
   },
   { 
-    icon: 'mdi-chart-timeline-variant-outline', 
+    icon: 'mdi-clock-outline',
     title: '即時記錄', 
     desc: '隨時掌握健康數據，動態追蹤健康趨勢。'
   },
   { 
-    icon: 'mdi-gesture-tap-outline', 
+    icon: 'mdi-gesture-tap-button',
     title: '簡單操作', 
     desc: '直覺介面設計，所有年齡層都能輕鬆上手。'
   },

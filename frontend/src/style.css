@@ -26,11 +26,12 @@
 }
 
 /* 設置頁面基本樣式 */
-body {
+body, .v-application, .v-app, .dashboard-bg, .dashboard-container, .report-container, .data-section, .health-card, .search-section, .reports-section, .report-section, .upload-section, .file-drop-zone, .metric-card, .auth-item, .stat-card, .custom-stepper, .feature-card, .about-section, .features-section, .main-content {
+  background-color: #F9F7F4 !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
+  font-size: 1.15rem;
 }
 
 /* 設置標題樣式 */
@@ -40,12 +41,12 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.5rem; }
-h5 { font-size: 1.25rem; }
-h6 { font-size: 1rem; }
+h1 { font-size: 3rem; }
+h2 { font-size: 2.5rem; }
+h3 { font-size: 2rem; }
+h4 { font-size: 1.75rem; }
+h5 { font-size: 1.5rem; }
+h6 { font-size: 1.25rem; }
 
 /* 卡片基本樣式 */
 .card {
@@ -152,4 +153,21 @@ h6 { font-size: 1rem; }
 .material-icons {
   font-size: 1.5rem;
   vertical-align: middle;
+}
+
+.card, .feature-card, .auth-item, .stat-card, .metric-card, .data-section, .report-section, .reports-section, .search-section, .upload-section, .file-drop-zone {
+  font-size: 1.15rem;
+}
+
+.btn, .v-btn, button {
+  font-size: 1.15rem !important;
+  font-weight: 700;
+}
+
+input, .input, .v-input, .v-text-field input, textarea {
+  font-size: 1.1rem !important;
+}
+
+label, .v-label {
+  font-size: 1.05rem !important;
 }

@@ -3,7 +3,7 @@
     <v-row align="center" justify="center">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card class="elevation-3">
-          <v-toolbar color="primary" dark flat>
+          <v-toolbar :style="'background-color: #8A817C !important;'" dark flat>
             <v-toolbar-title class="text-h5 font-weight-bold">企業健康數據管理平台</v-toolbar-title>
           </v-toolbar>
           
@@ -84,7 +84,7 @@
                 <!-- 登入按鈕 -->
               <v-btn
                 :loading="loading"
-                color="primary"
+                style="background-color: #F8F441; color: #111827;"
                 block
                 type="submit"
                 :disabled="!valid"
@@ -98,14 +98,12 @@
               
                 <!-- 測試功能按鈕 -->
               <v-btn
-                color="info"
+                style="background-color: #F8F441; color: #111827;"
                 block
                 @click="handleTestLogin"
-                elevation="2"
-                  height="48"
+                variant="flat"
                 class="mb-4"
-                  prepend-icon="mdi-test-tube"
-                  variant="outlined"
+                prepend-icon="mdi-test-tube"
               >
                 測試登入
               </v-btn>
@@ -113,10 +111,10 @@
               
               <!-- 導航按鈕 -->
               <div class="d-flex justify-space-between mb-4">
-                <v-btn text color="primary" @click="goToHome" prepend-icon="mdi-home">
+                <v-btn text style="background-color: #FCAb10; color: #111827;" @click="goToHome" prepend-icon="mdi-home">
                   返回首頁
                 </v-btn>
-                <v-btn text color="success" @click="goToRegister" prepend-icon="mdi-account-plus">
+                <v-btn text style="background-color: #FCAb10; color: #111827;" @click="goToRegister" prepend-icon="mdi-account-plus">
                   註冊帳號
                 </v-btn>
               </div>

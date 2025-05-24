@@ -83,6 +83,7 @@ onUnmounted(() => {
 <style scoped>
 body, #app, .v-application, .v-app {
   background: #f9f7f4 !important;
+
 }
 
 .brand-app-bar {
@@ -93,6 +94,7 @@ body, #app, .v-application, .v-app {
   height: 80px !important;
 }
 
+>>>>>>> 56a3e8d34a9523f27a697194858ce2fe641a2be5
 .brand-title {
   font-size: 1.8rem;
   font-weight: 900;
@@ -120,14 +122,18 @@ body, #app, .v-application, .v-app {
 }
 
 .footer-title {
+
   color: #6b7280;
   font-weight: 400;
   letter-spacing: 0;
   font-size: 0.875rem;
+
 }
 
 .v-icon {
   color: #111827 !important;
+
+
 }
 
 .brand-item {

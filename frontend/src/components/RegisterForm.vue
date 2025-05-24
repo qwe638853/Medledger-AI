@@ -3,7 +3,8 @@
     <v-row align="center" justify="center">
       <v-col cols="12" sm="10" md="8" lg="7" xl="6">
         <v-card class="elevation-3 register-card">
-          <v-toolbar color="primary" dark flat>
+          <!-- 註冊頁面頂部藍色區塊，改為 #8A817C -->
+          <v-toolbar :style="'background-color: #8A817C !important;'" dark flat>
             <v-toolbar-title class="text-h5 font-weight-bold">企業帳號註冊</v-toolbar-title>
           </v-toolbar>
           
@@ -72,7 +73,7 @@
                 </v-radio-group>
                 <div class="mt-6 text-center">
                   <v-btn
-                    color="primary"
+                    style="background-color: #F8F441; color: #111827;"
                     variant="flat"
                     size="large"
                     width="180"
@@ -200,7 +201,9 @@
                   </v-row>
                   <div class="mt-6 d-flex justify-space-between">
                     <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
-                    <v-btn color="primary" variant="flat" @click="validateAndGoNext" :disabled="!basicFormValid">
+                    <v-btn
+                      style="background-color: #F8F441; color: #111827;"
+                      variant="flat" @click="validateAndGoNext" :disabled="!basicFormValid">
                       下一步
                       <v-icon class="ms-2">mdi-arrow-right</v-icon>
                     </v-btn>
@@ -267,7 +270,9 @@
                   </v-row>
                   <div class="mt-6 d-flex justify-space-between">
                     <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">返回</v-btn>
-                    <v-btn color="primary" variant="flat" @click="validateAndGoNextAccount" :disabled="!accountFormValid">
+                    <v-btn
+                      style="background-color: #F8F441; color: #111827;"
+                      variant="flat" @click="validateAndGoNextAccount" :disabled="!accountFormValid">
                       下一步
                       <v-icon class="ms-2">mdi-arrow-right</v-icon>
                     </v-btn>
@@ -337,7 +342,9 @@
                 </v-row>
                 <div class="mt-6 d-flex justify-space-between">
                   <v-btn variant="tonal" @click="previousStep" prepend-icon="mdi-arrow-left">上一步</v-btn>
-                  <v-btn color="success" variant="flat" :loading="loading" @click="handleRegister" :disabled="!registerForm.idCardFront || !registerForm.idCardBack">
+                  <v-btn
+                    style="background-color: #F8F441; color: #111827;"
+                    variant="flat" :loading="loading" @click="handleRegister" :disabled="!registerForm.idCardFront || !registerForm.idCardBack">
                     完成註冊
                     <v-icon class="ms-2">mdi-check</v-icon>
                   </v-btn>
@@ -347,20 +354,28 @@
             
             <!-- 導航按鈕 -->
             <div class="d-flex justify-space-between mb-4 mt-4">
-              <v-btn text color="primary" @click="goToHome" prepend-icon="mdi-home">
+              <v-btn
+                style="background-color: #FCAb10; color: #111827;"
+                variant="flat"
+                @click="goToHome"
+              >
                 返回首頁
               </v-btn>
-              <v-btn text color="info" @click="goToLogin" prepend-icon="mdi-login">
+              <v-btn
+                style="background-color: #FCAb10; color: #111827;"
+                variant="flat"
+                @click="goToLogin"
+              >
                 已有帳號？登入
               </v-btn>
             </div>
             
             <!-- 測試按鈕 -->
             <v-btn
-              color="info"
+              style="background-color: #F8F441; color: #111827;"
               block
               @click="handleTestRegister"
-              variant="outlined"
+              variant="flat"
               class="mb-4"
               prepend-icon="mdi-test-tube"
             >

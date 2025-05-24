@@ -799,7 +799,7 @@ const steps = [
 <style scoped>
 .fill-height {
   min-height: calc(100vh - 64px);
-  background-color: #f8f9fa;
+  background-color: #f9f7f4;
 }
 
 .register-card {
@@ -860,7 +860,7 @@ const steps = [
 }
 
 .debug-info {
-  background-color: #f8f9fa;
+  background-color: #f9f7f4;
   border: 1px solid #e9ecef;
   border-radius: 4px;
   font-family: monospace;

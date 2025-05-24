@@ -1,20 +1,22 @@
 <template>
   <div class="landing-page">
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section-codingbio">
       <v-container>
         <v-row align="center">
-          <v-col cols="12" md="6" class="hero-content">
-            <v-img src="@/assets/logo.png" alt="logo" max-width="64" class="mb-4" />
-            <h1 class="hero-title mb-2">智慧守護，健康鏈結</h1>
-            <div class="hero-slogan mb-4">結合 AI 與區塊鏈技術，打造安全可信的健康數據平台</div>
+          <v-col cols="12" md="6" class="hero-left d-flex flex-column align-center justify-center">
+            <h1 class="hero-title-codingbio mb-4">智慧守護，鏈接健康未來</h1>
+            <div class="hero-desc-codingbio mb-6">
+              結合 AI 與區塊鏈技術，打造安全可信的健康數據平台
+            </div>
+            <v-btn color="primary" class="hero-btn-codingbio" large :to="{ path: '/register' }">立即使用</v-btn>
           </v-col>
-          <v-col cols="12" md="6" class="text-center">
+          <v-col cols="12" md="6" class="hero-right">
+            <!-- 幾何圖形SVG或插圖，或用背景圖 -->
+            <div class="hero-geometry-bg"></div>
           </v-col>
         </v-row>
       </v-container>
-      <!-- 浮動幾何背景元素 -->
-      <div class="floating-bg"></div>
     </section>
 
     <!-- Features Section -->
@@ -103,48 +105,46 @@ const features = ref([
   font-weight: 500;
   letter-spacing: 1px;
 }
-.hero-section {
-  background: linear-gradient(120deg, #A7E2E3 30%, #ffffff 110%);
+.hero-section-codingbio {
+  background: #f9f7f4;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
   position: relative;
-  padding: 64px 0 48px 0;
   overflow: hidden;
 }
-.hero-content {
-  z-index: 2;
-}
-.hero-title {
-  font-size: 2.6rem;
+.hero-title-codingbio {
+  font-size: 3rem;
   font-weight: 800;
-  color: #1565c0;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 8px rgba(33, 150, 243, 0.08);
+  color: #222;
+  letter-spacing: 1.5px;
+  line-height: 1.1;
 }
-.hero-slogan {
-  font-size: 1.2rem;
-  color: #1976d2;
-  font-weight: 500;
+.hero-desc-codingbio {
+  font-size: 1.25rem;
+  color: #6b7280;
+  font-weight: 400;
+  margin-bottom: 2rem;
+}
+.hero-btn-codingbio {
+  background: #f7e85a !important;
+  color: #222 !important;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 0.8rem 2.5rem;
+  font-size: 1.1rem;
   letter-spacing: 1px;
 }
-.hero-cta {
-  font-size: 1.15rem;
-  font-weight: bold;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px 0 rgba(33, 150, 243, 0.10);
+.hero-right {
+  position: relative;
+  min-height: 320px;
 }
-.hero-illustration {
-  z-index: 2;
-}
-.floating-bg {
-  position: absolute;
-  top: -60px;
-  right: -120px;
-  width: 420px;
+.hero-geometry-bg {
+  width: 100%;
   height: 420px;
-  background: radial-gradient(circle at 60% 40%, #42a5f5 0%, #e3f2fd 100%);
-  opacity: 0.25;
-  border-radius: 50%;
-  z-index: 1;
-  filter: blur(12px);
+  background: url('@/assets/geometry-bg.svg') right center/contain no-repeat;
+  /* 你可以用SVG或PNG，或直接寫SVG在這裡 */
 }
 .features-section {
   background: #f9f7f4;
@@ -166,12 +166,12 @@ const features = ref([
 }
 .feature-title {
   font-size: 1.2rem;
-  color: #1565c0;
+  color: #080808;
   font-weight: 700;
 }
 .feature-desc {
   font-size: 1rem;
-  color: #1976d2;
+  color: #080808;
 }
 .about-section {
   background: linear-gradient(90deg, #f9f7f4 60%);
@@ -179,23 +179,30 @@ const features = ref([
 }
 .about-title {
   font-size: 1.5rem;
-  color: #1565c0;
+  color: #080808;
   font-weight: 800;
   margin-bottom: 1.5rem;
 }
 .about-desc {
   font-size: 1.1rem;
-  color: #1976d2;
+  color: #080808;
   line-height: 1.8;
 }
 .about-illustration {
   border-radius: 20px;
   box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.10);
 }
+.hero-left {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 @media (max-width: 960px) {
-  .hero-title {
-    font-size: 2rem;
-  }
+  .hero-title-codingbio { font-size: 2rem; }
+  .hero-geometry-bg { height: 220px; }
   .about-title {
     font-size: 1.2rem;
   }

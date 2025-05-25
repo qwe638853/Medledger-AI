@@ -14,19 +14,7 @@ service HealthService {
       body: "*"
     };
   }
-  rpc ClaimReport(ClaimReportRequest) returns (ClaimReportResponse) {
-    option (google.api.http) = {
-      post: "/v1/claim"
-      body: "*"
-    };
-  }
-
-  rpc ReadReport(ReadReportRequest) returns (ReadReportResponse) {
-    option (google.api.http) = {
-      get: "/v1/report/{report_id}"
-    };
-  }
-
+  
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/v1/login"
@@ -96,6 +84,7 @@ service HealthService {
     };
   }
 
+  //保險業者讀授權報告
   rpc ViewAuthorizedReport(ViewAuthorizedReportRequest) returns (ViewAuthorizedReportResponse) {
     option (google.api.http) = {
       get: "/v1/reports/authorized/{user_id}/{report_id}"
@@ -118,14 +107,6 @@ message UploadReportResponse {
     string message = 2;
 }
 
-message ClaimReportRequest {
-  string report_id = 1;
-}
-
-message ClaimReportResponse {
-  bool success = 1;
-  string message = 2;
-}
 
 message ReadReportRequest {
   string report_id = 1;

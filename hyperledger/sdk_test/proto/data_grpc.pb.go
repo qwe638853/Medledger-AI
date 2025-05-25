@@ -21,8 +21,6 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	HealthService_UploadReport_FullMethodName              = "/health.HealthService/UploadReport"
-	HealthService_ClaimReport_FullMethodName               = "/health.HealthService/ClaimReport"
-	HealthService_ReadReport_FullMethodName                = "/health.HealthService/ReadReport"
 	HealthService_Login_FullMethodName                     = "/health.HealthService/Login"
 	HealthService_RegisterUser_FullMethodName              = "/health.HealthService/RegisterUser"
 	HealthService_RegisterInsurer_FullMethodName           = "/health.HealthService/RegisterInsurer"
@@ -42,8 +40,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HealthServiceClient interface {
 	UploadReport(ctx context.Context, in *UploadReportRequest, opts ...grpc.CallOption) (*UploadReportResponse, error)
-	ClaimReport(ctx context.Context, in *ClaimReportRequest, opts ...grpc.CallOption) (*ClaimReportResponse, error)
-	ReadReport(ctx context.Context, in *ReadReportRequest, opts ...grpc.CallOption) (*ReadReportResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	RegisterInsurer(ctx context.Context, in *RegisterInsurerRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
@@ -55,6 +51,7 @@ type HealthServiceClient interface {
 	GetInsurerDashboardStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*InsurerDashboardStatsResponse, error)
 	ListAuthorizedReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedReportsResponse, error)
 	ListReportMetaByPatientID(ctx context.Context, in *PatientIDRequest, opts ...grpc.CallOption) (*ListReportMetaResponse, error)
+	// 保險業者讀授權報告
 	ViewAuthorizedReport(ctx context.Context, in *ViewAuthorizedReportRequest, opts ...grpc.CallOption) (*ViewAuthorizedReportResponse, error)
 }
 
@@ -70,26 +67,6 @@ func (c *healthServiceClient) UploadReport(ctx context.Context, in *UploadReport
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UploadReportResponse)
 	err := c.cc.Invoke(ctx, HealthService_UploadReport_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *healthServiceClient) ClaimReport(ctx context.Context, in *ClaimReportRequest, opts ...grpc.CallOption) (*ClaimReportResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ClaimReportResponse)
-	err := c.cc.Invoke(ctx, HealthService_ClaimReport_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *healthServiceClient) ReadReport(ctx context.Context, in *ReadReportRequest, opts ...grpc.CallOption) (*ReadReportResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReadReportResponse)
-	err := c.cc.Invoke(ctx, HealthService_ReadReport_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +198,6 @@ func (c *healthServiceClient) ViewAuthorizedReport(ctx context.Context, in *View
 // for forward compatibility.
 type HealthServiceServer interface {
 	UploadReport(context.Context, *UploadReportRequest) (*UploadReportResponse, error)
-	ClaimReport(context.Context, *ClaimReportRequest) (*ClaimReportResponse, error)
-	ReadReport(context.Context, *ReadReportRequest) (*ReadReportResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterResponse, error)
 	RegisterInsurer(context.Context, *RegisterInsurerRequest) (*RegisterResponse, error)
@@ -234,6 +209,7 @@ type HealthServiceServer interface {
 	GetInsurerDashboardStats(context.Context, *emptypb.Empty) (*InsurerDashboardStatsResponse, error)
 	ListAuthorizedReports(context.Context, *emptypb.Empty) (*ListAuthorizedReportsResponse, error)
 	ListReportMetaByPatientID(context.Context, *PatientIDRequest) (*ListReportMetaResponse, error)
+	// 保險業者讀授權報告
 	ViewAuthorizedReport(context.Context, *ViewAuthorizedReportRequest) (*ViewAuthorizedReportResponse, error)
 	mustEmbedUnimplementedHealthServiceServer()
 }
@@ -247,12 +223,6 @@ type UnimplementedHealthServiceServer struct{}
 
 func (UnimplementedHealthServiceServer) UploadReport(context.Context, *UploadReportRequest) (*UploadReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadReport not implemented")
-}
-func (UnimplementedHealthServiceServer) ClaimReport(context.Context, *ClaimReportRequest) (*ClaimReportResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClaimReport not implemented")
-}
-func (UnimplementedHealthServiceServer) ReadReport(context.Context, *ReadReportRequest) (*ReadReportResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadReport not implemented")
 }
 func (UnimplementedHealthServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -325,42 +295,6 @@ func _HealthService_UploadReport_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HealthServiceServer).UploadReport(ctx, req.(*UploadReportRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _HealthService_ClaimReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClaimReportRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(HealthServiceServer).ClaimReport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: HealthService_ClaimReport_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).ClaimReport(ctx, req.(*ClaimReportRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _HealthService_ReadReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadReportRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(HealthServiceServer).ReadReport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: HealthService_ReadReport_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).ReadReport(ctx, req.(*ReadReportRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -591,14 +525,6 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadReport",
 			Handler:    _HealthService_UploadReport_Handler,
-		},
-		{
-			MethodName: "ClaimReport",
-			Handler:    _HealthService_ClaimReport_Handler,
-		},
-		{
-			MethodName: "ReadReport",
-			Handler:    _HealthService_ReadReport_Handler,
 		},
 		{
 			MethodName: "Login",

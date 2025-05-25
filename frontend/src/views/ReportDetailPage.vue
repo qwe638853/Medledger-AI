@@ -181,16 +181,25 @@ const fetchReportData = async () => {
   
   try {
     let response;
+    console.log("Role",userRole.value);
     // 只有保險公司角色需要調用 API
-    if (userRole.value === 'insurance') {
-      response = await healthCheckService.fetchInsuranceReportDetail(reportId);
+    if (userRole.value === 'insurer') {
+      response = await healthCheckService.fetchReportContent(reportId, patientId);
       if (!response) {
         throw new Error('無法獲取報告數據');
       }
-      report.value = response;
+      
+      report.value = {
+        id: reportId,
+        patient_id: patientId,
+        date: new Date().toISOString(),
+        rawData: JSON.parse(response.resultJson) || {}
+      };
+      console.log("response",report.value);
     } else {
       // 一般用戶直接使用 store 中的數據
       report.value = userStore.currentReport;
+      console.log("response",report.value);
     }
     
     // 如果有數據，進行風險評估
@@ -374,45 +383,42 @@ onMounted(() => {
                         class="ring-bg"
                         cx="50"
                         cy="50"
-                        r="45"
+                        r="40"
                         fill="none"
                         stroke="#f1f1f1"
-                        stroke-width="4"
+                        stroke-width="8"
                       />
                       <!-- 進度圓環 -->
                       <circle
                         class="ring-progress"
                         cx="50"
                         cy="50"
-                        r="45"
+                        r="40"
                         fill="none"
                         :stroke="getMetricColor(key, value)"
-                        stroke-width="4"
-                        :stroke-dasharray="`${getMetricPercent(key, value) * 2.83} 283`"
+                        stroke-width="8"
+                        :stroke-dasharray="`${getMetricPercent(key, value) * 2.51} 251`"
                         transform="rotate(-90 50 50)"
                       />
                       <!-- 中心數值 -->
-                      <text
-                        x="50"
-                        y="50"
-                        text-anchor="middle"
-                        dominant-baseline="middle"
-                        :fill="getMetricColor(key, value)"
-                        class="ring-value"
-                      >
-                        {{ getMetricNumber(value) }}
-                      </text>
-                      <!-- 單位 -->
-                      <text
-                        x="50"
-                        y="65"
-                        text-anchor="middle"
-                        class="ring-unit"
-                        fill="#888"
-                      >
-                        {{ METRIC_REF_RANGE[key]?.unit || '' }}
-                      </text>
+                      <g transform="rotate(90 50 50)">
+                        <text
+                          x="50"
+                          y="50"
+                          text-anchor="middle"
+                          dominant-baseline="central"
+                          :fill="getMetricColor(key, value)"
+                          class="ring-value"
+                        >
+                          {{ getMetricNumber(value) }}
+                        </text>
+                      </g>
                     </svg>
+                  </div>
+                  
+                  <!-- 單位顯示 -->
+                  <div class="metric-unit">
+                    {{ METRIC_REF_RANGE[key]?.unit || '' }}
                   </div>
                   
                   <h3 class="metric-name">{{ METRIC_NAME_MAP[key] || key }}</h3>
@@ -540,11 +546,14 @@ onMounted(() => {
   height: 100%;
   padding: 2rem !important;
   transition: all 0.2s ease;
+  background: white;
+  border-radius: 24px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
 }
 
 .metric-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 .metric-content {
@@ -556,9 +565,10 @@ onMounted(() => {
 
 /* SVG 圓環樣式 */
 .metric-ring {
-  width: 120px;
-  height: 120px;
-  margin-bottom: 1.5rem;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 0.5rem;  /* 減少底部間距，為單位預留空間 */
+  position: relative;
 }
 
 .ring {
@@ -573,30 +583,36 @@ onMounted(() => {
 
 .ring-progress {
   transition: stroke-dasharray 0.5s ease;
+  stroke-linecap: round;
 }
 
 .ring-value {
-  font-size: 24px;
-  font-weight: 600;
-  transform: rotate(90deg);
+  font-size: 28px;
+  font-weight: 700;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.ring-unit {
-  font-size: 12px;
-  transform: rotate(90deg);
+/* 單位樣式 */
+.metric-unit {
+  font-size: 14px;
+  color: #888;
+  font-weight: 500;
+  margin-bottom: 1rem;  /* 與下方標題保持間距 */
+  line-height: 1;
 }
 
 .metric-name {
-  font-size: 1rem;
-  color: #111827;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-size: 1.125rem;
+  color: #222;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
 }
 
 .metric-range {
   font-size: 0.875rem;
-  color: #888;
+  color: #666;
   margin: 0;
+  line-height: 1.5;
 }
 
 /* 文字型指標卡片 */
@@ -703,8 +719,18 @@ onMounted(() => {
   }
   
   .metric-ring {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 0.375rem;
+  }
+  
+  .ring-value {
+    font-size: 24px;
+  }
+  
+  .metric-unit {
+    font-size: 12px;
+    margin-bottom: 0.75rem;
   }
 }
 
@@ -721,8 +747,19 @@ onMounted(() => {
     padding: 1.5rem !important;
   }
   
+  .metric-ring {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 0.25rem;
+  }
+  
   .ring-value {
     font-size: 20px;
+  }
+  
+  .metric-unit {
+    font-size: 11px;
+    margin-bottom: 0.5rem;
   }
 }
 </style> 

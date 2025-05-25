@@ -184,102 +184,6 @@ func (x *UploadReportResponse) GetMessage() string {
 	return ""
 }
 
-type ClaimReportRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ClaimReportRequest) Reset() {
-	*x = ClaimReportRequest{}
-	mi := &file_proto_data_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ClaimReportRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ClaimReportRequest) ProtoMessage() {}
-
-func (x *ClaimReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ClaimReportRequest.ProtoReflect.Descriptor instead.
-func (*ClaimReportRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ClaimReportRequest) GetReportId() string {
-	if x != nil {
-		return x.ReportId
-	}
-	return ""
-}
-
-type ClaimReportResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ClaimReportResponse) Reset() {
-	*x = ClaimReportResponse{}
-	mi := &file_proto_data_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ClaimReportResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ClaimReportResponse) ProtoMessage() {}
-
-func (x *ClaimReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ClaimReportResponse.ProtoReflect.Descriptor instead.
-func (*ClaimReportResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ClaimReportResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ClaimReportResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 type ReadReportRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReportId      string                 `protobuf:"bytes,1,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
@@ -289,7 +193,7 @@ type ReadReportRequest struct {
 
 func (x *ReadReportRequest) Reset() {
 	*x = ReadReportRequest{}
-	mi := &file_proto_data_proto_msgTypes[4]
+	mi := &file_proto_data_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -301,7 +205,7 @@ func (x *ReadReportRequest) String() string {
 func (*ReadReportRequest) ProtoMessage() {}
 
 func (x *ReadReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[4]
+	mi := &file_proto_data_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -314,7 +218,7 @@ func (x *ReadReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadReportRequest.ProtoReflect.Descriptor instead.
 func (*ReadReportRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{4}
+	return file_proto_data_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ReadReportRequest) GetReportId() string {
@@ -334,7 +238,7 @@ type ReadReportResponse struct {
 
 func (x *ReadReportResponse) Reset() {
 	*x = ReadReportResponse{}
-	mi := &file_proto_data_proto_msgTypes[5]
+	mi := &file_proto_data_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +250,7 @@ func (x *ReadReportResponse) String() string {
 func (*ReadReportResponse) ProtoMessage() {}
 
 func (x *ReadReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[5]
+	mi := &file_proto_data_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +263,7 @@ func (x *ReadReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadReportResponse.ProtoReflect.Descriptor instead.
 func (*ReadReportResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{5}
+	return file_proto_data_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ReadReportResponse) GetSuccess() bool {
@@ -386,7 +290,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_proto_data_proto_msgTypes[6]
+	mi := &file_proto_data_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -398,7 +302,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[6]
+	mi := &file_proto_data_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -411,7 +315,7 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{6}
+	return file_proto_data_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LoginRequest) GetUserId() string {
@@ -439,7 +343,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_proto_data_proto_msgTypes[7]
+	mi := &file_proto_data_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -451,7 +355,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[7]
+	mi := &file_proto_data_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -464,7 +368,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{7}
+	return file_proto_data_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LoginResponse) GetSuccess() bool {
@@ -502,7 +406,7 @@ type RegisterUserRequest struct {
 
 func (x *RegisterUserRequest) Reset() {
 	*x = RegisterUserRequest{}
-	mi := &file_proto_data_proto_msgTypes[8]
+	mi := &file_proto_data_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -514,7 +418,7 @@ func (x *RegisterUserRequest) String() string {
 func (*RegisterUserRequest) ProtoMessage() {}
 
 func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[8]
+	mi := &file_proto_data_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -527,7 +431,7 @@ func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterUserRequest.ProtoReflect.Descriptor instead.
 func (*RegisterUserRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{8}
+	return file_proto_data_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RegisterUserRequest) GetUserId() string {
@@ -586,7 +490,7 @@ type RegisterInsurerRequest struct {
 
 func (x *RegisterInsurerRequest) Reset() {
 	*x = RegisterInsurerRequest{}
-	mi := &file_proto_data_proto_msgTypes[9]
+	mi := &file_proto_data_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -598,7 +502,7 @@ func (x *RegisterInsurerRequest) String() string {
 func (*RegisterInsurerRequest) ProtoMessage() {}
 
 func (x *RegisterInsurerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[9]
+	mi := &file_proto_data_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -611,7 +515,7 @@ func (x *RegisterInsurerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterInsurerRequest.ProtoReflect.Descriptor instead.
 func (*RegisterInsurerRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{9}
+	return file_proto_data_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RegisterInsurerRequest) GetInsurerId() string {
@@ -666,7 +570,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_proto_data_proto_msgTypes[10]
+	mi := &file_proto_data_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +582,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[10]
+	mi := &file_proto_data_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +595,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{10}
+	return file_proto_data_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -721,7 +625,7 @@ type Report struct {
 
 func (x *Report) Reset() {
 	*x = Report{}
-	mi := &file_proto_data_proto_msgTypes[11]
+	mi := &file_proto_data_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -733,7 +637,7 @@ func (x *Report) String() string {
 func (*Report) ProtoMessage() {}
 
 func (x *Report) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[11]
+	mi := &file_proto_data_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -746,7 +650,7 @@ func (x *Report) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Report.ProtoReflect.Descriptor instead.
 func (*Report) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{11}
+	return file_proto_data_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Report) GetReportId() string {
@@ -793,7 +697,7 @@ type ListMyReportsResponse struct {
 
 func (x *ListMyReportsResponse) Reset() {
 	*x = ListMyReportsResponse{}
-	mi := &file_proto_data_proto_msgTypes[12]
+	mi := &file_proto_data_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -805,7 +709,7 @@ func (x *ListMyReportsResponse) String() string {
 func (*ListMyReportsResponse) ProtoMessage() {}
 
 func (x *ListMyReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[12]
+	mi := &file_proto_data_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -818,7 +722,7 @@ func (x *ListMyReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyReportsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{12}
+	return file_proto_data_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListMyReportsResponse) GetReports() []*Report {
@@ -841,7 +745,7 @@ type RequestAccessRequest struct {
 
 func (x *RequestAccessRequest) Reset() {
 	*x = RequestAccessRequest{}
-	mi := &file_proto_data_proto_msgTypes[13]
+	mi := &file_proto_data_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -853,7 +757,7 @@ func (x *RequestAccessRequest) String() string {
 func (*RequestAccessRequest) ProtoMessage() {}
 
 func (x *RequestAccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[13]
+	mi := &file_proto_data_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -866,7 +770,7 @@ func (x *RequestAccessRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestAccessRequest.ProtoReflect.Descriptor instead.
 func (*RequestAccessRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{13}
+	return file_proto_data_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RequestAccessRequest) GetReportId() string {
@@ -907,7 +811,7 @@ type RequestAccessResponse struct {
 
 func (x *RequestAccessResponse) Reset() {
 	*x = RequestAccessResponse{}
-	mi := &file_proto_data_proto_msgTypes[14]
+	mi := &file_proto_data_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -919,7 +823,7 @@ func (x *RequestAccessResponse) String() string {
 func (*RequestAccessResponse) ProtoMessage() {}
 
 func (x *RequestAccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[14]
+	mi := &file_proto_data_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +836,7 @@ func (x *RequestAccessResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestAccessResponse.ProtoReflect.Descriptor instead.
 func (*RequestAccessResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{14}
+	return file_proto_data_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RequestAccessResponse) GetSuccess() bool {
@@ -968,7 +872,7 @@ type AccessRequest struct {
 
 func (x *AccessRequest) Reset() {
 	*x = AccessRequest{}
-	mi := &file_proto_data_proto_msgTypes[15]
+	mi := &file_proto_data_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +884,7 @@ func (x *AccessRequest) String() string {
 func (*AccessRequest) ProtoMessage() {}
 
 func (x *AccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[15]
+	mi := &file_proto_data_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +897,7 @@ func (x *AccessRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessRequest.ProtoReflect.Descriptor instead.
 func (*AccessRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{15}
+	return file_proto_data_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AccessRequest) GetRequestId() string {
@@ -1075,7 +979,7 @@ type ListAccessRequestsResponse struct {
 
 func (x *ListAccessRequestsResponse) Reset() {
 	*x = ListAccessRequestsResponse{}
-	mi := &file_proto_data_proto_msgTypes[16]
+	mi := &file_proto_data_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1087,7 +991,7 @@ func (x *ListAccessRequestsResponse) String() string {
 func (*ListAccessRequestsResponse) ProtoMessage() {}
 
 func (x *ListAccessRequestsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[16]
+	mi := &file_proto_data_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1100,7 +1004,7 @@ func (x *ListAccessRequestsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessRequestsResponse.ProtoReflect.Descriptor instead.
 func (*ListAccessRequestsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{16}
+	return file_proto_data_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListAccessRequestsResponse) GetRequests() []*AccessRequest {
@@ -1120,7 +1024,7 @@ type ApproveAccessRequestRequest struct {
 
 func (x *ApproveAccessRequestRequest) Reset() {
 	*x = ApproveAccessRequestRequest{}
-	mi := &file_proto_data_proto_msgTypes[17]
+	mi := &file_proto_data_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1132,7 +1036,7 @@ func (x *ApproveAccessRequestRequest) String() string {
 func (*ApproveAccessRequestRequest) ProtoMessage() {}
 
 func (x *ApproveAccessRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[17]
+	mi := &file_proto_data_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,7 +1049,7 @@ func (x *ApproveAccessRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveAccessRequestRequest.ProtoReflect.Descriptor instead.
 func (*ApproveAccessRequestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{17}
+	return file_proto_data_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ApproveAccessRequestRequest) GetRequestId() string {
@@ -1165,7 +1069,7 @@ type ApproveAccessRequestResponse struct {
 
 func (x *ApproveAccessRequestResponse) Reset() {
 	*x = ApproveAccessRequestResponse{}
-	mi := &file_proto_data_proto_msgTypes[18]
+	mi := &file_proto_data_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1177,7 +1081,7 @@ func (x *ApproveAccessRequestResponse) String() string {
 func (*ApproveAccessRequestResponse) ProtoMessage() {}
 
 func (x *ApproveAccessRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[18]
+	mi := &file_proto_data_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1190,7 +1094,7 @@ func (x *ApproveAccessRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveAccessRequestResponse.ProtoReflect.Descriptor instead.
 func (*ApproveAccessRequestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{18}
+	return file_proto_data_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ApproveAccessRequestResponse) GetSuccess() bool {
@@ -1217,7 +1121,7 @@ type RejectAccessRequestRequest struct {
 
 func (x *RejectAccessRequestRequest) Reset() {
 	*x = RejectAccessRequestRequest{}
-	mi := &file_proto_data_proto_msgTypes[19]
+	mi := &file_proto_data_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1133,7 @@ func (x *RejectAccessRequestRequest) String() string {
 func (*RejectAccessRequestRequest) ProtoMessage() {}
 
 func (x *RejectAccessRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[19]
+	mi := &file_proto_data_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1146,7 @@ func (x *RejectAccessRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectAccessRequestRequest.ProtoReflect.Descriptor instead.
 func (*RejectAccessRequestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{19}
+	return file_proto_data_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RejectAccessRequestRequest) GetRequestId() string {
@@ -1262,7 +1166,7 @@ type RejectAccessRequestResponse struct {
 
 func (x *RejectAccessRequestResponse) Reset() {
 	*x = RejectAccessRequestResponse{}
-	mi := &file_proto_data_proto_msgTypes[20]
+	mi := &file_proto_data_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1178,7 @@ func (x *RejectAccessRequestResponse) String() string {
 func (*RejectAccessRequestResponse) ProtoMessage() {}
 
 func (x *RejectAccessRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[20]
+	mi := &file_proto_data_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1191,7 @@ func (x *RejectAccessRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectAccessRequestResponse.ProtoReflect.Descriptor instead.
 func (*RejectAccessRequestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{20}
+	return file_proto_data_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RejectAccessRequestResponse) GetSuccess() bool {
@@ -1315,7 +1219,7 @@ type InsurerDashboardStatsResponse struct {
 
 func (x *InsurerDashboardStatsResponse) Reset() {
 	*x = InsurerDashboardStatsResponse{}
-	mi := &file_proto_data_proto_msgTypes[21]
+	mi := &file_proto_data_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1327,7 +1231,7 @@ func (x *InsurerDashboardStatsResponse) String() string {
 func (*InsurerDashboardStatsResponse) ProtoMessage() {}
 
 func (x *InsurerDashboardStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[21]
+	mi := &file_proto_data_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1340,7 +1244,7 @@ func (x *InsurerDashboardStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InsurerDashboardStatsResponse.ProtoReflect.Descriptor instead.
 func (*InsurerDashboardStatsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{21}
+	return file_proto_data_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *InsurerDashboardStatsResponse) GetTotalAuthorized() int32 {
@@ -1376,7 +1280,7 @@ type AuthorizedReport struct {
 
 func (x *AuthorizedReport) Reset() {
 	*x = AuthorizedReport{}
-	mi := &file_proto_data_proto_msgTypes[22]
+	mi := &file_proto_data_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1388,7 +1292,7 @@ func (x *AuthorizedReport) String() string {
 func (*AuthorizedReport) ProtoMessage() {}
 
 func (x *AuthorizedReport) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[22]
+	mi := &file_proto_data_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1401,7 +1305,7 @@ func (x *AuthorizedReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthorizedReport.ProtoReflect.Descriptor instead.
 func (*AuthorizedReport) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{22}
+	return file_proto_data_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *AuthorizedReport) GetReportId() string {
@@ -1441,7 +1345,7 @@ type ListAuthorizedReportsResponse struct {
 
 func (x *ListAuthorizedReportsResponse) Reset() {
 	*x = ListAuthorizedReportsResponse{}
-	mi := &file_proto_data_proto_msgTypes[23]
+	mi := &file_proto_data_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1453,7 +1357,7 @@ func (x *ListAuthorizedReportsResponse) String() string {
 func (*ListAuthorizedReportsResponse) ProtoMessage() {}
 
 func (x *ListAuthorizedReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[23]
+	mi := &file_proto_data_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1466,7 +1370,7 @@ func (x *ListAuthorizedReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuthorizedReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListAuthorizedReportsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{23}
+	return file_proto_data_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListAuthorizedReportsResponse) GetReports() []*AuthorizedReport {
@@ -1485,7 +1389,7 @@ type PatientIDRequest struct {
 
 func (x *PatientIDRequest) Reset() {
 	*x = PatientIDRequest{}
-	mi := &file_proto_data_proto_msgTypes[24]
+	mi := &file_proto_data_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1497,7 +1401,7 @@ func (x *PatientIDRequest) String() string {
 func (*PatientIDRequest) ProtoMessage() {}
 
 func (x *PatientIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[24]
+	mi := &file_proto_data_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1510,7 +1414,7 @@ func (x *PatientIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatientIDRequest.ProtoReflect.Descriptor instead.
 func (*PatientIDRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{24}
+	return file_proto_data_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *PatientIDRequest) GetPatientId() string {
@@ -1531,7 +1435,7 @@ type ReportMeta struct {
 
 func (x *ReportMeta) Reset() {
 	*x = ReportMeta{}
-	mi := &file_proto_data_proto_msgTypes[25]
+	mi := &file_proto_data_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1543,7 +1447,7 @@ func (x *ReportMeta) String() string {
 func (*ReportMeta) ProtoMessage() {}
 
 func (x *ReportMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[25]
+	mi := &file_proto_data_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1556,7 +1460,7 @@ func (x *ReportMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportMeta.ProtoReflect.Descriptor instead.
 func (*ReportMeta) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{25}
+	return file_proto_data_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ReportMeta) GetReportId() string {
@@ -1589,7 +1493,7 @@ type ListReportMetaResponse struct {
 
 func (x *ListReportMetaResponse) Reset() {
 	*x = ListReportMetaResponse{}
-	mi := &file_proto_data_proto_msgTypes[26]
+	mi := &file_proto_data_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1601,7 +1505,7 @@ func (x *ListReportMetaResponse) String() string {
 func (*ListReportMetaResponse) ProtoMessage() {}
 
 func (x *ListReportMetaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[26]
+	mi := &file_proto_data_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1614,7 +1518,7 @@ func (x *ListReportMetaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListReportMetaResponse.ProtoReflect.Descriptor instead.
 func (*ListReportMetaResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{26}
+	return file_proto_data_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListReportMetaResponse) GetReports() []*ReportMeta {
@@ -1634,7 +1538,7 @@ type ViewAuthorizedReportRequest struct {
 
 func (x *ViewAuthorizedReportRequest) Reset() {
 	*x = ViewAuthorizedReportRequest{}
-	mi := &file_proto_data_proto_msgTypes[27]
+	mi := &file_proto_data_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1646,7 +1550,7 @@ func (x *ViewAuthorizedReportRequest) String() string {
 func (*ViewAuthorizedReportRequest) ProtoMessage() {}
 
 func (x *ViewAuthorizedReportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[27]
+	mi := &file_proto_data_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1659,7 +1563,7 @@ func (x *ViewAuthorizedReportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ViewAuthorizedReportRequest.ProtoReflect.Descriptor instead.
 func (*ViewAuthorizedReportRequest) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{27}
+	return file_proto_data_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ViewAuthorizedReportRequest) GetReportId() string {
@@ -1686,7 +1590,7 @@ type ViewAuthorizedReportResponse struct {
 
 func (x *ViewAuthorizedReportResponse) Reset() {
 	*x = ViewAuthorizedReportResponse{}
-	mi := &file_proto_data_proto_msgTypes[28]
+	mi := &file_proto_data_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1698,7 +1602,7 @@ func (x *ViewAuthorizedReportResponse) String() string {
 func (*ViewAuthorizedReportResponse) ProtoMessage() {}
 
 func (x *ViewAuthorizedReportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_data_proto_msgTypes[28]
+	mi := &file_proto_data_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1711,7 +1615,7 @@ func (x *ViewAuthorizedReportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ViewAuthorizedReportResponse.ProtoReflect.Descriptor instead.
 func (*ViewAuthorizedReportResponse) Descriptor() ([]byte, []int) {
-	return file_proto_data_proto_rawDescGZIP(), []int{28}
+	return file_proto_data_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ViewAuthorizedReportResponse) GetSuccess() bool {
@@ -1738,11 +1642,6 @@ const file_proto_data_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12*\n" +
 	"\x11test_results_json\x18\x03 \x01(\tR\x0ftestResultsJson\"J\n" +
 	"\x14UploadReportResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"1\n" +
-	"\x12ClaimReportRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\tR\breportId\"I\n" +
-	"\x13ClaimReportResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"0\n" +
 	"\x11ReadReportRequest\x12\x1b\n" +
@@ -1854,13 +1753,10 @@ const file_proto_data_proto_rawDesc = "" +
 	"\x13AccessRequestStatus\x12\v\n" +
 	"\aPENDING\x10\x00\x12\f\n" +
 	"\bAPPROVED\x10\x01\x12\f\n" +
-	"\bREJECTED\x10\x022\x97\r\n" +
+	"\bREJECTED\x10\x022\xd4\v\n" +
 	"\rHealthService\x12`\n" +
 	"\fUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
-	"/v1/upload\x12\\\n" +
-	"\vClaimReport\x12\x1a.health.ClaimReportRequest\x1a\x1b.health.ClaimReportResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/claim\x12c\n" +
-	"\n" +
-	"ReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/report/{report_id}\x12J\n" +
+	"/v1/upload\x12J\n" +
 	"\x05Login\x12\x14.health.LoginRequest\x1a\x15.health.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/login\x12c\n" +
 	"\fRegisterUser\x12\x1b.health.RegisterUserRequest\x1a\x18.health.RegisterResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/register/user\x12l\n" +
 	"\x0fRegisterInsurer\x12\x1e.health.RegisterInsurerRequest\x1a\x18.health.RegisterResponse\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/register/insurer\x12[\n" +
@@ -1887,77 +1783,71 @@ func file_proto_data_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_data_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_proto_data_proto_goTypes = []any{
 	(AccessRequestStatus)(0),              // 0: health.AccessRequestStatus
 	(*UploadReportRequest)(nil),           // 1: health.UploadReportRequest
 	(*UploadReportResponse)(nil),          // 2: health.UploadReportResponse
-	(*ClaimReportRequest)(nil),            // 3: health.ClaimReportRequest
-	(*ClaimReportResponse)(nil),           // 4: health.ClaimReportResponse
-	(*ReadReportRequest)(nil),             // 5: health.ReadReportRequest
-	(*ReadReportResponse)(nil),            // 6: health.ReadReportResponse
-	(*LoginRequest)(nil),                  // 7: health.LoginRequest
-	(*LoginResponse)(nil),                 // 8: health.LoginResponse
-	(*RegisterUserRequest)(nil),           // 9: health.RegisterUserRequest
-	(*RegisterInsurerRequest)(nil),        // 10: health.RegisterInsurerRequest
-	(*RegisterResponse)(nil),              // 11: health.RegisterResponse
-	(*Report)(nil),                        // 12: health.Report
-	(*ListMyReportsResponse)(nil),         // 13: health.ListMyReportsResponse
-	(*RequestAccessRequest)(nil),          // 14: health.RequestAccessRequest
-	(*RequestAccessResponse)(nil),         // 15: health.RequestAccessResponse
-	(*AccessRequest)(nil),                 // 16: health.AccessRequest
-	(*ListAccessRequestsResponse)(nil),    // 17: health.ListAccessRequestsResponse
-	(*ApproveAccessRequestRequest)(nil),   // 18: health.ApproveAccessRequestRequest
-	(*ApproveAccessRequestResponse)(nil),  // 19: health.ApproveAccessRequestResponse
-	(*RejectAccessRequestRequest)(nil),    // 20: health.RejectAccessRequestRequest
-	(*RejectAccessRequestResponse)(nil),   // 21: health.RejectAccessRequestResponse
-	(*InsurerDashboardStatsResponse)(nil), // 22: health.InsurerDashboardStatsResponse
-	(*AuthorizedReport)(nil),              // 23: health.AuthorizedReport
-	(*ListAuthorizedReportsResponse)(nil), // 24: health.ListAuthorizedReportsResponse
-	(*PatientIDRequest)(nil),              // 25: health.PatientIDRequest
-	(*ReportMeta)(nil),                    // 26: health.ReportMeta
-	(*ListReportMetaResponse)(nil),        // 27: health.ListReportMetaResponse
-	(*ViewAuthorizedReportRequest)(nil),   // 28: health.ViewAuthorizedReportRequest
-	(*ViewAuthorizedReportResponse)(nil),  // 29: health.ViewAuthorizedReportResponse
-	(*emptypb.Empty)(nil),                 // 30: google.protobuf.Empty
+	(*ReadReportRequest)(nil),             // 3: health.ReadReportRequest
+	(*ReadReportResponse)(nil),            // 4: health.ReadReportResponse
+	(*LoginRequest)(nil),                  // 5: health.LoginRequest
+	(*LoginResponse)(nil),                 // 6: health.LoginResponse
+	(*RegisterUserRequest)(nil),           // 7: health.RegisterUserRequest
+	(*RegisterInsurerRequest)(nil),        // 8: health.RegisterInsurerRequest
+	(*RegisterResponse)(nil),              // 9: health.RegisterResponse
+	(*Report)(nil),                        // 10: health.Report
+	(*ListMyReportsResponse)(nil),         // 11: health.ListMyReportsResponse
+	(*RequestAccessRequest)(nil),          // 12: health.RequestAccessRequest
+	(*RequestAccessResponse)(nil),         // 13: health.RequestAccessResponse
+	(*AccessRequest)(nil),                 // 14: health.AccessRequest
+	(*ListAccessRequestsResponse)(nil),    // 15: health.ListAccessRequestsResponse
+	(*ApproveAccessRequestRequest)(nil),   // 16: health.ApproveAccessRequestRequest
+	(*ApproveAccessRequestResponse)(nil),  // 17: health.ApproveAccessRequestResponse
+	(*RejectAccessRequestRequest)(nil),    // 18: health.RejectAccessRequestRequest
+	(*RejectAccessRequestResponse)(nil),   // 19: health.RejectAccessRequestResponse
+	(*InsurerDashboardStatsResponse)(nil), // 20: health.InsurerDashboardStatsResponse
+	(*AuthorizedReport)(nil),              // 21: health.AuthorizedReport
+	(*ListAuthorizedReportsResponse)(nil), // 22: health.ListAuthorizedReportsResponse
+	(*PatientIDRequest)(nil),              // 23: health.PatientIDRequest
+	(*ReportMeta)(nil),                    // 24: health.ReportMeta
+	(*ListReportMetaResponse)(nil),        // 25: health.ListReportMetaResponse
+	(*ViewAuthorizedReportRequest)(nil),   // 26: health.ViewAuthorizedReportRequest
+	(*ViewAuthorizedReportResponse)(nil),  // 27: health.ViewAuthorizedReportResponse
+	(*emptypb.Empty)(nil),                 // 28: google.protobuf.Empty
 }
 var file_proto_data_proto_depIdxs = []int32{
-	12, // 0: health.ListMyReportsResponse.reports:type_name -> health.Report
-	16, // 1: health.ListAccessRequestsResponse.requests:type_name -> health.AccessRequest
-	23, // 2: health.ListAuthorizedReportsResponse.reports:type_name -> health.AuthorizedReport
-	26, // 3: health.ListReportMetaResponse.reports:type_name -> health.ReportMeta
+	10, // 0: health.ListMyReportsResponse.reports:type_name -> health.Report
+	14, // 1: health.ListAccessRequestsResponse.requests:type_name -> health.AccessRequest
+	21, // 2: health.ListAuthorizedReportsResponse.reports:type_name -> health.AuthorizedReport
+	24, // 3: health.ListReportMetaResponse.reports:type_name -> health.ReportMeta
 	1,  // 4: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
-	3,  // 5: health.HealthService.ClaimReport:input_type -> health.ClaimReportRequest
-	5,  // 6: health.HealthService.ReadReport:input_type -> health.ReadReportRequest
-	7,  // 7: health.HealthService.Login:input_type -> health.LoginRequest
-	9,  // 8: health.HealthService.RegisterUser:input_type -> health.RegisterUserRequest
-	10, // 9: health.HealthService.RegisterInsurer:input_type -> health.RegisterInsurerRequest
-	30, // 10: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
-	14, // 11: health.HealthService.RequestAccess:input_type -> health.RequestAccessRequest
-	30, // 12: health.HealthService.ListAccessRequests:input_type -> google.protobuf.Empty
-	18, // 13: health.HealthService.ApproveAccessRequest:input_type -> health.ApproveAccessRequestRequest
-	20, // 14: health.HealthService.RejectAccessRequest:input_type -> health.RejectAccessRequestRequest
-	30, // 15: health.HealthService.GetInsurerDashboardStats:input_type -> google.protobuf.Empty
-	30, // 16: health.HealthService.ListAuthorizedReports:input_type -> google.protobuf.Empty
-	25, // 17: health.HealthService.ListReportMetaByPatientID:input_type -> health.PatientIDRequest
-	28, // 18: health.HealthService.ViewAuthorizedReport:input_type -> health.ViewAuthorizedReportRequest
-	2,  // 19: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
-	4,  // 20: health.HealthService.ClaimReport:output_type -> health.ClaimReportResponse
-	6,  // 21: health.HealthService.ReadReport:output_type -> health.ReadReportResponse
-	8,  // 22: health.HealthService.Login:output_type -> health.LoginResponse
-	11, // 23: health.HealthService.RegisterUser:output_type -> health.RegisterResponse
-	11, // 24: health.HealthService.RegisterInsurer:output_type -> health.RegisterResponse
-	13, // 25: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
-	15, // 26: health.HealthService.RequestAccess:output_type -> health.RequestAccessResponse
-	17, // 27: health.HealthService.ListAccessRequests:output_type -> health.ListAccessRequestsResponse
-	19, // 28: health.HealthService.ApproveAccessRequest:output_type -> health.ApproveAccessRequestResponse
-	21, // 29: health.HealthService.RejectAccessRequest:output_type -> health.RejectAccessRequestResponse
-	22, // 30: health.HealthService.GetInsurerDashboardStats:output_type -> health.InsurerDashboardStatsResponse
-	24, // 31: health.HealthService.ListAuthorizedReports:output_type -> health.ListAuthorizedReportsResponse
-	27, // 32: health.HealthService.ListReportMetaByPatientID:output_type -> health.ListReportMetaResponse
-	29, // 33: health.HealthService.ViewAuthorizedReport:output_type -> health.ViewAuthorizedReportResponse
-	19, // [19:34] is the sub-list for method output_type
-	4,  // [4:19] is the sub-list for method input_type
+	5,  // 5: health.HealthService.Login:input_type -> health.LoginRequest
+	7,  // 6: health.HealthService.RegisterUser:input_type -> health.RegisterUserRequest
+	8,  // 7: health.HealthService.RegisterInsurer:input_type -> health.RegisterInsurerRequest
+	28, // 8: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
+	12, // 9: health.HealthService.RequestAccess:input_type -> health.RequestAccessRequest
+	28, // 10: health.HealthService.ListAccessRequests:input_type -> google.protobuf.Empty
+	16, // 11: health.HealthService.ApproveAccessRequest:input_type -> health.ApproveAccessRequestRequest
+	18, // 12: health.HealthService.RejectAccessRequest:input_type -> health.RejectAccessRequestRequest
+	28, // 13: health.HealthService.GetInsurerDashboardStats:input_type -> google.protobuf.Empty
+	28, // 14: health.HealthService.ListAuthorizedReports:input_type -> google.protobuf.Empty
+	23, // 15: health.HealthService.ListReportMetaByPatientID:input_type -> health.PatientIDRequest
+	26, // 16: health.HealthService.ViewAuthorizedReport:input_type -> health.ViewAuthorizedReportRequest
+	2,  // 17: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
+	6,  // 18: health.HealthService.Login:output_type -> health.LoginResponse
+	9,  // 19: health.HealthService.RegisterUser:output_type -> health.RegisterResponse
+	9,  // 20: health.HealthService.RegisterInsurer:output_type -> health.RegisterResponse
+	11, // 21: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
+	13, // 22: health.HealthService.RequestAccess:output_type -> health.RequestAccessResponse
+	15, // 23: health.HealthService.ListAccessRequests:output_type -> health.ListAccessRequestsResponse
+	17, // 24: health.HealthService.ApproveAccessRequest:output_type -> health.ApproveAccessRequestResponse
+	19, // 25: health.HealthService.RejectAccessRequest:output_type -> health.RejectAccessRequestResponse
+	20, // 26: health.HealthService.GetInsurerDashboardStats:output_type -> health.InsurerDashboardStatsResponse
+	22, // 27: health.HealthService.ListAuthorizedReports:output_type -> health.ListAuthorizedReportsResponse
+	25, // 28: health.HealthService.ListReportMetaByPatientID:output_type -> health.ListReportMetaResponse
+	27, // 29: health.HealthService.ViewAuthorizedReport:output_type -> health.ViewAuthorizedReportResponse
+	17, // [17:30] is the sub-list for method output_type
+	4,  // [4:17] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -1974,7 +1864,7 @@ func file_proto_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_data_proto_rawDesc), len(file_proto_data_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   29,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -98,6 +98,8 @@ function scrollToSection(sectionId) {
 <style scoped>
 body, #app, .v-application, .v-app {
   background: #f9f7f4 !important;
+  font-size: 1.18rem !important;
+  line-height: 1.7 !important;
 }
 
 .brand-app-bar {
@@ -109,11 +111,13 @@ body, #app, .v-application, .v-app {
 .logo-image {
   border-radius: 8px;
   transition: transform 0.2s ease;
+  width: 56px !important;
+  height: 56px !important;
 }
 
 .brand-title {
   font-family: 'Inter', sans-serif;
-  font-size: 1.5rem;
+  font-size: 2.2rem;
   font-weight: 900;
   color: #111827;
   letter-spacing: -0.5px;
@@ -138,7 +142,7 @@ body, #app, .v-application, .v-app {
 
 .footer-title {
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 1.1rem !important;
   font-weight: 400;
 }
 
@@ -171,5 +175,24 @@ body, #app, .v-application, .v-app {
 
 .v-img {
   filter: grayscale(100%) contrast(1.1);
+}
+
+h1, .text-h1 { font-size: 3.2rem !important; }
+h2, .text-h2 { font-size: 2.5rem !important; }
+h3, .text-h3 { font-size: 2rem !important; }
+h4, .text-h4 { font-size: 1.7rem !important; }
+h5, .text-h5 { font-size: 1.4rem !important; }
+h6, .text-h6 { font-size: 1.2rem !important; }
+
+.v-btn, .v-btn__content, .v-btn .v-icon {
+  font-size: 1.18rem !important;
+}
+
+.v-list-item, .v-list-item__title {
+  font-size: 1.15rem !important;
+}
+
+input, textarea, .v-input__slot, .v-label {
+  font-size: 1.15rem !important;
 }
 </style>

@@ -31,15 +31,6 @@ func (s *server) UploadReport(ctx context.Context, req *pb.UploadReportRequest) 
 	return sc.HandleUploadReport(ctx, req, s.Wallet, s.Builder)
 }
 
-// ClaimReport
-func (s *server) ClaimReport(ctx context.Context, req *pb.ClaimReportRequest) (*pb.ClaimReportResponse, error) {
-	log.Printf("Received ClaimReport: %v", req)
-	return &pb.ClaimReportResponse{
-		Success: true,
-		Message: "Report Claimed Successfully",
-	}, nil
-}
-
 // ReadReport
 func (s *server) ReadReport(ctx context.Context, req *pb.ReadReportRequest) (*pb.ReadReportResponse, error) {
 	log.Printf("Received ReadReport: %v", req)

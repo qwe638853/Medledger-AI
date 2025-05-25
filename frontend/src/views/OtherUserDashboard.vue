@@ -47,25 +47,28 @@ const snackbarColor = ref('success');
 const dashboardStats = ref({
   totalAuthorized: 0,
   pendingRequests: 0,
-  totalPatients: 0
 });
 
-// 獲取 Dashboard 數據
+
 const fetchDashboardStats = async () => {
   try {
-    dashboardStats.value = await healthCheckService.fetchDashboardStats();
+    //dashboardStats.value = await healthCheckService.fetchDashboardStats();
   } catch (error) {
     console.error('獲取 Dashboard 數據時出錯:', error);
     // 錯誤處理已經在服務層完成
   }
 };
 
+
 // 獲取所有已授權報告
 const fetchAllAuthorizedReports = async () => {
   loadingAuthorizedReports.value = true;
   try {
     allAuthorizedReports.value = await healthCheckService.fetchAuthorizedReports();
-    fetchDashboardStats(); // 更新儀表板數據
+    console.log("tag",allAuthorizedReports.value);
+    
+    dashboardStats.value.totalAuthorized = allAuthorizedReports.value.length;
+    console.log("tag",dashboardStats.value);
   } catch (error) {
     console.error('獲取已授權報告時出錯:', error);
     snackbarMessage.value = '獲取已授權報告時出錯';
@@ -431,22 +434,7 @@ const formatExpiryDate = (expiry) => {
           </v-card>
         </v-col>
 
-        <!-- 已授權客戶卡片 -->
-        <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100">
-            <v-card-text class="pa-4">
-              <div class="d-flex align-center">
-                <div class="rounded-circle bg-purple-lighten-5 p-2 me-3">
-                  <v-icon size="24" color="purple-darken-2">mdi-account-group</v-icon>
-                </div>
-                <div>
-                  <div class="text-overline text-purple-darken-1">授權病患數</div>
-                  <div class="text-h4 font-weight-bold text-purple-darken-3">{{ dashboardStats.totalPatients }}</div>
-                </div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
+        
       </v-row>
 
       <!-- 搜尋區塊 -->
@@ -666,61 +654,102 @@ const formatExpiryDate = (expiry) => {
       <!-- 全部已授權報告區塊 -->
       <v-row v-if="viewMode === 'authorized'" justify="center">
         <v-col cols="12">
-          <v-card class="rounded-xl" elevation="2">
-            <v-card-title class="py-4 px-6 bg-green-lighten-5 d-flex align-center">
-              <div class="d-flex align-center flex-grow-1">
-                <v-icon size="28" color="green-darken-2" class="me-3">mdi-folder-account</v-icon>
-                <span class="text-h5 font-weight-bold text-green-darken-3">所有已授權健康報告</span>
-              </div>
-              <v-btn
-                color="grey-darken-1"
-                variant="tonal"
-                size="small"
-                @click="switchToSearchView"
-                prepend-icon="mdi-arrow-left"
-                class="back-btn"
-                elevation="1"
-              >
-                返回搜尋
-              </v-btn>
-            </v-card-title>
+          <!-- 返回按鈕 -->
+          <v-btn
+            color="grey-darken-1"
+            variant="outlined"
+            size="small"
+            @click="switchToSearchView"
+            class="mb-6 back-btn"
+            elevation="0"
+          >
+            <v-icon start size="18">mdi-arrow-left</v-icon>
+            返回搜尋
+          </v-btn>
+
+          <v-card class="authorized-reports-card" elevation="0">
+            <!-- 標題區塊 -->
+            <div class="auth-reports-header px-6 py-4 d-flex align-center">
+              <v-icon
+                size="28"
+                color="#24B47E"
+                class="me-3"
+              >mdi-folder-account</v-icon>
+              <span class="text-h5 font-weight-bold">所有已授權健康報告</span>
+            </div>
             
+            <!-- 表格區塊 -->
             <v-data-table
               :headers="[
-                { title: '報告編號', key: 'id', align: 'start', width: '120px' },
-                { title: '病患 ID', key: 'patient_id', align: 'start', width: '150px' },
-                { title: '報告日期', key: 'date', align: 'center', width: '140px' },
-                { title: '授權到期', key: 'expiry', align: 'center', width: '140px' },
-                { title: '查看報告', key: 'actions', align: 'center', width: '100px', sortable: false }
+                { 
+                  title: '報告編號',
+                  key: 'id',
+                  align: 'start',
+                  width: '120px'
+                },
+                { 
+                  title: '病患 ID',
+                  key: 'patient_id',
+                  align: 'start',
+                  width: '150px'
+                },
+                { 
+                  title: '報告日期',
+                  key: 'date',
+                  align: 'center',
+                  width: '140px'
+                },
+                { 
+                  title: '授權到期',
+                  key: 'expiry',
+                  align: 'center',
+                  width: '140px'
+                },
+                { 
+                  title: '',
+                  key: 'actions',
+                  align: 'center',
+                  width: '80px',
+                  sortable: false
+                }
               ]"
               :items="allAuthorizedReports"
               :loading="loadingAuthorizedReports"
               loading-text="正在載入已授權報告..."
-              class="elevation-0 authorized-reports-table"
+              class="authorized-reports-table"
               hover
-              item-value="id"
-              density="comfortable"
+              v-model:items-per-page="itemsPerPage"
+              :items-per-page-options="[10, 20, 50]"
             >
+              <!-- 報告編號欄位 -->
+              <template v-slot:item.id="{ item }">
+                <div class="id-cell">
+                  {{ item.id.substring(0, 4) }}...{{ item.id.slice(-4) }}
+                  <div class="id-tooltip">{{ item.id }}</div>
+                </div>
+              </template>
+
+              <!-- 病患 ID 欄位 -->
               <template v-slot:item.patient_id="{ item }">
-                <v-chip
-                  size="small"
-                  color="blue-lighten-4"
-                  class="font-weight-medium patient-chip"
-                >
-                  {{ item.patient_id }}
-                </v-chip>
+                <div class="id-cell">
+                  {{ item.patient_id.substring(0, 4) }}...{{ item.patient_id.slice(-4) }}
+                  <div class="id-tooltip">{{ item.patient_id }}</div>
+                </div>
               </template>
               
+              <!-- 報告日期欄位 -->
               <template v-slot:item.date="{ item }">
-                <v-chip
-                  size="small"
-                  color="grey-lighten-4"
-                  class="date-chip"
-                >
+                <div class="date-cell">
+                  <v-icon
+                    size="16"
+                    color="grey-darken-1"
+                    class="me-1"
+                  >mdi-calendar-outline</v-icon>
                   {{ formatDate(item.date) }}
-                </v-chip>
+                </div>
               </template>
               
+              <!-- 授權到期欄位 -->
               <template v-slot:item.expiry="{ item }">
                 <v-chip
                   size="small"
@@ -733,24 +762,20 @@ const formatExpiryDate = (expiry) => {
                 </v-chip>
               </template>
               
+              <!-- 操作按鈕欄位 -->
               <template v-slot:item.actions="{ item }">
-                <v-tooltip location="top">
-                  <template v-slot:activator="{ props }">
-                    <v-btn
-                      color="blue-darken-2"
-                      variant="tonal"
-                      size="small"
-                      @click="goToReportDetail(item)"
-                      v-bind="props"
-                      class="view-content-btn"
-                    >
-                      <v-icon>mdi-eye</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>查看詳細內容</span>
-                </v-tooltip>
+                <v-btn
+                  icon
+                  variant="text"
+                  size="small"
+                  @click="goToReportDetail(item)"
+                  class="view-report-btn"
+                >
+                  <v-icon>mdi-eye-outline</v-icon>
+                </v-btn>
               </template>
-              
+
+              <!-- 無資料顯示 -->
               <template v-slot:no-data>
                 <div class="text-center pa-5">
                   <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-folder-open-outline</v-icon>
@@ -1491,5 +1516,185 @@ const formatExpiryDate = (expiry) => {
   margin-left: 12px;
   border-radius: 24px !important;
   letter-spacing: 1px;
+}
+
+/* 已授權報告卡片樣式 */
+.authorized-reports-card {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.auth-reports-header {
+  background: #F9F7F4;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 返回按鈕樣式 */
+.back-btn {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+.back-btn:hover {
+  background-color: #f5f5f5 !important;
+  transform: translateY(-1px);
+}
+
+/* 表格樣式 */
+.authorized-reports-table {
+  background: white !important;
+}
+
+:deep(.v-data-table) {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+:deep(.v-data-table__wrapper) {
+  border-radius: 24px !important;
+}
+
+:deep(.v-data-table-header th) {
+  font-weight: 600 !important;
+  color: #333 !important;
+  background: white !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 16px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+:deep(.v-data-table-row) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+:deep(.v-data-table-row:nth-child(even)) {
+  background-color: rgba(0, 0, 0, 0.01) !important;
+}
+
+:deep(.v-data-table-row:hover) {
+  background-color: rgba(36, 180, 126, 0.05) !important;
+}
+
+:deep(.v-data-table td) {
+  color: #666 !important;
+  font-weight: 400 !important;
+  padding: 12px 16px !important;
+}
+
+/* ID 欄位樣式 */
+.id-cell {
+  position: relative;
+  cursor: pointer;
+}
+
+.id-tooltip {
+  display: none;
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.id-cell:hover .id-tooltip {
+  display: block;
+}
+
+/* 日期欄位樣式 */
+.date-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+/* 查看報告按鈕樣式 */
+.view-report-btn {
+  color: #666 !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.view-report-btn:hover {
+  background: #F8F441 !important;
+  color: #333 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(248, 244, 65, 0.2) !important;
+}
+
+/* 分頁元件樣式 */
+:deep(.v-data-table-footer) {
+  background: white !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.v-data-table-footer select) {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+}
+
+:deep(.v-data-table-footer .v-btn) {
+  color: #666 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+:deep(.v-data-table-footer .v-btn:hover) {
+  background: rgba(36, 180, 126, 0.1) !important;
+  color: #24B47E !important;
+}
+
+/* RWD 適配 */
+@media (max-width: 600px) {
+  .authorized-reports-card {
+    border-radius: 16px;
+  }
+
+  :deep(.v-data-table-row) {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px !important;
+    margin-bottom: 8px !important;
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  :deep(.v-data-table td) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border: none !important;
+  }
+
+  :deep(.v-data-table td::before) {
+    content: attr(data-label);
+    font-weight: 500 !important;
+    color: #333 !important;
+  }
+
+  .date-cell {
+    justify-content: flex-end;
+  }
+
+  .view-report-btn {
+    margin-left: auto;
+  }
 }
 </style>

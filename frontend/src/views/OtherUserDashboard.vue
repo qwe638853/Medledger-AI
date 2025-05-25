@@ -21,7 +21,7 @@ const authorizedReportsDialog = ref(false);
 const loadingAuthorizedReports = ref(false);
 
 // 視圖模式
-const viewMode = ref('search'); // 'search' 或 'authorized'
+const viewMode = ref('search'); // 'search' 或 'authorized' 或 'pending' 或 'history'
 
 // 搜尋相關
 const searchLoading = ref(false);
@@ -49,6 +49,22 @@ const dashboardStats = ref({
   pendingRequests: 0,
 });
 
+// 待授權請求相關
+const myAccessRequests = ref([]);
+const loadingMyRequests = ref(false);
+
+// 移除 pendingRequestsTab，改用兩個獨立的計算屬性
+const pendingRequests = computed(() => 
+  myAccessRequests.value.filter(req => req.status === 'PENDING')
+);
+
+const historyRequests = computed(() => 
+  myAccessRequests.value.filter(req => req.status !== 'PENDING')
+);
+
+// 分頁設置
+const pendingItemsPerPage = ref(5);
+const historyItemsPerPage = ref(5);
 
 const fetchDashboardStats = async () => {
   try {
@@ -80,6 +96,23 @@ const fetchAllAuthorizedReports = async () => {
   }
 };
 
+// 獲取我發出的授權請求
+const fetchMyAccessRequests = async () => {
+  loadingMyRequests.value = true;
+  try {
+    myAccessRequests.value = await healthCheckService.listMyAccessRequests();
+    // 更新儀表板數據
+    dashboardStats.value.pendingRequests = pendingRequests.value.length;
+  } catch (error) {
+    console.error('獲取授權請求失敗:', error);
+    snackbarMessage.value = '獲取授權請求失敗';
+    snackbarColor.value = 'error';
+    snackbar.value = true;
+  } finally {
+    loadingMyRequests.value = false;
+  }
+};
+
 // 切換到已授權報告視圖
 const switchToAuthorizedView = async () => {
   if (allAuthorizedReports.value.length === 0) {
@@ -92,6 +125,24 @@ const switchToAuthorizedView = async () => {
 // 切換到搜尋視圖
 const switchToSearchView = () => {
   viewMode.value = 'search';
+};
+
+// 切換到待授權請求視圖
+const switchToPendingView = async () => {
+  if (myAccessRequests.value.length === 0) {
+    await fetchMyAccessRequests();
+  }
+  viewMode.value = 'pending';
+  showSearchResults.value = false;
+};
+
+// 切換到歷史紀錄視圖
+const switchToHistoryView = async () => {
+  if (myAccessRequests.value.length === 0) {
+    await fetchMyAccessRequests();
+  }
+  viewMode.value = 'history';
+  showSearchResults.value = false;
 };
 
 // 打開授權報告對話框（查看詳細）
@@ -191,6 +242,7 @@ const sendAuthRequest = async () => {
 onMounted(async () => {
   // 先取得後端資料
   await fetchAllAuthorizedReports();
+  await fetchMyAccessRequests();
   await fetchDashboardStats();
 
   /*
@@ -356,6 +408,16 @@ const formatExpiryDate = (expiry) => {
     day: '2-digit'
   });
 };
+
+// 獲取請求狀態的顯示文字和顏色
+const getRequestStatusInfo = (status) => {
+  const statusMap = {
+    'PENDING': { text: '待審核', color: 'warning', icon: 'mdi-clock-outline' },
+    'APPROVED': { text: '已通過', color: 'success', icon: 'mdi-check-circle' },
+    'REJECTED': { text: '已拒絕', color: 'error', icon: 'mdi-close-circle' }
+  };
+  return statusMap[status] || { text: '未知', color: 'grey', icon: 'mdi-help-circle' };
+};
 </script>
 
 <template>
@@ -419,8 +481,8 @@ const formatExpiryDate = (expiry) => {
 
         <!-- 待處理請求卡片 -->
         <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100">
-            <v-card-text class="pa-4">
+          <v-card class="stat-card rounded-xl" elevation="2" height="100" @click="switchToPendingView">
+            <v-card-text class="pa-4 d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <div class="rounded-circle bg-orange-lighten-5 p-2 me-3">
                   <v-icon size="24" color="orange-darken-2">mdi-clock-outline</v-icon>
@@ -430,11 +492,48 @@ const formatExpiryDate = (expiry) => {
                   <div class="text-h4 font-weight-bold text-orange-darken-3">{{ dashboardStats.pendingRequests }}</div>
                 </div>
               </div>
+              <v-btn
+                color="orange-darken-2"
+                class="modern-btn d-flex align-center view-all-btn"
+                size="large"
+                elevation="1"
+                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
+                @click.stop="switchToPendingView"
+              >
+                <v-icon size="24" class="me-2">mdi-eye</v-icon>
+                <span class="logout-text">查看</span>
+              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
 
-        
+        <!-- 歷史紀錄卡片 -->
+        <v-col cols="12" sm="6" md="3" class="px-3">
+          <v-card class="stat-card rounded-xl" elevation="2" height="100" @click="switchToHistoryView">
+            <v-card-text class="pa-4 d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <div class="rounded-circle bg-blue-grey-lighten-5 p-2 me-3">
+                  <v-icon size="24" color="blue-grey-darken-1">mdi-history</v-icon>
+                </div>
+                <div>
+                  <div class="text-overline text-blue-grey-darken-1">歷史紀錄</div>
+                  <div class="text-h6 font-weight-medium text-blue-grey-darken-2">查看已處理請求</div>
+                </div>
+              </div>
+              <v-btn
+                color="blue-grey-darken-1"
+                class="modern-btn d-flex align-center view-all-btn"
+                size="large"
+                elevation="1"
+                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
+                @click.stop="switchToHistoryView"
+              >
+                <v-icon size="24" class="me-2">mdi-eye</v-icon>
+                <span class="logout-text">查看</span>
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </v-col>
       </v-row>
 
       <!-- 搜尋區塊 -->
@@ -801,106 +900,221 @@ const formatExpiryDate = (expiry) => {
       </v-col>
     </v-row>
 
-      <!-- 授權請求對話框 -->
-      <v-dialog v-model="authRequestDialog" max-width="600" persistent>
-        <v-card class="auth-request-dialog">
-          <v-card-title class="py-4 px-6 bg-deep-purple-lighten-5 rounded-t-lg">
-            <v-icon size="28" color="deep-purple-darken-1" class="me-3">mdi-key-chain</v-icon>
-            <span class="text-h6 font-weight-medium text-deep-purple-darken-1">請求健康報告授權</span>
-          </v-card-title>
-          
-          <!-- 報告資訊區塊 -->
-          <v-card-text class="pa-6 pt-5">
-            <v-sheet
-              v-if="selectedReport"
-              class="info-card mb-5 pa-4 rounded-lg"
-              color="blue-lighten-5"
-              elevation="0"
-            >
-              <div class="d-flex align-center mb-3">
-                <v-icon color="blue-darken-1" class="me-2">mdi-clipboard-text</v-icon>
-                <div class="text-subtitle-1 font-weight-medium text-blue-darken-1">報告資訊</div>
-              </div>
-              <v-divider class="mb-3"></v-divider>
-              <div class="d-flex flex-column gap-1">
-                <div class="d-flex align-center">
-                  <div class="text-body-2 font-weight-medium text-grey-darken-2 me-2 info-label">報告編號：</div>
-                  <div class="text-body-1">{{ selectedReport.id }}</div>
-                </div>
-                <div class="d-flex align-center">
-                  <div class="text-body-2 font-weight-medium text-grey-darken-2 me-2 info-label">病患 ID：</div>
-                  <div class="text-body-1">{{ patientId }}</div>
-                </div>
-                <div class="d-flex align-center">
-                  <div class="text-body-2 font-weight-medium text-grey-darken-2 me-2 info-label">報告日期：</div>
-                  <div class="text-body-1">{{ selectedReport.date || '未指定' }}</div>
-                </div>
-              </div>
-            </v-sheet>
+      <!-- 待授權請求列表區塊 -->
+      <v-row v-if="viewMode === 'pending'" justify="center">
+        <v-col cols="12">
+          <!-- 返回按鈕 -->
+          <v-btn
+            color="grey-darken-1"
+            variant="outlined"
+            size="small"
+            @click="switchToSearchView"
+            class="mb-6 back-btn"
+            elevation="0"
+          >
+            <v-icon start size="18">mdi-arrow-left</v-icon>
+            返回搜尋
+          </v-btn>
 
-            <!-- 授權理由輸入 -->
-            <v-textarea
-              v-model="authReason"
-              label="授權理由"
-              placeholder="請詳細說明請求授權此報告的原因..."
-              variant="outlined"
-              rows="3"
-              auto-grow
-              class="mb-5"
-              hide-details="auto"
-              counter="200"
-              :rules="[v => !!v || '請輸入授權理由']"
-              bg-color="white"
-            ></v-textarea>
-
-            <!-- 授權到期日選擇 -->
-            <div class="mb-1 font-weight-medium text-grey-darken-2">授權到期日</div>
-            <v-date-picker
-              v-model="authExpiry"
-              class="mb-3 elevation-1 rounded-lg mx-auto"
-              :min="new Date().toISOString().substr(0, 10)"
-              color="deep-purple"
-              width="100%"
-            ></v-date-picker>
+          <v-card class="pending-requests-card" elevation="0">
+            <!-- 標題區塊 -->
+            <div class="pending-header px-6 py-4 d-flex align-center">
+              <v-icon
+                size="28"
+                color="orange-darken-2"
+                class="me-3"
+              >mdi-clock-alert</v-icon>
+              <span class="text-h6 font-weight-bold">待處理授權請求</span>
+              <v-chip
+                class="ms-3"
+                color="orange-lighten-4"
+                text-color="orange-darken-2"
+                size="small"
+              >
+                {{ pendingRequests.length }} 筆請求
+              </v-chip>
+            </div>
             
-            <!-- 錯誤提示 -->
-            <v-alert
-              v-if="!authReason || !authExpiry"
-              type="warning"
-              variant="tonal"
-              border="start"
-              class="mt-4 rounded-lg"
-              density="compact"
+            <!-- 表格區塊 -->
+            <v-data-table
+              :headers="[
+                { 
+                  title: '報告編號',
+                  key: 'reportId',
+                  align: 'start',
+                  width: '120px'
+                },
+                { 
+                  title: '病患雜湊',
+                  key: 'patientHash',
+                  align: 'start',
+                  width: '120px'
+                },
+                { 
+                  title: '申請日期',
+                  key: 'requestedAt',
+                  align: 'center',
+                  width: '120px'
+                }
+              ]"
+              :items="pendingRequests"
+              :loading="loadingMyRequests"
+              loading-text="正在載入授權請求..."
+              class="pending-requests-table"
+              hover
+              v-model:items-per-page="pendingItemsPerPage"
+              :items-per-page-options="[5, 10]"
             >
-              請填寫完整授權資訊才能繼續
-            </v-alert>
-          </v-card-text>
-          
-          <v-divider></v-divider>
-          
-          <v-card-actions class="pa-5">
-            <v-spacer></v-spacer>
-            <v-btn
-              color="grey"
-              variant="flat"
-              @click="authRequestDialog = false"
-              class="me-3"
+              <!-- 報告編號欄位 -->
+              <template v-slot:item.reportId="{ item }">
+                <div class="id-cell">
+                  {{ item.reportId.substring(0, 4) }}...{{ item.reportId.slice(-4) }}
+                  <div class="id-tooltip">{{ item.reportId }}</div>
+                </div>
+              </template>
+
+              <!-- 病患雜湊欄位 -->
+              <template v-slot:item.patientHash="{ item }">
+                <div class="id-cell">
+                  {{ item.patientHash.substring(0, 4) }}...{{ item.patientHash.slice(-4) }}
+                  <div class="id-tooltip">{{ item.patientHash }}</div>
+                </div>
+              </template>
+
+              <!-- 申請日期欄位 -->
+              <template v-slot:item.requestedAt="{ item }">
+                <div class="date-cell">
+                  <v-icon size="16" color="grey-darken-1" class="me-1">mdi-calendar-outline</v-icon>
+                  {{ item.requestedAt }}
+                </div>
+              </template>
+
+              <!-- 無資料顯示 -->
+              <template v-slot:no-data>
+                <div class="text-center pa-5">
+                  <v-icon size="40" color="grey-lighten-1" class="mb-3">mdi-clipboard-text-clock-outline</v-icon>
+                  <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">無待處理請求</div>
+                  <div class="text-body-2 text-grey">您目前沒有待處理的授權請求</div>
+                </div>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- 歷史紀錄列表區塊 -->
+      <v-row v-if="viewMode === 'history'" justify="center">
+        <v-col cols="12">
+          <!-- 返回按鈕 -->
+          <v-btn
+            color="grey-darken-1"
+            variant="outlined"
+            size="small"
+            @click="switchToSearchView"
+            class="mb-6 back-btn"
+            elevation="0"
+          >
+            <v-icon start size="18">mdi-arrow-left</v-icon>
+            返回搜尋
+          </v-btn>
+
+          <v-card class="history-requests-card" elevation="0">
+            <!-- 標題區塊 -->
+            <div class="history-header px-6 py-4 d-flex align-center">
+              <v-icon
+                size="28"
+                color="blue-grey-darken-1"
+                class="me-3"
+              >mdi-history</v-icon>
+              <span class="text-h6 font-weight-bold">授權請求歷史紀錄</span>
+            </div>
+            
+            <!-- 表格區塊 -->
+            <v-data-table
+              :headers="[
+                { 
+                  title: '報告編號',
+                  key: 'reportId',
+                  align: 'start',
+                  width: '120px'
+                },
+                { 
+                  title: '病患雜湊',
+                  key: 'patientHash',
+                  align: 'start',
+                  width: '120px'
+                },
+                { 
+                  title: '申請日期',
+                  key: 'requestedAt',
+                  align: 'center',
+                  width: '120px'
+                },
+                { 
+                  title: '狀態',
+                  key: 'status',
+                  align: 'center',
+                  width: '100px'
+                }
+              ]"
+              :items="historyRequests"
+              :loading="loadingMyRequests"
+              loading-text="正在載入歷史紀錄..."
+              class="history-requests-table"
+              hover
+              v-model:items-per-page="historyItemsPerPage"
+              :items-per-page-options="[5, 10]"
             >
-              取消
-            </v-btn>
-            <v-btn
-              color="deep-purple"
-              @click="sendAuthRequest"
-              :loading="requestLoading"
-              :disabled="requestLoading || !authReason || !authExpiry"
-              prepend-icon="mdi-send"
-              elevation="1"
-            >
-              送出授權請求
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+              <!-- 報告編號欄位 -->
+              <template v-slot:item.reportId="{ item }">
+                <div class="id-cell">
+                  {{ item.reportId.substring(0, 4) }}...{{ item.reportId.slice(-4) }}
+                  <div class="id-tooltip">{{ item.reportId }}</div>
+                </div>
+              </template>
+
+              <!-- 病患雜湊欄位 -->
+              <template v-slot:item.patientHash="{ item }">
+                <div class="id-cell">
+                  {{ item.patientHash.substring(0, 4) }}...{{ item.patientHash.slice(-4) }}
+                  <div class="id-tooltip">{{ item.patientHash }}</div>
+                </div>
+              </template>
+
+              <!-- 申請日期欄位 -->
+              <template v-slot:item.requestedAt="{ item }">
+                <div class="date-cell">
+                  <v-icon size="16" color="grey-darken-1" class="me-1">mdi-calendar-outline</v-icon>
+                  {{ item.requestedAt }}
+                </div>
+              </template>
+
+              <!-- 狀態欄位 -->
+              <template v-slot:item.status="{ item }">
+                <v-chip
+                  size="small"
+                  :color="getRequestStatusInfo(item.status).color + '-lighten-4'"
+                  :text-color="getRequestStatusInfo(item.status).color + '-darken-2'"
+                  variant="outlined"
+                  :prepend-icon="getRequestStatusInfo(item.status).icon"
+                  class="status-chip"
+                >
+                  {{ getRequestStatusInfo(item.status).text }}
+                </v-chip>
+              </template>
+
+              <!-- 無資料顯示 -->
+              <template v-slot:no-data>
+                <div class="text-center pa-5">
+                  <v-icon size="40" color="grey-lighten-1" class="mb-3">mdi-history</v-icon>
+                  <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">無歷史紀錄</div>
+                  <div class="text-body-2 text-grey">您目前沒有已處理的授權請求紀錄</div>
+                </div>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- Snackbar 訊息 -->
       <v-snackbar
@@ -1696,5 +1910,28 @@ const formatExpiryDate = (expiry) => {
   .view-report-btn {
     margin-left: auto;
   }
+}
+
+/* 待授權請求卡片樣式 */
+.pending-requests-card, .history-requests-card {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  height: 100%;
+}
+
+.pending-header {
+  background: #FFF8E1;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.history-header {
+  background: #ECEFF1;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.pending-requests-table, .history-requests-table {
+  background: white !important;
 }
 </style>

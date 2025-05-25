@@ -174,6 +174,44 @@ function evaluateRisk(metrics = {}) {
   }
 }
 
+// 保險分析相關資料
+const insuranceAnalysis = ref({
+  riskScore: 75,
+  mainRisks: [
+    { type: '心血管疾病', level: '中度', description: '血壓和膽固醇指標略高' },
+    { type: '糖尿病', level: '低度', description: '血糖指標在正常範圍內，但接近上限' }
+  ],
+  suggestions: [
+    '建議定期追蹤血壓和血脂指標',
+    '建議進行年度心臟功能檢查',
+    '建議調整飲食習慣，減少高油脂食物攝入'
+  ]
+});
+
+// AI 分析和保單推薦
+const aiAnalysis = ref({
+  summary: '根據您的健康檢查結果，整體健康狀況良好。血壓和血糖指標在正常範圍內，但膽固醇指標略高，建議注意飲食控制。',
+  recommendations: [
+    '增加每週運動次數至3-4次',
+    '控制飲食中的膽固醇攝入',
+    '保持充足睡眠，維持作息規律'
+  ],
+  insuranceRecommendations: [
+    {
+      name: '優質醫療保障計劃',
+      coverage: '住院醫療、手術、門診',
+      features: ['免等待期', '一年一約', '可選擇醫院'],
+      monthlyPremium: 2500
+    },
+    {
+      name: '重大疾病防護計劃',
+      coverage: '癌症、心臟病、中風等重大疾病',
+      features: ['保額最高500萬', '保費豁免權益', '理賠無等待期'],
+      monthlyPremium: 3200
+    }
+  ]
+});
+
 // 根據不同角色使用不同的 API endpoint
 const fetchReportData = async () => {
   loading.value = true;
@@ -304,7 +342,9 @@ onMounted(() => {
       <template v-else>
         <!-- 底部操作按鈕 -->
         <div class="action-buttons">
+          <!-- 只有病患看得到 AI 分析按鈕 -->
           <v-btn
+            v-if="userRole === 'user'"
             class="action-btn ai-btn"
             elevation="0"
             @click="showAISummary = !showAISummary"
@@ -314,29 +354,127 @@ onMounted(() => {
           </v-btn>
           
           <v-btn
+            v-if="userRole === 'insurer'"
             class="action-btn risk-btn"
             elevation="0"
             @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }"
           >
             <v-icon start size="20">mdi-shield-outline</v-icon>
-            風險評估
+            保險風險分析
           </v-btn>
         </div>
 
         <!-- 分析結果區域 -->
         <div class="analysis-section" v-if="showAISummary || showRisk">
-          <v-card v-if="showAISummary" class="analysis-card ai-card" elevation="0">
-            <h3 class="analysis-title">AI 分析摘要</h3>
-            <p class="analysis-content">{{ aiSummary }}</p>
-          </v-card>
+          <!-- 病患看到的 AI 分析和保單推薦 -->
+          <template v-if="userRole === 'user'">
+            <v-card v-if="showAISummary" class="analysis-card ai-card" elevation="0">
+              <h3 class="analysis-title">AI 分析摘要</h3>
+              <p class="analysis-content">{{ aiAnalysis.summary }}</p>
+              
+              <v-divider class="my-4" />
+              
+              <h4 class="recommendations-title">健康建議</h4>
+              <ul class="recommendations-list">
+                <li v-for="(rec, index) in aiAnalysis.recommendations" :key="index">
+                  {{ rec }}
+                </li>
+              </ul>
 
-          <v-card v-if="showRisk" class="analysis-card risk-card" elevation="0">
-            <h3 class="analysis-title">風險評估結果</h3>
-            <div class="risk-level" :class="riskLevel === '高風險' ? 'high' : riskLevel === '中風險' ? 'medium' : 'low'">
-              {{ riskLevel }}
-            </div>
-            <p class="analysis-content">{{ riskAdvice }}</p>
-          </v-card>
+              <v-divider class="my-4" />
+              
+              <h4 class="recommendations-title">推薦保險方案</h4>
+              <div class="insurance-recommendations">
+                <v-card
+                  v-for="(plan, index) in aiAnalysis.insuranceRecommendations"
+                  :key="index"
+                  class="insurance-plan-card"
+                  elevation="0"
+                  variant="outlined"
+                >
+                  <div class="d-flex justify-space-between align-center mb-2">
+                    <h5 class="plan-name">{{ plan.name }}</h5>
+                    <v-chip color="primary" size="small">
+                      月繳 ${{ plan.monthlyPremium }}
+                    </v-chip>
+                  </div>
+                  <p class="plan-coverage">承保範圍：{{ plan.coverage }}</p>
+                  <div class="plan-features">
+                    <v-chip
+                      v-for="(feature, fIndex) in plan.features"
+                      :key="fIndex"
+                      size="x-small"
+                      class="me-2"
+                      color="grey-lighten-3"
+                    >
+                      {{ feature }}
+                    </v-chip>
+                  </div>
+                </v-card>
+              </div>
+            </v-card>
+          </template>
+
+          <!-- 保險業者看到的風險分析 -->
+          <template v-else-if="userRole === 'insurer' && showRisk">
+            <v-card class="analysis-card risk-card" elevation="0">
+              <h3 class="analysis-title">保險風險評估報告</h3>
+              
+              <div class="risk-score-section text-center mb-4">
+                <v-progress-circular
+                  :model-value="insuranceAnalysis.riskScore"
+                  :color="insuranceAnalysis.riskScore > 80 ? 'red' : insuranceAnalysis.riskScore > 60 ? 'orange' : 'green'"
+                  size="100"
+                  width="12"
+                >
+                  <span class="text-h5 font-weight-bold">{{ insuranceAnalysis.riskScore }}</span>
+                </v-progress-circular>
+                <div class="mt-2 text-body-1 font-weight-medium">風險評分</div>
+              </div>
+
+              <v-divider class="mb-4" />
+
+              <h4 class="risk-subtitle mb-3">主要風險項目</h4>
+              <v-list class="risk-list">
+                <v-list-item
+                  v-for="(risk, index) in insuranceAnalysis.mainRisks"
+                  :key="index"
+                  class="risk-item"
+                >
+                  <template v-slot:prepend>
+                    <v-icon
+                      :color="risk.level === '高度' ? 'red' : risk.level === '中度' ? 'orange' : 'green'"
+                      size="small"
+                    >
+                      mdi-alert-circle
+                    </v-icon>
+                  </template>
+                  <v-list-item-title class="risk-type">
+                    {{ risk.type }}
+                    <v-chip
+                      size="x-small"
+                      :color="risk.level === '高度' ? 'red-lighten-4' : risk.level === '中度' ? 'orange-lighten-4' : 'green-lighten-4'"
+                      class="ms-2"
+                    >
+                      {{ risk.level }}風險
+                    </v-chip>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="risk-description">
+                    {{ risk.description }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+
+              <v-divider class="my-4" />
+
+              <h4 class="risk-subtitle mb-3">建議措施</h4>
+              <ul class="suggestions-list">
+                <li v-for="(suggestion, index) in insuranceAnalysis.suggestions" :key="index">
+                  {{ suggestion }}
+                </li>
+              </ul>
+            </v-card>
+          </template>
         </div>
         <!-- 報告總覽卡片 -->
         <v-card class="overview-card mb-8" elevation="0">
@@ -760,6 +898,128 @@ onMounted(() => {
   .metric-unit {
     font-size: 11px;
     margin-bottom: 0.5rem;
+  }
+}
+
+/* 保險分析相關樣式 */
+.risk-score-section {
+  padding: 1rem 0;
+}
+
+.risk-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.risk-list {
+  background: transparent !important;
+}
+
+.risk-item {
+  padding: 12px !important;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.risk-type {
+  font-weight: 500 !important;
+  font-size: 1rem !important;
+}
+
+.risk-description {
+  font-size: 0.875rem !important;
+  color: #666 !important;
+  margin-top: 4px !important;
+}
+
+.suggestions-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestions-list li {
+  padding: 8px 0;
+  color: #444;
+  position: relative;
+  padding-left: 24px;
+}
+
+.suggestions-list li::before {
+  content: "•";
+  color: #666;
+  position: absolute;
+  left: 8px;
+}
+
+/* 保險推薦相關樣式 */
+.recommendations-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.recommendations-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.recommendations-list li {
+  padding: 8px 0;
+  color: #444;
+  position: relative;
+  padding-left: 24px;
+}
+
+.recommendations-list li::before {
+  content: "•";
+  color: #666;
+  position: absolute;
+  left: 8px;
+}
+
+.insurance-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insurance-plan-card {
+  padding: 1rem;
+  border-radius: 12px !important;
+  background: #f8f9fa !important;
+}
+
+.plan-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.plan-coverage {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0.5rem 0;
+}
+
+.plan-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .insurance-plan-card {
+    padding: 12px;
+  }
+
+  .plan-features {
+    margin-top: 8px;
   }
 }
 </style> 

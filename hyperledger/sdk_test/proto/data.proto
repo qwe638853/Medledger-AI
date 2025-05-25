@@ -8,19 +8,23 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service HealthService {
+  //健檢中心上傳報告
   rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
     option (google.api.http) = {
       post: "/v1/upload"
       body: "*"
     };
   }
-  
+
+  //登入
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/v1/login"
       body: "*"
     };
   }
+
+  //用戶註冊
   rpc RegisterUser(RegisterUserRequest) returns (RegisterResponse) {
     option (google.api.http) = {
       post: "/v1/register/user"
@@ -28,18 +32,23 @@ service HealthService {
     };
   }
 
+  //保險業者註冊
   rpc RegisterInsurer(RegisterInsurerRequest) returns (RegisterResponse) {
     option (google.api.http) = {
       post: "/v1/register/insurer"
       body: "*"
     };
   }
+
+  //用戶讀取自己的報告
   rpc ListMyReports(google.protobuf.Empty) returns (ListMyReportsResponse) {
     option (google.api.http) = {
       get: "/v1/reports"
     };
   }
 
+
+  //請求授權
   rpc RequestAccess(RequestAccessRequest) returns (RequestAccessResponse) {
     option (google.api.http) = {
       post: "/v1/access/request"
@@ -47,12 +56,14 @@ service HealthService {
     };
   }
 
+  //請求授權列表
   rpc ListAccessRequests(google.protobuf.Empty) returns (ListAccessRequestsResponse) {
     option (google.api.http) = {
       get: "/v1/access/requests"
     };
   }
 
+  //接受授權
   rpc ApproveAccessRequest(ApproveAccessRequestRequest) returns (ApproveAccessRequestResponse) {
     option (google.api.http) = {
       post: "/v1/access/approve"
@@ -60,6 +71,8 @@ service HealthService {
     };
   }
 
+
+  //拒絕授權
   rpc RejectAccessRequest(RejectAccessRequestRequest) returns (RejectAccessRequestResponse) {
     option (google.api.http) = {
       post: "/v1/access/reject"
@@ -67,11 +80,7 @@ service HealthService {
     };
   }
 
-  rpc GetInsurerDashboardStats(google.protobuf.Empty) returns (InsurerDashboardStatsResponse) {
-    option (google.api.http) = {
-      get: "/v1/dashboard/summary"
-    };
-  }
+
   rpc ListAuthorizedReports(google.protobuf.Empty) returns (ListAuthorizedReportsResponse) {
     option (google.api.http) = {
       get: "/v1/reports/authorized"
@@ -88,6 +97,13 @@ service HealthService {
   rpc ViewAuthorizedReport(ViewAuthorizedReportRequest) returns (ViewAuthorizedReportResponse) {
     option (google.api.http) = {
       get: "/v1/reports/authorized/{user_id}/{report_id}"
+    };
+  }
+
+  // 保險業者查看自己發出的授權請求
+  rpc ListMyAccessRequests(google.protobuf.Empty) returns (ListMyAccessRequestsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/requests/my"
     };
   }
 
@@ -266,4 +282,10 @@ message ViewAuthorizedReportRequest {
 message ViewAuthorizedReportResponse {
   bool success = 1;
   string result_json = 2;        // 報告全文或格式化內容
+}
+
+
+message ListMyAccessRequestsResponse {
+  bool success = 1;
+  repeated AccessRequest requests = 3;
 }

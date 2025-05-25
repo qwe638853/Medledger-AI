@@ -357,7 +357,7 @@ const formatExpiryDate = (expiry) => {
 
 <template>
   <div class="dashboard-bg">
-    <v-container class="dashboard-container py-8 mx-auto" max-width="1280">
+    <v-container class="dashboard-container py-8 mx-auto" max-width="1800">
       <!-- 四張統計卡片置於同一行 -->
       <v-row class="mb-8" justify="center">
         <!-- 歡迎卡片 -->
@@ -375,18 +375,21 @@ const formatExpiryDate = (expiry) => {
                 color="grey-darken-3" 
                 @click="handleLogout" 
                 elevation="1" 
-                icon="mdi-logout-variant"
-                size="small"
-                class="modern-btn"
-              ></v-btn>
+                icon
+                size="large"
+                class="modern-btn d-flex align-center logout-btn"
+              >
+                <v-icon size="28" class="me-2">mdi-logout-variant</v-icon>
+                <span class="logout-text">登出</span>
+              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- 已授權報告數量卡片 -->
         <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100" @click="switchToAuthorizedView">
-            <v-card-text class="pa-4">
+          <v-card class="stat-card rounded-xl" elevation="2" height="100">
+            <v-card-text class="pa-4 d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <div class="rounded-circle bg-yellow-lighten-4 p-2 me-3">
                   <v-icon size="24" color="grey-darken-3">mdi-file-document-outline</v-icon>
@@ -396,6 +399,17 @@ const formatExpiryDate = (expiry) => {
                   <div class="text-h4 font-weight-bold text-grey-darken-3">{{ dashboardStats.totalAuthorized }}</div>
                 </div>
               </div>
+              <v-btn
+                color="grey-darken-3"
+                class="modern-btn d-flex align-center view-all-btn"
+                size="large"
+                elevation="1"
+                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
+                @click="switchToAuthorizedView"
+              >
+                <v-icon size="24" class="me-2">mdi-eye</v-icon>
+                <span class="logout-text">查看</span>
+              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
@@ -896,6 +910,8 @@ const formatExpiryDate = (expiry) => {
   padding: 2rem;
   background: var(--background-color);
   min-height: 100vh;
+  max-width: 1800px;
+  margin: 0 auto;
 }
 
 .dashboard-header {
@@ -1454,5 +1470,26 @@ const formatExpiryDate = (expiry) => {
 .v-btn:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.logout-btn {
+  min-width: 110px !important;
+  height: 48px !important;
+  font-size: 1.15rem !important;
+  padding: 0 20px !important;
+}
+
+.logout-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+
+.view-all-btn {
+  align-self: center;
+  margin-left: 12px;
+  border-radius: 24px !important;
+  letter-spacing: 1px;
 }
 </style>

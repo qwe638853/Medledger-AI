@@ -450,11 +450,13 @@ const handleLLMSummary = async () => {
     <v-row align="center" justify="center">
       <v-col cols="12" sm="11" md="10" lg="9">
         <!-- 頂部用戶資訊卡片 -->
-        <v-card class="user-card mb-8" elevation="0">
+        <v-card class="user-card mb-8" elevation="2">
           <v-row align="center" justify="space-between">
             <v-col cols="12" sm="8">
               <div class="d-flex align-center">
-                <v-icon size="32" class="user-icon mr-4">mdi-account-outline</v-icon>
+                <div class="rounded-circle bg-yellow-lighten-4 p-3 me-3">
+                  <v-icon size="32" color="grey-darken-3">mdi-account-outline</v-icon>
+                </div>
                 <div>
                   <h2 class="user-title mb-1">使用者儀表板</h2>
                   <div class="user-subtitle">{{ currentUser }}</div>
@@ -463,12 +465,15 @@ const handleLLMSummary = async () => {
             </v-col>
             <v-col cols="12" sm="4" class="d-flex justify-end">
               <v-btn
-                class="logout-btn"
-                elevation="0"
+                color="grey-darken-3"
                 @click="handleLogout"
+                elevation="1"
+                icon
+                size="large"
+                class="modern-btn d-flex align-center logout-btn"
               >
-                登出
-                <v-icon end>mdi-logout-variant</v-icon>
+                <v-icon size="28" class="me-2">mdi-logout-variant</v-icon>
+                <span class="logout-text">登出</span>
               </v-btn>
             </v-col>
           </v-row>
@@ -639,23 +644,41 @@ const handleLLMSummary = async () => {
 }
 
 .user-icon {
-  color: #111827;
+  /* 移除原本顏色設定，統一用圓形背景 */
+  color: unset;
 }
 
-/* 登出按鈕 */
 .logout-btn {
-  background-color: #F8F441 !important;
-  color: #111827 !important;
+  min-width: 110px !important;
+  height: 48px !important;
+  font-size: 1.15rem !important;
+  padding: 0 20px !important;
+  background-color: #333 !important;
+  color: #fff !important;
+  border-radius: 24px !important;
   font-weight: 600 !important;
-  border-radius: 16px !important;
-  padding: 0 24px !important;
-  height: 44px !important;
-  transition: all 0.2s ease;
+  letter-spacing: 1px;
 }
 
-.logout-btn:hover {
+.logout-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+
+.modern-btn {
+  border-radius: 24px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.modern-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  opacity: 0.95;
 }
 
 /* 區塊標題樣式 */

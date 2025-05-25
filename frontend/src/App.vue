@@ -29,8 +29,8 @@
           <v-spacer />
           
           <nav class="d-flex align-center">
-            <v-btn text class="nav-link mx-2" to="#about">關於我們</v-btn>
-            <v-btn text class="nav-link mx-2" to="#contact">聯絡資訊</v-btn>
+            <v-btn text class="nav-link mx-2" @click="scrollToSection('about-section')">關於我們</v-btn>
+            <v-btn text class="nav-link mx-2" @click="scrollToSection('contact-section')">聯絡資訊</v-btn>
           </nav>
         </div>
       </v-container>
@@ -86,6 +86,13 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('show-snackbar', handleSnackbarEvent);
 });
+
+function scrollToSection(sectionId) {
+  const el = document.getElementById(sectionId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
 </script>
 
 <style scoped>

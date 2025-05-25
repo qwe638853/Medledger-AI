@@ -944,8 +944,8 @@ const steps = [
 
 /* 已完成步驟樣式 */
 .step-item.completed .step-circle {
-  border-color: #111827;
-  background: #111827;
+  border-color: #463F3A;
+  background: #463F3A;
 }
 
 .step-item.completed .step-check {

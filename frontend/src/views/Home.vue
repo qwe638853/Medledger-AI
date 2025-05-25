@@ -48,7 +48,7 @@
     </section>
 
     <!-- About Us Section -->
-    <section class="about-section" id="about">
+    <section class="about-section" id="about-section">
       <v-container>
         <v-row align="center">
           <v-col cols="12" md="6" class="text-center mb-4 mb-md-0">
@@ -56,14 +56,28 @@
           <v-col cols="12" md="6">
             <h2 class="about-title mb-4">關於智療鏈</h2>
             <p class="about-desc mb-3">
-              智療鏈致力於結合 AI 與區塊鏈，讓每一位用戶都能安全、便捷地管理個人健康數據。
+              智療鏈致力於結合 AI 與區塊鏈，讓每一位用戶都能安全、便利的管理個人健康數據。
             </p>
             <p class="about-desc mb-3">
-              我們相信，數據的自主權與隱私保護是健康科技的核心。平台以高標準加密與權限控管，確保您的資訊安全無虞。
+              數據的自主權與隱私保護是健康科技的核心。平台以高標準加密與權限控管，確保您的資訊安全無虞。
             </p>
             <p class="about-desc">
               智療鏈團隊持續創新，推動健康數據上鏈，攜手用戶共創智慧健康新未來。
             </p>
+          </v-col>
+        </v-row>
+      </v-container>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact-section">
+      <v-container>
+        <v-row align="center" justify="center">
+          <v-col cols="12" md="8" class="text-center">
+            <h2 class="contact-title mb-4">聯絡資訊</h2>
+            <p class="contact-desc mb-2">Email：t111AB0009@ntut.org.tw</p>
+            <p class="contact-desc mb-2">電話：(886-2) 2771-2171</p>
+            <p class="contact-desc">地址：台北市忠孝東路三段一號</p>
           </v-col>
         </v-row>
       </v-container>
@@ -109,6 +123,13 @@ const features = ref([
     desc: 'AI 智能分析，協助您洞察健康風險與改善建議。'
   }
 ]);
+
+function scrollToSection(sectionId) {
+  const el = document.getElementById(sectionId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
 </script>
 
 <style scoped>
@@ -275,6 +296,42 @@ const features = ref([
 .about-illustration {
   border-radius: 20px;
   box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.10);
+}
+
+.nav-btn {
+  background: #fff !important;
+  color: #111827 !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  margin-left: 12px !important;
+  padding: 12px 28px !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: #F8F441 !important;
+  color: #333 !important;
+}
+
+.contact-section {
+  background: #F9F7F4;
+  padding: 6rem 0 4rem 0;
+}
+
+.contact-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  color: #111827;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.contact-desc {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
 }
 
 @media (max-width: 960px) {

@@ -31,15 +31,6 @@ func (s *server) UploadReport(ctx context.Context, req *pb.UploadReportRequest) 
 	return sc.HandleUploadReport(ctx, req, s.Wallet, s.Builder)
 }
 
-// ReadReport
-func (s *server) ReadReport(ctx context.Context, req *pb.ReadReportRequest) (*pb.ReadReportResponse, error) {
-	log.Printf("Received ReadReport: %v", req)
-	return &pb.ReadReportResponse{
-		Success:       true,
-		ReportContent: "Fake report content...",
-	}, nil
-}
-
 // Login
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	return sc.HandleLogin(ctx, req, s.Wallet)
@@ -92,6 +83,10 @@ func (s *server) ListReportMetaByPatientID(ctx context.Context, req *pb.PatientI
 
 func (s *server) ViewAuthorizedReport(ctx context.Context, req *pb.ViewAuthorizedReportRequest) (*pb.ViewAuthorizedReportResponse, error) {
 	return sc.HandleViewAuthorizedReport(ctx, req, s.Wallet, s.Builder)
+}
+
+func (s *server) ListMyAccessRequests(ctx context.Context, in *emptypb.Empty) (*pb.ListMyAccessRequestsResponse, error) {
+	return sc.HandleListMyAccessRequests(ctx, in, s.Wallet, s.Builder)
 }
 
 func main() {

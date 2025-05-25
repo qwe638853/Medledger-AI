@@ -1632,6 +1632,58 @@ func (x *ViewAuthorizedReportResponse) GetResultJson() string {
 	return ""
 }
 
+type ListMyAccessRequestsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Requests      []*AccessRequest       `protobuf:"bytes,3,rep,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyAccessRequestsResponse) Reset() {
+	*x = ListMyAccessRequestsResponse{}
+	mi := &file_proto_data_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyAccessRequestsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyAccessRequestsResponse) ProtoMessage() {}
+
+func (x *ListMyAccessRequestsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_data_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyAccessRequestsResponse.ProtoReflect.Descriptor instead.
+func (*ListMyAccessRequestsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_data_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ListMyAccessRequestsResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ListMyAccessRequestsResponse) GetRequests() []*AccessRequest {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
 var File_proto_data_proto protoreflect.FileDescriptor
 
 const file_proto_data_proto_rawDesc = "" +
@@ -1749,11 +1801,14 @@ const file_proto_data_proto_rawDesc = "" +
 	"\x1cViewAuthorizedReportResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
 	"\vresult_json\x18\x02 \x01(\tR\n" +
-	"resultJson*>\n" +
+	"resultJson\"k\n" +
+	"\x1cListMyAccessRequestsResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x121\n" +
+	"\brequests\x18\x03 \x03(\v2\x15.health.AccessRequestR\brequests*>\n" +
 	"\x13AccessRequestStatus\x12\v\n" +
 	"\aPENDING\x10\x00\x12\f\n" +
 	"\bAPPROVED\x10\x01\x12\f\n" +
-	"\bREJECTED\x10\x022\xd4\v\n" +
+	"\bREJECTED\x10\x022\xd0\v\n" +
 	"\rHealthService\x12`\n" +
 	"\fUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/v1/upload\x12J\n" +
@@ -1764,11 +1819,11 @@ const file_proto_data_proto_rawDesc = "" +
 	"\rRequestAccess\x12\x1c.health.RequestAccessRequest\x1a\x1d.health.RequestAccessResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/access/request\x12m\n" +
 	"\x12ListAccessRequests\x12\x16.google.protobuf.Empty\x1a\".health.ListAccessRequestsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/access/requests\x12\x80\x01\n" +
 	"\x14ApproveAccessRequest\x12#.health.ApproveAccessRequestRequest\x1a$.health.ApproveAccessRequestResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/access/approve\x12|\n" +
-	"\x13RejectAccessRequest\x12\".health.RejectAccessRequestRequest\x1a#.health.RejectAccessRequestResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/access/reject\x12x\n" +
-	"\x18GetInsurerDashboardStats\x12\x16.google.protobuf.Empty\x1a%.health.InsurerDashboardStatsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/dashboard/summary\x12v\n" +
+	"\x13RejectAccessRequest\x12\".health.RejectAccessRequestRequest\x1a#.health.RejectAccessRequestResponse\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/v1/access/reject\x12v\n" +
 	"\x15ListAuthorizedReports\x12\x16.google.protobuf.Empty\x1a%.health.ListAuthorizedReportsResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/reports/authorized\x12|\n" +
 	"\x19ListReportMetaByPatientID\x12\x18.health.PatientIDRequest\x1a\x1e.health.ListReportMetaResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/reports/meta/{patient_id}\x12\x97\x01\n" +
-	"\x14ViewAuthorizedReport\x12#.health.ViewAuthorizedReportRequest\x1a$.health.ViewAuthorizedReportResponse\"4\x82\xd3\xe4\x93\x02.\x12,/v1/reports/authorized/{user_id}/{report_id}B\x17Z\x15sdk_test/proto;healthb\x06proto3"
+	"\x14ViewAuthorizedReport\x12#.health.ViewAuthorizedReportRequest\x1a$.health.ViewAuthorizedReportResponse\"4\x82\xd3\xe4\x93\x02.\x12,/v1/reports/authorized/{user_id}/{report_id}\x12t\n" +
+	"\x14ListMyAccessRequests\x12\x16.google.protobuf.Empty\x1a$.health.ListMyAccessRequestsResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/access/requests/myB\x17Z\x15sdk_test/proto;healthb\x06proto3"
 
 var (
 	file_proto_data_proto_rawDescOnce sync.Once
@@ -1783,7 +1838,7 @@ func file_proto_data_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_data_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_proto_data_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_proto_data_proto_goTypes = []any{
 	(AccessRequestStatus)(0),              // 0: health.AccessRequestStatus
 	(*UploadReportRequest)(nil),           // 1: health.UploadReportRequest
@@ -1813,44 +1868,46 @@ var file_proto_data_proto_goTypes = []any{
 	(*ListReportMetaResponse)(nil),        // 25: health.ListReportMetaResponse
 	(*ViewAuthorizedReportRequest)(nil),   // 26: health.ViewAuthorizedReportRequest
 	(*ViewAuthorizedReportResponse)(nil),  // 27: health.ViewAuthorizedReportResponse
-	(*emptypb.Empty)(nil),                 // 28: google.protobuf.Empty
+	(*ListMyAccessRequestsResponse)(nil),  // 28: health.ListMyAccessRequestsResponse
+	(*emptypb.Empty)(nil),                 // 29: google.protobuf.Empty
 }
 var file_proto_data_proto_depIdxs = []int32{
 	10, // 0: health.ListMyReportsResponse.reports:type_name -> health.Report
 	14, // 1: health.ListAccessRequestsResponse.requests:type_name -> health.AccessRequest
 	21, // 2: health.ListAuthorizedReportsResponse.reports:type_name -> health.AuthorizedReport
 	24, // 3: health.ListReportMetaResponse.reports:type_name -> health.ReportMeta
-	1,  // 4: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
-	5,  // 5: health.HealthService.Login:input_type -> health.LoginRequest
-	7,  // 6: health.HealthService.RegisterUser:input_type -> health.RegisterUserRequest
-	8,  // 7: health.HealthService.RegisterInsurer:input_type -> health.RegisterInsurerRequest
-	28, // 8: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
-	12, // 9: health.HealthService.RequestAccess:input_type -> health.RequestAccessRequest
-	28, // 10: health.HealthService.ListAccessRequests:input_type -> google.protobuf.Empty
-	16, // 11: health.HealthService.ApproveAccessRequest:input_type -> health.ApproveAccessRequestRequest
-	18, // 12: health.HealthService.RejectAccessRequest:input_type -> health.RejectAccessRequestRequest
-	28, // 13: health.HealthService.GetInsurerDashboardStats:input_type -> google.protobuf.Empty
-	28, // 14: health.HealthService.ListAuthorizedReports:input_type -> google.protobuf.Empty
+	14, // 4: health.ListMyAccessRequestsResponse.requests:type_name -> health.AccessRequest
+	1,  // 5: health.HealthService.UploadReport:input_type -> health.UploadReportRequest
+	5,  // 6: health.HealthService.Login:input_type -> health.LoginRequest
+	7,  // 7: health.HealthService.RegisterUser:input_type -> health.RegisterUserRequest
+	8,  // 8: health.HealthService.RegisterInsurer:input_type -> health.RegisterInsurerRequest
+	29, // 9: health.HealthService.ListMyReports:input_type -> google.protobuf.Empty
+	12, // 10: health.HealthService.RequestAccess:input_type -> health.RequestAccessRequest
+	29, // 11: health.HealthService.ListAccessRequests:input_type -> google.protobuf.Empty
+	16, // 12: health.HealthService.ApproveAccessRequest:input_type -> health.ApproveAccessRequestRequest
+	18, // 13: health.HealthService.RejectAccessRequest:input_type -> health.RejectAccessRequestRequest
+	29, // 14: health.HealthService.ListAuthorizedReports:input_type -> google.protobuf.Empty
 	23, // 15: health.HealthService.ListReportMetaByPatientID:input_type -> health.PatientIDRequest
 	26, // 16: health.HealthService.ViewAuthorizedReport:input_type -> health.ViewAuthorizedReportRequest
-	2,  // 17: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
-	6,  // 18: health.HealthService.Login:output_type -> health.LoginResponse
-	9,  // 19: health.HealthService.RegisterUser:output_type -> health.RegisterResponse
-	9,  // 20: health.HealthService.RegisterInsurer:output_type -> health.RegisterResponse
-	11, // 21: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
-	13, // 22: health.HealthService.RequestAccess:output_type -> health.RequestAccessResponse
-	15, // 23: health.HealthService.ListAccessRequests:output_type -> health.ListAccessRequestsResponse
-	17, // 24: health.HealthService.ApproveAccessRequest:output_type -> health.ApproveAccessRequestResponse
-	19, // 25: health.HealthService.RejectAccessRequest:output_type -> health.RejectAccessRequestResponse
-	20, // 26: health.HealthService.GetInsurerDashboardStats:output_type -> health.InsurerDashboardStatsResponse
+	29, // 17: health.HealthService.ListMyAccessRequests:input_type -> google.protobuf.Empty
+	2,  // 18: health.HealthService.UploadReport:output_type -> health.UploadReportResponse
+	6,  // 19: health.HealthService.Login:output_type -> health.LoginResponse
+	9,  // 20: health.HealthService.RegisterUser:output_type -> health.RegisterResponse
+	9,  // 21: health.HealthService.RegisterInsurer:output_type -> health.RegisterResponse
+	11, // 22: health.HealthService.ListMyReports:output_type -> health.ListMyReportsResponse
+	13, // 23: health.HealthService.RequestAccess:output_type -> health.RequestAccessResponse
+	15, // 24: health.HealthService.ListAccessRequests:output_type -> health.ListAccessRequestsResponse
+	17, // 25: health.HealthService.ApproveAccessRequest:output_type -> health.ApproveAccessRequestResponse
+	19, // 26: health.HealthService.RejectAccessRequest:output_type -> health.RejectAccessRequestResponse
 	22, // 27: health.HealthService.ListAuthorizedReports:output_type -> health.ListAuthorizedReportsResponse
 	25, // 28: health.HealthService.ListReportMetaByPatientID:output_type -> health.ListReportMetaResponse
 	27, // 29: health.HealthService.ViewAuthorizedReport:output_type -> health.ViewAuthorizedReportResponse
-	17, // [17:30] is the sub-list for method output_type
-	4,  // [4:17] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	28, // 30: health.HealthService.ListMyAccessRequests:output_type -> health.ListMyAccessRequestsResponse
+	18, // [18:31] is the sub-list for method output_type
+	5,  // [5:18] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_data_proto_init() }
@@ -1864,7 +1921,7 @@ func file_proto_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_data_proto_rawDesc), len(file_proto_data_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   27,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

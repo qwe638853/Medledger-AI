@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
-	"time"
 	"strconv"
+	"time"
 
 	"sdk_test/database"
 	fc "sdk_test/fabric"
@@ -198,6 +198,17 @@ func HandleRequestAccess(
 	}, nil
 }
 
+type rawAccessRequest struct {
+	DocType      string `json:"docType"`
+	RequestID    string `json:"requestId"`
+	ReportID     string `json:"reportId"`
+	PatientHash  string `json:"patientHash"`
+	RequesterHash string `json:"requesterHash"`
+	Reason       string `json:"reason"`
+	RequestedAt  int64  `json:"requestedAt"`
+	Expiry       int64  `json:"expiry"`
+	Status       string `json:"status"`
+}
 // HandleListAccessRequests 列出病患的所有授權請求
 func HandleListAccessRequests(
 	ctx context.Context,
@@ -230,17 +241,7 @@ func HandleListAccessRequests(
 	}
 	log.Printf("[Debug] 查詢到授權請求: %s", string(result))
 
-	type rawAccessRequest struct {
-		DocType      string `json:"docType"`
-		RequestID    string `json:"requestId"`
-		ReportID     string `json:"reportId"`
-		PatientHash  string `json:"patientHash"`
-		RequesterHash string `json:"requesterHash"`
-		Reason       string `json:"reason"`
-		RequestedAt  int64  `json:"requestedAt"`
-		Expiry       int64  `json:"expiry"`
-		Status       string `json:"status"`
-	}
+	
 	var raws []rawAccessRequest
 	if err := json.Unmarshal(result, &raws); err != nil {
 		return nil, status.Error(codes.Internal, "解析結果失敗")
@@ -568,5 +569,72 @@ func HandleViewAuthorizedReport(
 	return &pb.ViewAuthorizedReportResponse{
 		Success: true,
 		ResultJson: string(result),
+	}, nil
+}
+
+// HandleListMyAccessRequests 處理保險業者查看自己發出的授權請求
+func HandleListMyAccessRequests(
+	ctx context.Context,
+	_ *emptypb.Empty,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ListMyAccessRequestsResponse, error) {
+
+	// 取得JWT中的使用者ID（保險業者）
+	insurerId, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	// 檢查是否為有效的保險業者
+	_, err = database.GetInsurerPassword(insurerId)
+	if err != nil {
+		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以查看授權請求")
+	}
+
+	// 取得保險業者錢包
+	entry, ok := wallet.Get(insurerId)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	// 連接區塊鏈
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, err
+	}
+	defer gw.Close()
+
+	// 呼叫智能合約方法
+	result, err := contract.EvaluateTransaction("ListMyAccessRequests")
+	if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢授權請求失敗")
+	}
+
+	// 解析鏈碼回傳的JSON結果
+	var raws []rawAccessRequest
+	if err := json.Unmarshal(result, &raws); err != nil {
+		return nil, status.Error(codes.Internal, "解析結果失敗")
+	}
+
+	// 轉換為 protobuf 格式
+	var requests []*pb.AccessRequest
+	for _, r := range raws {
+		// 從資料庫獲取病患資訊（如果需要的話）
+		requests = append(requests, &pb.AccessRequest{
+			RequestId:     r.RequestID,
+			ReportId:     r.ReportID,
+			PatientHash:  r.PatientHash,
+			RequesterHash: r.RequesterHash,
+			Reason:       r.Reason,
+			RequestedAt:  r.RequestedAt,
+			Expiry:       r.Expiry,
+			Status:       r.Status,
+		})
+	}
+
+	return &pb.ListMyAccessRequestsResponse{
+		Success: true,
+		Requests: requests,
 	}, nil
 }

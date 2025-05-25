@@ -633,7 +633,31 @@ export const fetchReportContent = async (reportId, patientId) => {
     console.error('獲取報告內容失敗:', error);
     throw error;
   }
-}
+};
+  /**
+ * 獲取保險業者發出的授權請求列表
+ * @returns {Promise<Array>} 授權請求列表
+ */
+export const listMyAccessRequests = async () => {
+  try {
+    const response = await apiClient.get('/v1/access/requests/my');
+    if (response.data.success) {
+      return response.data.requests.map(req => ({
+        requestId: req.requestId,
+        reportId: req.reportId,
+        patientHash: req.patientHash,
+        reason: req.reason,
+        requestedAt: new Date(req.requestedAt * 1000).toLocaleDateString(),
+        expiry: new Date(req.expiry * 1000).toLocaleDateString(),
+        status: req.status
+      }));
+    }
+    throw new Error(response.data.message || '獲取授權請求列表失敗');
+  } catch (error) {
+    console.error('獲取授權請求列表失敗:', error);
+    throw error;
+  }
+};
 
 
 // 導出健康檢查服務對象
@@ -655,4 +679,5 @@ export default {
   rejectAccessRequest,
   fetchGrantedTickets,
   fetchReportContent,
+  listMyAccessRequests
 }; 

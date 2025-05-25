@@ -493,6 +493,42 @@ func (h *HealthCheckContract) ListPendingAccessRequests(ctx contractapi.Transact
 
 	return results, nil
 }
+// 列出保險業者發出的授權請求
+func (h *HealthCheckContract) ListMyAccessRequests(ctx contractapi.TransactionContextInterface) ([]AccessRequest, error) {
+    userID, role, err := getCaller(ctx)
+    if err != nil || role != "insurer" {
+        return nil, fmt.Errorf("only insurer can list their access requests")
+    }
+    requesterHash := hashID(userID)
+
+    query := fmt.Sprintf(`{
+        "selector": {
+            "docType": "%s",
+            "requesterHash": "%s"
+        }
+    }`, docAccessRequest, requesterHash)
+
+    iter, err := ctx.GetStub().GetQueryResult(query)
+    if err != nil {
+        return nil, fmt.Errorf("query execution failed: %v", err)
+    }
+    defer iter.Close()
+
+    var results []AccessRequest
+    for iter.HasNext() {
+        kv, err := iter.Next()
+        if err != nil {
+            continue
+        }
+        var req AccessRequest
+        if err := json.Unmarshal(kv.Value, &req); err != nil {
+            continue
+        }
+        results = append(results, req)
+    }
+    return results, nil
+}
+
 
 func main() {
 	chaincode, err := contractapi.NewChaincode(&HealthCheckContract{})

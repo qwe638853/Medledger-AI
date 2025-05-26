@@ -638,3 +638,82 @@ func HandleListMyAccessRequests(
 		Requests: requests,
 	}, nil
 }
+
+// 添加中間結構以匹配鏈碼的 AuthTicket 結構
+type rawAuthTicket struct {
+	DocType     string `json:"docType"`
+	PatientHash string `json:"patientHash"`
+	TargetHash  string `json:"targetHash"`
+	ReportID    string `json:"reportId"`
+	GrantedAt   int64  `json:"grantedAt"`
+	Expiry      int64  `json:"expiry"`
+}
+
+func HandleListMyAuthorizedTickets(
+	ctx context.Context,
+	_ *emptypb.Empty,
+	wallet wl.WalletInterface,
+	builder fc.GWBuilder) (*pb.ListAuthorizedTicketsResponse, error) {
+	
+	userID, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
+	}
+
+	entry, ok := wallet.Get(userID)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, err
+	}
+	defer gw.Close()
+
+	result, err := contract.EvaluateTransaction("ListMyAuthorizedTickets")
+    if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢授權請求失敗")
+	}
+
+	// 先解析為中間結構
+	var raws []rawAuthTicket
+	if err := json.Unmarshal(result, &raws); err != nil {
+		return nil, status.Error(codes.Internal, "解析結果失敗")
+	}
+
+	// 轉換為 proto 結構
+	var tickets []*pb.AuthTicket
+	for _, r := range raws {
+		// 從資料庫獲取保險業者資訊
+		insurer, err := database.GetInsurerByHash(r.TargetHash)
+		if err != nil {
+			log.Printf("[Warning] 無法獲取保險業者資訊: %v", err)
+			// 如果無法獲取保險業者資訊，仍然添加票據，但不包含名稱資訊
+			tickets = append(tickets, &pb.AuthTicket{
+				PatientHash: r.PatientHash,
+				TargetHash:  r.TargetHash,
+				ReportId:    r.ReportID,
+				GrantedAt:   r.GrantedAt,
+				Expiry:      r.Expiry,
+			})
+			continue
+		}
+
+		tickets = append(tickets, &pb.AuthTicket{
+			PatientHash:  r.PatientHash,
+			TargetHash:   r.TargetHash,
+			ReportId:     r.ReportID,
+			GrantedAt:    r.GrantedAt,
+			Expiry:       r.Expiry,
+			RequesterName: insurer.Name,
+			CompanyName:   insurer.CompanyName,
+		})
+	}
+	log.Printf("[Info] 查詢到授權票據: %v", tickets)
+	return &pb.ListAuthorizedTicketsResponse{
+		Success: true,
+		Tickets: tickets,
+	}, nil
+}	

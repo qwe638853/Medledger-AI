@@ -89,6 +89,10 @@ func (s *server) ListMyAccessRequests(ctx context.Context, in *emptypb.Empty) (*
 	return sc.HandleListMyAccessRequests(ctx, in, s.Wallet, s.Builder)
 }
 
+func (s *server) ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty) (*pb.ListAuthorizedTicketsResponse, error) {
+	return sc.HandleListMyAuthorizedTickets(ctx, in, s.Wallet, s.Builder)
+}
+
 func main() {
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {

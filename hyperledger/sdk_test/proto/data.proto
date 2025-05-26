@@ -47,6 +47,12 @@ service HealthService {
     };
   }
 
+  //用戶讀取授權紀錄
+  rpc ListMyAuthorizedTickets(google.protobuf.Empty) returns (ListAuthorizedTicketsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/tickets"
+    };
+  }
 
   //請求授權
   rpc RequestAccess(RequestAccessRequest) returns (RequestAccessResponse) {
@@ -106,6 +112,8 @@ service HealthService {
       get: "/v1/access/requests/my"
     };
   }
+
+  
 
 }
 
@@ -289,3 +297,19 @@ message ListMyAccessRequestsResponse {
   bool success = 1;
   repeated AccessRequest requests = 3;
 }
+
+message AuthTicket {
+  string patient_hash = 1;
+  string target_hash = 2;
+  string report_id = 3;
+  int64 granted_at = 4;
+  int64 expiry = 5;
+  string requester_name = 6;  // 保險業者名稱
+  string company_name = 7;    // 公司名稱
+}
+
+message ListAuthorizedTicketsResponse {
+  repeated AuthTicket tickets = 1;
+  bool success = 3;
+}
+

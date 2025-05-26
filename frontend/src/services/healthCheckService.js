@@ -575,26 +575,31 @@ export const rejectAccessRequest = async (requestId) => {
  */
 export const fetchGrantedTickets = async () => {
   try {
-    const response = await apiClient.get('/v1/access/granted');
+    const response = await apiClient.get('/v1/access/tickets');
     console.log('獲取已授權票據回應:', response);
     
     // 處理可能的空回應
     if (!response.data) {
       console.warn('已授權票據回應為空');
-      return [];
+      return { success: false, tickets: [] };
     }
     
     if (response.data && response.data.tickets) {
-      // 適應實際後端回應格式，正確映射欄位
-      return response.data.tickets.map(ticket => ({
-        reportId: ticket.reportId || ticket.report_id || '',
-        targetId: ticket.targetId || ticket.target_id || ticket.requesterId || '', 
-        targetName: ticket.targetName || ticket.target_name || ticket.targetId || ticket.requesterId || '未知對象',
-        grantTime: ticket.grantedAt || ticket.grant_time || ticket.requestedAt || 0,
-        expiry: ticket.expiry || 0
-      }));
+      // 直接使用後端回傳的欄位名稱
+      return {
+        success: response.data.success,
+        tickets: response.data.tickets.map(ticket => ({
+          reportId: ticket.reportId,
+          targetHash: ticket.targetHash,
+          patientHash: ticket.patientHash,
+          grantTime: ticket.grantedAt,
+          expiryTime: ticket.expiry,
+          requesterName: ticket.requesterName,
+          companyName: ticket.companyName
+        }))
+      };
     }
-    return [];
+    return { success: false, tickets: [] };
   } catch (error) {
     const errorMsg = handleApiError(error, '獲取已授權票據');
     notifyError(errorMsg);

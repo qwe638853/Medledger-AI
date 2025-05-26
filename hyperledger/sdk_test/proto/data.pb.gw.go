@@ -151,6 +151,25 @@ func local_request_HealthService_ListMyReports_0(ctx context.Context, marshaler 
 	return msg, metadata, err
 }
 
+func request_HealthService_ListMyAuthorizedTickets_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.ListMyAuthorizedTickets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_HealthService_ListMyAuthorizedTickets_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq emptypb.Empty
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.ListMyAuthorizedTickets(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 func request_HealthService_RequestAccess_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq RequestAccessRequest
@@ -476,6 +495,26 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_HealthService_ListMyReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListMyAuthorizedTickets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListMyAuthorizedTickets", runtime.WithHTTPPathPattern("/v1/access/tickets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_HealthService_ListMyAuthorizedTickets_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListMyAuthorizedTickets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_HealthService_RequestAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -761,6 +800,23 @@ func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_HealthService_ListMyReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ListMyAuthorizedTickets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListMyAuthorizedTickets", runtime.WithHTTPPathPattern("/v1/access/tickets"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_HealthService_ListMyAuthorizedTickets_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ListMyAuthorizedTickets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPost, pattern_HealthService_RequestAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -906,6 +962,7 @@ var (
 	pattern_HealthService_RegisterUser_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "user"}, ""))
 	pattern_HealthService_RegisterInsurer_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "insurer"}, ""))
 	pattern_HealthService_ListMyReports_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "reports"}, ""))
+	pattern_HealthService_ListMyAuthorizedTickets_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "tickets"}, ""))
 	pattern_HealthService_RequestAccess_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "request"}, ""))
 	pattern_HealthService_ListAccessRequests_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "requests"}, ""))
 	pattern_HealthService_ApproveAccessRequest_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "approve"}, ""))
@@ -922,6 +979,7 @@ var (
 	forward_HealthService_RegisterUser_0              = runtime.ForwardResponseMessage
 	forward_HealthService_RegisterInsurer_0           = runtime.ForwardResponseMessage
 	forward_HealthService_ListMyReports_0             = runtime.ForwardResponseMessage
+	forward_HealthService_ListMyAuthorizedTickets_0   = runtime.ForwardResponseMessage
 	forward_HealthService_RequestAccess_0             = runtime.ForwardResponseMessage
 	forward_HealthService_ListAccessRequests_0        = runtime.ForwardResponseMessage
 	forward_HealthService_ApproveAccessRequest_0      = runtime.ForwardResponseMessage

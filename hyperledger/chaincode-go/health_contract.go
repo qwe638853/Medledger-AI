@@ -232,8 +232,47 @@ func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextIn
 
 	return results, nil
 }
+// 患者查看自己的授權紀錄
+func (h *HealthCheckContract) ListMyAuthorizedTickets(ctx contractapi.TransactionContextInterface) ([]AuthTicket, error) {
+	userID, role, err := getCaller(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get caller identity: %v", err)
+	}
+	if role != "patient" {
+		return nil, fmt.Errorf("only patient can list their authorized reports")
+	}
 
-// 查看所有已授權的報告
+	patientHash := hashID(userID)
+
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"patientHash": "%s"
+		}
+	}`, docAuth, patientHash)
+	
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("query execution failed: %v", err)
+	}
+	defer iter.Close()
+
+	var results []AuthTicket
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+		var tk AuthTicket
+		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			continue
+		}
+		results = append(results, tk)
+	}
+	return results, nil
+}
+	
+// 保險業者查看所有已授權的報告
 func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {

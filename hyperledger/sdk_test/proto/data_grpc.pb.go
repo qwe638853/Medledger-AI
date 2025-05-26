@@ -25,6 +25,7 @@ const (
 	HealthService_RegisterUser_FullMethodName              = "/health.HealthService/RegisterUser"
 	HealthService_RegisterInsurer_FullMethodName           = "/health.HealthService/RegisterInsurer"
 	HealthService_ListMyReports_FullMethodName             = "/health.HealthService/ListMyReports"
+	HealthService_ListMyAuthorizedTickets_FullMethodName   = "/health.HealthService/ListMyAuthorizedTickets"
 	HealthService_RequestAccess_FullMethodName             = "/health.HealthService/RequestAccess"
 	HealthService_ListAccessRequests_FullMethodName        = "/health.HealthService/ListAccessRequests"
 	HealthService_ApproveAccessRequest_FullMethodName      = "/health.HealthService/ApproveAccessRequest"
@@ -49,6 +50,8 @@ type HealthServiceClient interface {
 	RegisterInsurer(ctx context.Context, in *RegisterInsurerRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	// 用戶讀取自己的報告
 	ListMyReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMyReportsResponse, error)
+	// 用戶讀取授權紀錄
+	ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedTicketsResponse, error)
 	// 請求授權
 	RequestAccess(ctx context.Context, in *RequestAccessRequest, opts ...grpc.CallOption) (*RequestAccessResponse, error)
 	// 請求授權列表
@@ -117,6 +120,16 @@ func (c *healthServiceClient) ListMyReports(ctx context.Context, in *emptypb.Emp
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListMyReportsResponse)
 	err := c.cc.Invoke(ctx, HealthService_ListMyReports_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *healthServiceClient) ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedTicketsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAuthorizedTicketsResponse)
+	err := c.cc.Invoke(ctx, HealthService_ListMyAuthorizedTickets_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +230,8 @@ type HealthServiceServer interface {
 	RegisterInsurer(context.Context, *RegisterInsurerRequest) (*RegisterResponse, error)
 	// 用戶讀取自己的報告
 	ListMyReports(context.Context, *emptypb.Empty) (*ListMyReportsResponse, error)
+	// 用戶讀取授權紀錄
+	ListMyAuthorizedTickets(context.Context, *emptypb.Empty) (*ListAuthorizedTicketsResponse, error)
 	// 請求授權
 	RequestAccess(context.Context, *RequestAccessRequest) (*RequestAccessResponse, error)
 	// 請求授權列表
@@ -255,6 +270,9 @@ func (UnimplementedHealthServiceServer) RegisterInsurer(context.Context, *Regist
 }
 func (UnimplementedHealthServiceServer) ListMyReports(context.Context, *emptypb.Empty) (*ListMyReportsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMyReports not implemented")
+}
+func (UnimplementedHealthServiceServer) ListMyAuthorizedTickets(context.Context, *emptypb.Empty) (*ListAuthorizedTicketsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMyAuthorizedTickets not implemented")
 }
 func (UnimplementedHealthServiceServer) RequestAccess(context.Context, *RequestAccessRequest) (*RequestAccessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RequestAccess not implemented")
@@ -387,6 +405,24 @@ func _HealthService_ListMyReports_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HealthServiceServer).ListMyReports(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HealthService_ListMyAuthorizedTickets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).ListMyAuthorizedTickets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_ListMyAuthorizedTickets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).ListMyAuthorizedTickets(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -561,6 +597,10 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMyReports",
 			Handler:    _HealthService_ListMyReports_Handler,
+		},
+		{
+			MethodName: "ListMyAuthorizedTickets",
+			Handler:    _HealthService_ListMyAuthorizedTickets_Handler,
 		},
 		{
 			MethodName: "RequestAccess",

@@ -26,21 +26,17 @@
     <!-- Features Section -->
     <section class="features-section" id="features">
       <v-container>
-        <div class="features-scroll-container">
-          <v-row justify="center" align="stretch" class="feature-row">
-            <v-col cols="12" sm="6" md="3" v-for="(feature, index) in features" :key="feature.title">
-              <v-card class="feature-card" elevation="0">
-                <v-card-text class="text-center d-flex flex-column align-center">
-                  <div class="icon-wrapper">
-                    <v-icon size="40" class="feature-icon">{{ feature.icon }}</v-icon>
-                  </div>
-                  <h3 class="feature-title mt-8 mb-4">{{ feature.title }}</h3>
-                  <p class="feature-desc mb-8">{{ feature.desc }}</p>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </div>
+        <v-row justify="center" align="stretch" class="feature-grid">
+          <v-col cols="12" sm="6" v-for="(feature, index) in features" :key="feature.title" :class="{ 'span-2': index === 3 }">
+            <v-card class="feature-card" elevation="0">
+              <v-card-text class="feature-info-row">
+                <v-icon size="40" :color="feature.iconColor" class="feature-icon">{{ feature.icon }}</v-icon>
+                <h3 class="feature-title ml-2">{{ feature.title }}</h3>
+                <span class="feature-desc ml-4">{{ feature.desc }}</span>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-container>
     </section>
 
@@ -85,6 +81,7 @@
       <v-container>
         <v-row align="center">
           <v-col cols="12" md="6" class="text-center mb-4 mb-md-0">
+            <img :src="aboutImg" alt="關於智療鏈" class="about-illustration" />
           </v-col>
           <v-col cols="12" md="6">
             <h2 class="about-title mb-4">關於智療鏈</h2>
@@ -138,6 +135,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import aboutImg from '@/assets/image.jpg';
 
 const props = defineProps({
   userRole: { type: String, default: null },
@@ -156,22 +154,26 @@ const features = ref([
   { 
     icon: 'mdi-shield-outline', 
     title: '資料安全', 
-    desc: '高等級加密與權限控管，守護您的健康數據隱私。'
+    desc: '高等級加密與權限控管，守護您的健康數據隱私。',
+    iconColor: '#4CAF50'
   },
   { 
     icon: 'mdi-clock-outline',
-    title: '即時記錄', 
-    desc: '隨時掌握健康數據，動態追蹤健康趨勢。'
+    title: '即時評估', 
+    desc: '隨時掌握健康數據，動態追蹤健康趨勢。',
+    iconColor: '#2196F3'
   },
   { 
     icon: 'mdi-gesture-tap-button',
     title: '簡單操作', 
-    desc: '直覺介面設計，所有年齡層都能輕鬆上手。'
+    desc: '直覺介面設計，所有年齡層都能輕鬆上手。',
+    iconColor: '#FF9800'
   },
   { 
     icon: 'mdi-trending-up', 
     title: '健康趨勢掌握', 
-    desc: 'AI 智能分析，協助您洞察健康風險與改善建議。'
+    desc: 'AI 智能分析，協助您洞察健康風險與改善建議。',
+    iconColor: '#9C27B0'
   }
 ]);
 
@@ -287,74 +289,43 @@ function scrollToSection(sectionId) {
 }
 
 .feature-card {
-  border-radius: 32px;
-  background: #f9f7f4;
-  padding: 3rem 2rem;
-  height: 100%;
-  min-height: 400px;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #ffffff, #f5f5f5);
+  padding: 20px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid #e5e7eb;
 }
 
 .feature-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-}
-
-.icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #F3F2EF;
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover .icon-wrapper {
-  background: #E5E7EB;
-}
-
-.feature-icon {
-  font-size: 36px !important;
-  color: #111827 !important;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .feature-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #111827;
   letter-spacing: -0.5px;
   line-height: 1.3;
+  margin-bottom: 0;
 }
 
 .feature-desc {
-  font-size: 1.25rem;
-  color: #888888;
+  font-family: sans-serif;
+  font-size: 1.1rem;
+  color: #666;
   line-height: 1.6;
+  margin-left: 24px;
+  max-width: 340px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }
 
-.learn-more {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #111827;
-  font-weight: 400;
-  transition: all 0.3s ease;
-  margin-top: auto;
-}
-
-.learn-more-text {
-  font-size: 1rem;
-}
-
-.learn-more-arrow {
-  font-family: system-ui;
-  font-size: 1.25rem;
-  line-height: 1;
+.feature-icon {
+  margin-right: 12px;
 }
 
 .about-section {
@@ -379,8 +350,13 @@ function scrollToSection(sectionId) {
 }
 
 .about-illustration {
+  max-width: 420px;
+  width: 100%;
+  height: auto;
   border-radius: 20px;
   box-shadow: 0 2px 12px 0 rgba(33, 150, 243, 0.10);
+  margin: 0 auto;
+  display: block;
 }
 
 .nav-btn {
@@ -471,14 +447,11 @@ function scrollToSection(sectionId) {
     padding: 6rem 0;
   }
   
-  .feature-row {
-    margin: 0 -1rem;
+  .feature-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .feature-card {
-    min-width: 300px;
-    margin: 0 1rem;
-    padding: 2rem;
+  .span-2 {
+    grid-column: auto;
   }
 }
 
@@ -495,27 +468,11 @@ function scrollToSection(sectionId) {
     padding: 4rem 0;
   }
   
-  .feature-card {
-    min-width: 280px;
-    padding: 2rem 1.5rem;
-    min-height: 360px;
+  .feature-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .feature-title {
-    font-size: 1.25rem;
-  }
-  
-  .feature-desc {
-    font-size: 1rem;
-  }
-  
-  .icon-wrapper {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .feature-icon {
-    font-size: 28px !important;
+  .span-2 {
+    grid-column: auto;
   }
 }
 
@@ -601,5 +558,11 @@ function scrollToSection(sectionId) {
   .faq-answer {
     font-size: 0.98rem;
   }
+}
+
+.feature-info-row {
+  display: flex;
+  align-items: center;
+  min-height: 80px;
 }
 </style>

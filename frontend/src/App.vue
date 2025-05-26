@@ -111,8 +111,8 @@ body, #app, .v-application, .v-app {
 .logo-image {
   border-radius: 8px;
   transition: transform 0.2s ease;
-  width: 56px !important;
-  height: 56px !important;
+  width: 60px !important;
+  height: 60px !important;
 }
 
 .brand-title {

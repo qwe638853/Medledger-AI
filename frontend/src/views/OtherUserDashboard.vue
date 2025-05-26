@@ -423,132 +423,176 @@ const getRequestStatusInfo = (status) => {
 <template>
   <div class="dashboard-bg">
     <v-container class="dashboard-container py-8 mx-auto" max-width="1800">
-      <!-- 四張統計卡片置於同一行 -->
-      <v-row class="mb-8" justify="center">
-        <!-- 歡迎卡片 -->
-        <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="rounded-xl welcome-card" elevation="2" height="100">
-            <v-card-text class="d-flex align-center pa-4">
-              <div class="rounded-circle bg-yellow-lighten-4 p-3 me-3">
-                <v-icon size="32" color="grey-darken-3">mdi-account-outline</v-icon>
+      <!-- 頂部統計卡片區 -->
+      <v-row class="mb-8">
+        <!-- 用戶資訊卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="user-info-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-primary-lighten-5 p-3">
+                  <v-icon size="32" color="primary">mdi-briefcase-account</v-icon>
+                </div>
+                <v-btn
+                  color="grey-darken-3"
+                  @click="handleLogout"
+                  elevation="0"
+                  icon
+                  size="small"
+                  class="ml-auto"
+                >
+                  <v-icon>mdi-logout</v-icon>
+                </v-btn>
               </div>
-              <div class="flex-grow-1">
-                <div class="text-subtitle-1 text-grey-darken-1">歡迎，保險顧問</div>
-                <div class="text-h6 font-weight-bold text-grey-darken-3">{{ currentUser }}</div>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">保險業者</div>
+                <div class="text-h6 font-weight-bold">{{ currentUser }}</div>
+                <div class="mt-2 d-flex align-center">
+                  <v-icon size="16" color="success" class="mr-1">mdi-shield-check</v-icon>
+                  <span class="text-caption text-success font-weight-medium">已驗證業者</span>
+                </div>
               </div>
-              <v-btn 
-                color="grey-darken-3" 
-                @click="handleLogout" 
-                elevation="1" 
-                icon
-                size="large"
-                class="modern-btn d-flex align-center logout-btn"
-              >
-                <v-icon size="28" class="me-2">mdi-logout-variant</v-icon>
-                <span class="logout-text">登出</span>
-              </v-btn>
+              <v-divider class="my-3"></v-divider>
+              <div class="d-flex align-center justify-space-between">
+                <div class="text-caption text-medium-emphasis">
+                  <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
+                  {{ new Date().toLocaleDateString('zh-TW') }}
+                </div>
+                <v-chip
+                  size="x-small"
+                  color="primary"
+                  variant="flat"
+                  class="font-weight-medium"
+                >
+                  保險顧問
+                </v-chip>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
 
-        <!-- 已授權報告數量卡片 -->
-        <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100">
-            <v-card-text class="pa-4 d-flex align-center justify-space-between">
-              <div class="d-flex align-center">
-                <div class="rounded-circle bg-yellow-lighten-4 p-2 me-3">
-                  <v-icon size="24" color="grey-darken-3">mdi-file-document-outline</v-icon>
-                </div>
-                <div>
-                  <div class="text-overline text-grey-darken-1">已授權報告</div>
-                  <div class="text-h4 font-weight-bold text-grey-darken-3">{{ dashboardStats.totalAuthorized }}</div>
+        <!-- 已授權報告統計卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-success-lighten-5 p-3">
+                  <v-icon size="32" color="success">mdi-file-document</v-icon>
                 </div>
               </div>
-              <v-btn
-                color="grey-darken-3"
-                class="modern-btn d-flex align-center view-all-btn"
-                size="large"
-                elevation="1"
-                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
-                @click="switchToAuthorizedView"
-              >
-                <v-icon size="24" class="me-2">mdi-eye</v-icon>
-                <span class="logout-text">查看</span>
-              </v-btn>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">已授權報告</div>
+                <div class="d-flex align-center justify-space-between mt-2">
+                  <div class="text-h4 font-weight-bold">{{ dashboardStats.totalAuthorized }}</div>
+                  <v-btn
+                    color="success"
+                    variant="tonal"
+                    @click="switchToAuthorizedView"
+                    class="view-btn"
+                  >
+                    <v-icon start>mdi-eye</v-icon>
+                    查看
+                  </v-btn>
+                </div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  model-value="70"
+                  color="success"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- 待處理請求卡片 -->
-        <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100" @click="switchToPendingView">
-            <v-card-text class="pa-4 d-flex align-center justify-space-between">
-              <div class="d-flex align-center">
-                <div class="rounded-circle bg-orange-lighten-5 p-2 me-3">
-                  <v-icon size="24" color="orange-darken-2">mdi-clock-outline</v-icon>
-                </div>
-                <div>
-                  <div class="text-overline text-orange-darken-1">待處理請求</div>
-                  <div class="text-h4 font-weight-bold text-orange-darken-3">{{ dashboardStats.pendingRequests }}</div>
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-warning-lighten-5 p-3">
+                  <v-icon size="32" color="warning">mdi-clock-outline</v-icon>
                 </div>
               </div>
-              <v-btn
-                color="orange-darken-2"
-                class="modern-btn d-flex align-center view-all-btn"
-                size="large"
-                elevation="1"
-                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
-                @click.stop="switchToPendingView"
-              >
-                <v-icon size="24" class="me-2">mdi-eye</v-icon>
-                <span class="logout-text">查看</span>
-              </v-btn>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">待處理請求</div>
+                <div class="d-flex align-center justify-space-between mt-2">
+                  <div class="text-h4 font-weight-bold">{{ dashboardStats.pendingRequests }}</div>
+                  <v-btn
+                    color="warning"
+                    variant="tonal"
+                    @click="switchToPendingView"
+                    class="view-btn"
+                  >
+                    <v-icon start>mdi-eye</v-icon>
+                    查看
+                  </v-btn>
+                </div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  :model-value="(dashboardStats.pendingRequests / 10) * 100"
+                  color="warning"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
 
         <!-- 歷史紀錄卡片 -->
-        <v-col cols="12" sm="6" md="3" class="px-3">
-          <v-card class="stat-card rounded-xl" elevation="2" height="100" @click="switchToHistoryView">
-            <v-card-text class="pa-4 d-flex align-center justify-space-between">
-              <div class="d-flex align-center">
-                <div class="rounded-circle bg-blue-grey-lighten-5 p-2 me-3">
-                  <v-icon size="24" color="blue-grey-darken-1">mdi-history</v-icon>
-                </div>
-                <div>
-                  <div class="text-overline text-blue-grey-darken-1">歷史紀錄</div>
-                  <div class="text-h6 font-weight-medium text-blue-grey-darken-2">查看已處理請求</div>
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-info-lighten-5 p-3">
+                  <v-icon size="32" color="info">mdi-history</v-icon>
                 </div>
               </div>
-              <v-btn
-                color="blue-grey-darken-1"
-                class="modern-btn d-flex align-center view-all-btn"
-                size="large"
-                elevation="1"
-                style="min-width: 90px; height: 48px; font-size: 1.15rem; font-weight: 600;"
-                @click.stop="switchToHistoryView"
-              >
-                <v-icon size="24" class="me-2">mdi-eye</v-icon>
-                <span class="logout-text">查看</span>
-              </v-btn>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">歷史紀錄</div>
+                <div class="d-flex align-center justify-space-between mt-2">
+                  <div class="text-h4 font-weight-bold">{{ historyRequests.length }}</div>
+                  <v-btn
+                    color="info"
+                    variant="tonal"
+                    @click="switchToHistoryView"
+                    class="view-btn"
+                  >
+                    <v-icon start>mdi-eye</v-icon>
+                    查看
+                  </v-btn>
+                </div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  :model-value="(historyRequests.length / 10) * 100"
+                  color="info"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
       <!-- 搜尋區塊 -->
-      <v-row class="mb-8" justify="center">
+      <v-row class="mb-8">
         <v-col cols="12">
-          <v-card class="rounded-xl search-card" elevation="3">
+          <v-card class="search-card" elevation="0">
             <v-card-text class="pa-6">
               <v-row align="center">
-                <v-col cols="12" md="4" class="pb-md-0">
-                  <div class="d-flex align-center mb-md-0 mb-3">
+                <v-col cols="12" md="4">
+                  <div class="d-flex align-center">
                     <v-icon size="24" color="grey-darken-3" class="me-2">mdi-magnify</v-icon>
                     <span class="text-h6 font-weight-bold text-grey-darken-3">病患健康報告查詢</span>
                   </div>
                 </v-col>
-                <v-col cols="12" md="5" class="pb-md-0 pt-md-0">
+                <v-col cols="12" md="5">
                   <v-text-field
                     v-model="patientId"
                     label="請輸入病患身分證字號"
@@ -560,16 +604,15 @@ const getRequestStatusInfo = (status) => {
                     class="modern-input"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="pt-md-0 d-flex gap-3">
+                <v-col cols="12" md="3" class="d-flex gap-3">
                   <v-btn
-                    color="yellow-accent-3"
+                    color="primary"
                     :loading="searchLoading"
                     :disabled="searchLoading"
                     @click="searchPatientReports"
                     prepend-icon="mdi-magnify"
-                    elevation="2"
-                    class="flex-grow-1 modern-btn primary-btn"
-                    :class="{'v-btn--active': viewMode === 'search'}"
+                    elevation="0"
+                    class="flex-grow-1"
                   >
                     搜尋
                   </v-btn>
@@ -696,31 +739,31 @@ const getRequestStatusInfo = (status) => {
               
               <!-- 已授權報告標籤內容 -->
               <v-window-item value="authorized" class="pb-4 pt-2">
-          <v-data-table
-            :headers="[
+                <v-data-table
+                  :headers="[
                     { title: '報告編號', key: 'id', align: 'start', sortable: true, width: '90px' },
                     { title: '健康數據', key: 'content', align: 'start', width: '45%' },
                     { title: '日期', key: 'date', align: 'center', sortable: true, width: '110px' },
                     { title: '狀態', key: 'status', align: 'center', width: '90px' },
                     { title: '授權到期', key: 'expiry', align: 'center', width: '110px' }
-            ]"
+                  ]"
                   :items="authorizedReports"
-            :loading="loading"
-            loading-text="資料載入中..."
+                  :loading="loading"
+                  loading-text="資料載入中..."
                   class="elevation-0 report-table"
                   hover
                   item-value="id"
                   density="compact"
                   fixed-header
-          >
+                >
                   <template v-slot:item.content="{ item }">
                     <div class="text-truncate content-cell">
                       {{ item.content }}
                     </div>
-            </template>
+                  </template>
                   <template v-slot:item.date="{ item }">
-              {{ item.date || '-' }}
-            </template>
+                    {{ item.date || '-' }}
+                  </template>
                   <template v-slot:item.status="{ item }">
                     <v-chip
                       size="x-small"
@@ -742,11 +785,11 @@ const getRequestStatusInfo = (status) => {
                       <div class="text-subtitle-1 font-weight-medium text-blue-grey">無已授權報告</div>
                       <div class="text-body-2 text-grey">該病患沒有已授權的健康報告</div>
                     </div>
-            </template>
-          </v-data-table>
+                  </template>
+                </v-data-table>
               </v-window-item>
             </v-window>
-        </v-card>
+          </v-card>
         </v-col>
       </v-row>
 
@@ -895,10 +938,10 @@ const getRequestStatusInfo = (status) => {
             <div class="text-h6 font-weight-medium text-blue-grey-darken-1 mb-1">請輸入病患身分證字號查詢健康報告</div>
             <div class="text-body-2 text-grey px-6 mb-0">
               您可以輸入病患身分證字號查詢特定病患，或點擊「授權報告」查看所有已授權報告
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- 待授權請求列表區塊 -->
       <v-row v-if="viewMode === 'pending'" justify="center">
@@ -1132,13 +1175,14 @@ const getRequestStatusInfo = (status) => {
           ></v-btn>
         </template>
       </v-snackbar>
-  </v-container>
+    </v-container>
   </div>
 </template>
 
 <style scoped>
+/* 全局樣式 */
 .dashboard-bg {
-  background-color: #F9F7F4;
+  background-color: #F8FAFC;
   min-height: 100vh;
   display: flex;
   align-items: flex-start;
@@ -1147,541 +1191,188 @@ const getRequestStatusInfo = (status) => {
 
 .dashboard-container {
   padding: 2rem;
-  background: var(--background-color);
   min-height: 100vh;
   max-width: 1800px;
   margin: 0 auto;
 }
 
-.dashboard-header {
-  margin-bottom: 2rem;
-}
-
-.dashboard-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  letter-spacing: -0.5px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.modern-btn {
+/* 卡片基礎樣式 */
+:deep(.v-card) {
   border-radius: 24px !important;
+  background: white !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+}
+
+:deep(.v-card:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 圓形圖標背景 */
+.rounded-circle {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.rounded-circle:hover {
+  transform: scale(1.05);
+}
+
+/* 統計卡片樣式 */
+.stat-card {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-progress {
+  opacity: 0.7;
+}
+
+/* 表格樣式 */
+.report-table {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+:deep(.v-data-table-header) {
+  background-color: #F8FAFC !important;
+}
+
+:deep(.v-data-table-header th) {
+  font-size: 0.875rem !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 12px 16px !important;
+}
+
+:deep(.v-data-table-row) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  transition: background-color 0.2s ease;
+}
+
+:deep(.v-data-table-row:hover) {
+  background-color: #F8FAFC !important;
+}
+
+:deep(.v-data-table td) {
+  padding: 12px 16px !important;
+  color: #334155 !important;
+  font-size: 0.875rem !important;
+}
+
+/* 內容單元格樣式 */
+.content-cell {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 日期單元格樣式 */
+.date-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+}
+
+/* 按鈕樣式 */
+:deep(.v-btn) {
+  border-radius: 12px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
   font-weight: 600 !important;
   transition: all 0.3s ease !important;
 }
 
-.modern-btn:hover {
+:deep(.v-btn:hover) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-  opacity: 0.95;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
 }
 
-.primary-btn {
-  background-color: #F8F441 !important;
-  color: #333 !important;
-}
-
-.modern-input {
-  border-radius: 12px !important;
-  background-color: white !important;
-}
-
-.modern-input :deep(.v-field) {
-  border-radius: 12px !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #e5e7eb !important;
-}
-
-.modern-input :deep(.v-field:focus-within) {
-  border-color: #F8F441 !important;
-  box-shadow: 0 2px 8px rgba(248, 244, 65, 0.2) !important;
-}
-
-.search-card, .result-card {
+/* 搜尋卡片樣式 */
+.search-card {
   background: white;
   border-radius: 24px !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-  overflow: hidden;
 }
 
-.welcome-card {
-  background: linear-gradient(135deg, #fff 0%, #F9F7F4 100%);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.modern-input {
+  border-radius: 16px !important;
 }
 
-.stat-card {
-  background: white;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+:deep(.modern-input .v-field) {
+  border-radius: 16px !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  transition: all 0.3s ease !important;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+:deep(.modern-input .v-field:hover) {
+  border-color: rgba(var(--v-theme-primary), 0.5) !important;
 }
 
-.search-section {
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 2rem;
-  border: 1px solid var(--border-color);
+:deep(.modern-input .v-field:focus-within) {
+  border-color: rgb(var(--v-theme-primary)) !important;
+  box-shadow: 0 2px 12px rgba(var(--v-theme-primary), 0.15) !important;
 }
 
-.search-form {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.view-toggle {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.view-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-md);
-  font-weight: 500;
-  color: var(--muted-color);
-  background: var(--background-color);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.view-button.active {
-  background: var(--primary-color);
-  color: var(--white);
-  border-color: var(--primary-color);
-}
-
-.reports-section {
-  background: var(--white);
-  border-radius: var(--border-radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-}
-
-.reports-tabs {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab-button {
-  padding: 0.75rem 0;
-  font-weight: 500;
-  color: var(--muted-color);
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.tab-button.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-.reports-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.report-card {
-  background: var(--background-color);
-  border-radius: var(--border-radius-md);
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.report-card:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-sm);
-}
-
-.report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.report-title {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.report-date {
-  font-size: 0.875rem;
-  color: var(--muted-color);
-}
-
-.report-content {
-  color: var(--muted-color);
-  margin-bottom: 1rem;
-}
-
-.report-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-.btn {
-  font-family: 'Inter', sans-serif;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-lg);
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: var(--white);
-  border: none;
-}
-
-.btn-secondary {
-  background: var(--white);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.dialog {
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-}
-
-.dialog-header {
-  padding: 1.5rem;
-  background: var(--background-color);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dialog-content {
-  padding: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-@media (max-width: 768px) {
+/* RWD 適配 */
+@media (max-width: 960px) {
   .dashboard-container {
     padding: 1rem;
   }
-  
-  .dashboard-title {
-    font-size: 1.75rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .search-form {
-    flex-direction: column;
-  }
-  
-  .view-toggle {
-    flex-direction: column;
-  }
-  
-  .view-button {
-    width: 100%;
-  }
-  
-  .reports-tabs {
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-  }
-  
-  .report-footer {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
-}
-
-/* 動畫效果 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-enter-active {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* 操作按鈕樣式 */
-.action-btn {
-  min-width: auto !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: 32px;
-  padding: 0 8px;
-}
-
-/* 健康數據內容單元格樣式 */
-.content-cell {
-  max-width: 100%;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 狀態標籤樣式 */
-.status-chip {
-  width: 100%;
-  justify-content: center;
-}
-
-/* 操作單元格樣式 */
-.actions-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-/* 搜尋結果窗口 */
-.result-window {
-  width: 100%;
-  overflow-x: auto;
-  padding-top: 6px;
-}
-
-/* 報告表格樣式 */
-.report-table {
-  width: 100%;
-}
-
-/* 標籤與內容間距 */
-.tab-content-divider {
-  height: 6px;
-  background-color: #f0f7ff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  margin-top: 0;
-  position: relative;
-  z-index: 1;
 }
 
 @media (max-width: 600px) {
-  .action-btn {
-    font-size: 0.8rem;
-    padding: 0 8px !important;
-    max-width: 100%;
-}
-  
-  :deep(.v-data-table__wrapper) {
-    overflow-x: auto;
-  }
-  
-  :deep(.v-data-table-header th) {
-    white-space: nowrap;
-  }
-}
-
-:deep(.v-data-table) {
-  background-color: transparent !important;
-  border-radius: 16px !important;
-  overflow: hidden;
-}
-
-:deep(.v-data-table-header th) {
-  font-weight: 600 !important;
-  color: #333 !important;
-  background-color: #f9f9f9 !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  padding: 16px !important;
-  border-bottom: 1px solid #eee !important;
-}
-
-:deep(.v-data-table-row) {
-  transition: all 0.2s ease !important;
-}
-
-:deep(.v-data-table-row:hover) {
-  background-color: #fafafa !important;
-  transform: translateY(-1px);
-}
-
-:deep(.v-data-table td) {
-  padding: 16px !important;
-  color: #444 !important;
-  font-weight: 400 !important;
-}
-
-:deep(.v-tabs) {
-  border-bottom: 1px solid #eee;
-}
-
-:deep(.v-tabs .v-tab) {
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-weight: 500 !important;
-  color: #666 !important;
-  min-height: 48px !important;
-  padding: 0 24px !important;
-}
-
-:deep(.v-tab--selected) {
-  color: #333 !important;
-  font-weight: 600 !important;
-}
-
-:deep(.v-tabs-slider) {
-  height: 2px !important;
-}
-
-.unauthorized-chip {
-  background-color: #FFF8E1 !important;
-  color: #F9A825 !important;
-}
-
-.authorized-chip {
-  background-color: #F1F8E9 !important;
-  color: #558B2F !important;
-}
-
-.auth-request-dialog {
-  border-radius: 24px !important;
-  overflow: hidden !important;
-}
-
-:deep(.v-dialog > .v-card) {
-  border-radius: 24px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-}
-
-:deep(.v-text-field) {
-  border-radius: 12px !important;
-}
-
-:deep(.v-text-field .v-field) {
-  border-radius: 12px !important;
-  background-color: #fff !important;
-  border: 1px solid #e5e7eb !important;
-}
-
-:deep(.v-text-field .v-field:focus-within) {
-  border-color: #F8F441 !important;
-  box-shadow: 0 2px 8px rgba(248, 244, 65, 0.2) !important;
-}
-
-@media (max-width: 600px) {
-  .dashboard-container {
-    padding: 16px !important;
-  }
-
-  .search-card, .result-card {
-    border-radius: 16px !important;
-  }
-
-  .v-col {
-    padding: 8px !important;
-  }
-
-  :deep(.v-data-table-header) {
-    display: none !important;
+  :deep(.v-card) {
+    border-radius: 12px !important;
   }
 
   :deep(.v-data-table-row) {
     display: flex !important;
     flex-direction: column !important;
     padding: 16px !important;
-    border-bottom: 1px solid #eee !important;
+    margin-bottom: 8px !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
   }
 
   :deep(.v-data-table td) {
-    padding: 4px 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
     border: none !important;
   }
 
   :deep(.v-data-table td::before) {
     content: attr(data-label);
-    font-weight: 600 !important;
-    margin-right: 8px !important;
-    color: #666 !important;
+    font-weight: 500 !important;
+    color: #64748B !important;
   }
 
-  .modern-btn {
-    width: 100% !important;
-    margin-bottom: 8px !important;
+  .content-cell {
+    max-width: 100%;
+  }
+
+  .date-cell {
+    justify-content: flex-end;
   }
 }
 
+/* 動畫效果 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -1691,45 +1382,6 @@ const getRequestStatusInfo = (status) => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
-}
-
-.v-card {
-  transition: all 0.3s ease !important;
-}
-
-.v-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
-}
-
-.v-btn {
-  transition: all 0.3s ease !important;
-}
-
-.v-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-}
-
-.logout-btn {
-  min-width: 110px !important;
-  height: 48px !important;
-  font-size: 1.15rem !important;
-  padding: 0 20px !important;
-}
-
-.logout-text {
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  display: inline-block;
-}
-
-.view-all-btn {
-  align-self: center;
-  margin-left: 12px;
-  border-radius: 24px !important;
-  letter-spacing: 1px;
 }
 
 /* 已授權報告卡片樣式 */
@@ -1826,90 +1478,35 @@ const getRequestStatusInfo = (status) => {
   display: block;
 }
 
-/* 日期欄位樣式 */
-.date-cell {
-  display: flex;
-  align-items: center;
+/* 狀態標籤樣式 */
+.status-chip {
+  width: 100%;
   justify-content: center;
-  color: #666;
 }
 
-/* 查看報告按鈕樣式 */
-.view-report-btn {
-  color: #666 !important;
-  background: rgba(0, 0, 0, 0.03) !important;
-  border-radius: 8px !important;
-  transition: all 0.2s ease !important;
+/* 操作單元格樣式 */
+.actions-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
-.view-report-btn:hover {
-  background: #F8F441 !important;
-  color: #333 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(248, 244, 65, 0.2) !important;
+/* 搜尋結果窗口 */
+.result-window {
+  width: 100%;
+  overflow-x: auto;
+  padding-top: 6px;
 }
 
-/* 分頁元件樣式 */
-:deep(.v-data-table-footer) {
-  background: white !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
-  padding: 12px 16px !important;
-}
-
-:deep(.v-data-table-footer select) {
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  border-radius: 8px !important;
-  padding: 4px 8px !important;
-}
-
-:deep(.v-data-table-footer .v-btn) {
-  color: #666 !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  border-radius: 8px !important;
-}
-
-:deep(.v-data-table-footer .v-btn:hover) {
-  background: rgba(36, 180, 126, 0.1) !important;
-  color: #24B47E !important;
-}
-
-/* RWD 適配 */
-@media (max-width: 600px) {
-  .authorized-reports-card {
-    border-radius: 16px;
-  }
-
-  :deep(.v-data-table-row) {
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 16px !important;
-    margin-bottom: 8px !important;
-    background: white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-  }
-
-  :deep(.v-data-table td) {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 8px 0 !important;
-    border: none !important;
-  }
-
-  :deep(.v-data-table td::before) {
-    content: attr(data-label);
-    font-weight: 500 !important;
-    color: #333 !important;
-  }
-
-  .date-cell {
-    justify-content: flex-end;
-  }
-
-  .view-report-btn {
-    margin-left: auto;
-  }
+/* 標籤與內容間距 */
+.tab-content-divider {
+  height: 6px;
+  background-color: #f0f7ff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 0;
+  position: relative;
+  z-index: 1;
 }
 
 /* 待授權請求卡片樣式 */
@@ -1933,5 +1530,21 @@ const getRequestStatusInfo = (status) => {
 
 .pending-requests-table, .history-requests-table {
   background: white !important;
+}
+
+/* 查看按鈕樣式 */
+.view-btn {
+  min-width: 90px;
+  height: 36px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 12px !important;
+  transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 </style>

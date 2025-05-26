@@ -113,6 +113,7 @@ body, #app, .v-application, .v-app {
   transition: transform 0.2s ease;
   width: 60px !important;
   height: 60px !important;
+  filter: none !important;
 }
 
 .brand-title {

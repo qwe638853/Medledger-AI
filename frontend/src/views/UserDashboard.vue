@@ -446,374 +446,611 @@ const handleLLMSummary = async () => {
 </script>
 
 <template>
-  <v-container class="dashboard-container fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="11" md="10" lg="9">
-        <!-- 頂部用戶資訊卡片 -->
-        <v-card class="user-card mb-8" elevation="2">
-          <v-row align="center" justify="space-between">
-            <v-col cols="12" sm="8">
-              <div class="d-flex align-center">
-                <div class="rounded-circle bg-yellow-lighten-4 p-3 me-3">
-                  <v-icon size="32" color="grey-darken-3">mdi-account-outline</v-icon>
+  <div class="dashboard-bg">
+    <v-container class="dashboard-container py-8 mx-auto" max-width="1800">
+      <!-- 頂部統計卡片區 -->
+      <v-row class="mb-8">
+        <!-- 用戶資訊卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="user-info-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-primary-lighten-5 p-3">
+                  <v-icon size="32" color="primary">mdi-account</v-icon>
                 </div>
-                <div>
-                  <h2 class="user-title mb-1">使用者儀表板</h2>
-                  <div class="user-subtitle">{{ currentUser }}</div>
+                <v-btn
+                  color="grey-darken-3"
+                  @click="handleLogout"
+                  elevation="0"
+                  icon
+                  size="small"
+                  class="ml-auto"
+                >
+                  <v-icon>mdi-logout</v-icon>
+                </v-btn>
+              </div>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">歡迎回來</div>
+                <div class="text-h6 font-weight-bold">{{ currentUser }}</div>
+              </div>
+              <div class="mt-2 text-caption text-medium-emphasis">
+                上次登入：{{ new Date().toLocaleDateString('zh-TW') }}
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- 健康報告統計卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-success-lighten-5 p-3">
+                  <v-icon size="32" color="success">mdi-file-document</v-icon>
                 </div>
               </div>
-            </v-col>
-            <v-col cols="12" sm="4" class="d-flex justify-end">
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">健康報告總數</div>
+                <div class="text-h4 font-weight-bold">{{ healthData.length }}</div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  model-value="70"
+                  color="success"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- 待處理授權請求卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-warning-lighten-5 p-3">
+                  <v-icon size="32" color="warning">mdi-clock-outline</v-icon>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">待處理授權</div>
+                <div class="text-h4 font-weight-bold">{{ accessRequests.length }}</div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  :model-value="(accessRequests.length / 10) * 100"
+                  color="warning"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- 已授權報告卡片 -->
+        <v-col cols="12" md="6" lg="3">
+          <v-card class="stat-card" elevation="0">
+            <v-card-text class="pa-6">
+              <div class="d-flex align-center mb-2">
+                <div class="rounded-circle bg-info-lighten-5 p-3">
+                  <v-icon size="32" color="info">mdi-shield-check</v-icon>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="text-subtitle-1 text-medium-emphasis">已授權報告</div>
+                <div class="text-h4 font-weight-bold">{{ authorizedTickets.length }}</div>
+              </div>
+              <div class="stat-progress mt-4">
+                <v-progress-linear
+                  :model-value="(authorizedTickets.length / healthData.length) * 100"
+                  color="info"
+                  height="4"
+                  rounded
+                ></v-progress-linear>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- 主要內容區 -->
+      <v-row>
+        <!-- 健康報告列表 -->
+        <v-col cols="12" lg="8">
+          <v-card class="report-card" elevation="0">
+            <v-card-title class="d-flex align-center px-6 py-4 bg-surface">
+              <v-icon size="24" color="primary" class="mr-3">mdi-file-document-multiple</v-icon>
+              <span class="text-h6 font-weight-bold">健康檢查報告</span>
+              <v-spacer></v-spacer>
               <v-btn
-                color="grey-darken-3"
-                @click="handleLogout"
-                elevation="1"
-                icon
-                size="large"
-                class="modern-btn d-flex align-center logout-btn"
+                color="primary"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-filter-variant"
+                class="mr-2"
               >
-                <v-icon size="28" class="me-2">mdi-logout-variant</v-icon>
-                <span class="logout-text">登出</span>
+                篩選
               </v-btn>
-            </v-col>
-          </v-row>
-        </v-card>
+              <v-btn
+                color="primary"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-sort-variant"
+              >
+                排序
+              </v-btn>
+            </v-card-title>
 
-        <!-- 健檢報告列表 -->
-        <v-card class="report-card mb-8" elevation="0">
-          <div class="d-flex align-center mb-6">
-            <v-icon size="24" class="section-icon mr-3">mdi-file-document-outline</v-icon>
-            <h3 class="section-title">健康檢查報告</h3>
-          </div>
-          
-          <v-data-table
-            :headers="[
-              { title: '報告編號', key: 'id', width: '120px' },
-              { title: '內容摘要', key: 'content', width: '300px' },
-              { title: '檢查日期', key: 'date', width: '150px' },
-              { title: '', key: 'actions', sortable: false, align: 'end', width: '80px' }
-            ]"
-            :items="healthData"
-            :loading="loading"
-            loading-text="資料載入中..."
-            class="report-table"
-            :custom-class="{ 'report-row': true }"
-            hide-default-footer
-          >
-            <template v-slot:item.content="{ item }">
-              <span class="content-preview">{{ item.content }}</span>
-            </template>
-            
-            <template v-slot:item.date="{ item }">
-              <span class="date-text">{{ formatDate(item.date) }}</span>
-            </template>
-            
-            <template v-slot:item.actions="{ item }">
-                  <v-btn
-                    icon
-                variant="text"
-                class="view-btn"
-                    @click="viewReportDetail(item)"
-                  >
-                <v-icon>mdi-eye-outline</v-icon>
-                  </v-btn>
-                </template>
+            <v-divider></v-divider>
 
-            <template v-slot:no-data>
-              <div class="empty-state">
-                <v-icon size="40" class="empty-icon">mdi-file-outline</v-icon>
-                <div class="empty-text">暫無健康檢查報告</div>
-              </div>
-            </template>
-          </v-data-table>
-        </v-card>
-
-        <!-- 資料授權管理 -->
-        <v-card class="auth-card" elevation="0">
-          <div class="d-flex align-center mb-6">
-            <v-icon size="24" class="section-icon mr-3">mdi-shield-outline</v-icon>
-            <h3 class="section-title">資料授權管理</h3>
-          </div>
-          
-          <v-tabs
-            v-model="authTab"
-            class="auth-tabs mb-6"
-          >
-            <v-tab value="requests" class="auth-tab">
-              <v-icon start class="mr-2">mdi-clipboard-text-outline</v-icon>
-              授權請求
-              <v-badge
-                v-if="accessRequests.length"
-                :content="accessRequests.length.toString()"
-                color="warning"
-                offset-x="5"
-                offset-y="-5"
-              ></v-badge>
-            </v-tab>
-            <v-tab value="authorized" class="auth-tab">
-              <v-icon start class="mr-2">mdi-check-circle-outline</v-icon>
-              已授權清單
-            </v-tab>
-          </v-tabs>
-          
-          <v-window v-model="authTab">
-            <v-window-item value="requests">
-              <!-- 授權請求表格 -->
+            <v-card-text class="pa-6">
               <v-data-table
                 :headers="[
-                  { title: '報告編號', key: 'reportId' },
-                  { title: '請求者', key: 'requesterName' },
-                  { title: '授權理由', key: 'reason' },
-                  { title: '申請時間', key: 'requestTime' },
+                  { title: '報告編號', key: 'id', align: 'start' },
+                  { title: '檢查項目', key: 'content', align: 'start' },
+                  { title: '檢查日期', key: 'date', align: 'center' },
+                  { title: '狀態', key: 'status', align: 'center' },
                   { title: '操作', key: 'actions', align: 'end' }
                 ]"
-                :items="accessRequests"
-                :loading="loadingRequests"
-                class="auth-table"
-                hide-default-footer
+                :items="healthData"
+                :loading="loading"
+                hover
+                class="report-table"
               >
-                <!-- 表格內容模板 -->
-                <template v-slot:item.actions="{ item }">
-                  <div class="d-flex gap-2 justify-end">
-                    <v-btn
-                      class="approve-btn"
-                      size="small"
-                      :loading="authProcessing"
-                      @click="approveRequest(item.id)"
-                    >
-                      <v-icon start size="18">mdi-check</v-icon>
-                      同意
-                    </v-btn>
-                    <v-btn
-                      class="reject-btn"
-                      size="small"
-                      :loading="authProcessing"
-                      @click="rejectRequest(item.id)"
-                    >
-                      <v-icon start size="18">mdi-close</v-icon>
-                      拒絕
-                    </v-btn>
+                <!-- 報告編號 -->
+                <template v-slot:item.id="{ item }">
+                  <div class="d-flex align-center">
+                    <v-icon size="18" color="primary" class="mr-2">mdi-file-document</v-icon>
+                    <span class="font-weight-medium">{{ item.id }}</span>
                   </div>
                 </template>
 
+                <!-- 檢查項目 -->
+                <template v-slot:item.content="{ item }">
+                  <div class="content-cell">
+                    <span class="text-truncate">{{ item.content }}</span>
+                  </div>
+                </template>
+
+                <!-- 檢查日期 -->
+                <template v-slot:item.date="{ item }">
+                  <div class="date-cell">
+                    <v-icon size="16" color="grey" class="mr-1">mdi-calendar</v-icon>
+                    {{ formatDate(item.date) }}
+                  </div>
+                </template>
+
+                <!-- 狀態 -->
+                <template v-slot:item.status="{ item }">
+                  <v-chip
+                    size="small"
+                    :color="item.status === 'normal' ? 'success' : 'warning'"
+                    variant="tonal"
+                    class="font-weight-medium"
+                  >
+                    {{ item.status === 'normal' ? '正常' : '需追蹤' }}
+                  </v-chip>
+                </template>
+
+                <!-- 操作按鈕 -->
+                <template v-slot:item.actions="{ item }">
+                  <div class="d-flex gap-2 justify-end">
+                    <v-btn
+                      icon="mdi-eye"
+                      variant="text"
+                      size="small"
+                      color="primary"
+                      @click="viewReportDetail(item)"
+                    ></v-btn>
+                    <v-btn
+                      icon="mdi-share-variant"
+                      variant="text"
+                      size="small"
+                      color="grey"
+                    ></v-btn>
+                  </div>
+                </template>
+
+                <!-- 無資料顯示 -->
                 <template v-slot:no-data>
-                  <div class="empty-state">
-                    <v-icon size="40" class="empty-icon">mdi-inbox-outline</v-icon>
-                    <div class="empty-title">暫無待處理的授權請求</div>
-                    <div class="empty-subtitle">當有新的授權請求時會顯示在這裡</div>
-              </div>
+                  <div class="d-flex flex-column align-center py-8">
+                    <v-icon size="64" color="grey-lighten-1" class="mb-4">
+                      mdi-file-document-outline
+                    </v-icon>
+                    <div class="text-h6 font-weight-medium text-grey-darken-1">
+                      尚無健康檢查報告
+                    </div>
+                    <div class="text-body-2 text-grey mt-2">
+                      您目前沒有任何健康檢查報告記錄
+                    </div>
+                  </div>
                 </template>
               </v-data-table>
-            </v-window-item>
-          </v-window>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- 授權管理區域 -->
+        <v-col cols="12" lg="4">
+          <v-card class="auth-card" elevation="0">
+            <v-card-title class="d-flex align-center px-6 py-4 bg-surface">
+              <v-icon size="24" color="primary" class="mr-3">mdi-shield-account</v-icon>
+              <span class="text-h6 font-weight-bold">授權管理</span>
+            </v-card-title>
+
+            <v-divider></v-divider>
+
+            <v-card-text class="pa-0">
+              <v-tabs
+                v-model="authTab"
+                color="primary"
+                align-tabs="center"
+                class="auth-tabs"
+              >
+                <v-tab value="requests" class="text-body-2 font-weight-medium">
+                  <v-icon start size="18">mdi-clock-outline</v-icon>
+                  待處理請求
+                  <v-badge
+                    v-if="accessRequests.length"
+                    :content="accessRequests.length.toString()"
+                    color="error"
+                    offset-x="3"
+                    offset-y="-3"
+                  ></v-badge>
+                </v-tab>
+                <v-tab value="authorized" class="text-body-2 font-weight-medium">
+                  <v-icon start size="18">mdi-shield-check</v-icon>
+                  已授權清單
+                </v-tab>
+              </v-tabs>
+
+              <v-window v-model="authTab" class="auth-window">
+                <v-window-item value="requests">
+                  <div class="pa-4">
+                    <v-list class="request-list pa-0" v-if="accessRequests.length">
+                      <v-list-item
+                        v-for="request in accessRequests"
+                        :key="request.id"
+                        class="request-item mb-3"
+                        rounded="lg"
+                      >
+                        <div class="d-flex flex-column">
+                          <div class="d-flex align-center mb-2">
+                            <v-avatar size="32" color="primary" class="mr-3">
+                              <v-icon color="white" size="16">mdi-account</v-icon>
+                            </v-avatar>
+                            <div>
+                              <div class="text-subtitle-2 font-weight-medium">
+                                {{ request.requesterName }}
+                              </div>
+                              <div class="text-caption text-grey">
+                                請求報告 #{{ request.reportId }}
+                              </div>
+                            </div>
+                          </div>
+                          <div class="text-caption text-grey-darken-1 mb-3">
+                            {{ request.reason }}
+                          </div>
+                          <div class="d-flex align-center justify-space-between">
+                            <div class="text-caption text-grey">
+                              <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
+                              {{ formatTimestamp(request.requestTime) }}
+                            </div>
+                            <div class="d-flex gap-2">
+                              <v-btn
+                                color="success"
+                                size="small"
+                                variant="tonal"
+                                :loading="authProcessing"
+                                @click="approveRequest(request.id)"
+                              >
+                                同意
+                              </v-btn>
+                              <v-btn
+                                color="error"
+                                size="small"
+                                variant="tonal"
+                                :loading="authProcessing"
+                                @click="rejectRequest(request.id)"
+                              >
+                                拒絕
+                              </v-btn>
+                            </div>
+                          </div>
+                        </div>
+                      </v-list-item>
+                    </v-list>
+                    <div v-else class="d-flex flex-column align-center py-8">
+                      <v-icon size="64" color="grey-lighten-1" class="mb-4">
+                        mdi-tray-full
+                      </v-icon>
+                      <div class="text-h6 font-weight-medium text-grey-darken-1">
+                        無待處理請求
+                      </div>
+                      <div class="text-body-2 text-grey mt-2">
+                        目前沒有需要處理的授權請求
+                      </div>
+                    </div>
+                  </div>
+                </v-window-item>
+
+                <v-window-item value="authorized">
+                  <div class="pa-4">
+                    <v-list class="auth-list pa-0" v-if="authorizedTickets.length">
+                      <v-list-item
+                        v-for="ticket in authorizedTickets"
+                        :key="ticket.id"
+                        class="auth-item mb-3"
+                        rounded="lg"
+                      >
+                        <div class="d-flex flex-column">
+                          <div class="d-flex align-center mb-2">
+                            <v-avatar size="32" color="success" class="mr-3">
+                              <v-icon color="white" size="16">mdi-shield-check</v-icon>
+                            </v-avatar>
+                            <div>
+                              <div class="text-subtitle-2 font-weight-medium">
+                                報告 #{{ ticket.reportId }}
+                              </div>
+                              <div class="text-caption text-grey">
+                                授權給：{{ ticket.targetId }}
+                              </div>
+                            </div>
+                          </div>
+                          <div class="d-flex align-center justify-space-between">
+                            <div class="text-caption text-grey">
+                              <v-icon size="14" class="mr-1">mdi-calendar</v-icon>
+                              {{ formatTimestamp(ticket.grantTime) }}
+                            </div>
+                            <v-chip
+                              size="x-small"
+                              color="success"
+                              variant="tonal"
+                              class="font-weight-medium"
+                            >
+                              已授權
+                            </v-chip>
+                          </div>
+                        </div>
+                      </v-list-item>
+                    </v-list>
+                    <div v-else class="d-flex flex-column align-center py-8">
+                      <v-icon size="64" color="grey-lighten-1" class="mb-4">
+                        mdi-shield-outline
+                      </v-icon>
+                      <div class="text-h6 font-weight-medium text-grey-darken-1">
+                        無已授權報告
+                      </div>
+                      <div class="text-body-2 text-grey mt-2">
+                        您目前沒有授權給他人的報告
+                      </div>
+                    </div>
+                  </div>
+                </v-window-item>
+              </v-window>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </div>
 </template>
 
 <style scoped>
 /* 全局樣式 */
-.dashboard-container {
-  background-color: #F9F7F4;
+.dashboard-bg {
+  background-color: #F8FAFC;
   min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.dashboard-container {
   padding: 2rem;
+  min-height: 100vh;
+  max-width: 1800px;
+  margin: 0 auto;
 }
 
 /* 卡片基礎樣式 */
 :deep(.v-card) {
-  border-radius: 28px !important;
+  border-radius: 24px !important;
   background: white !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-  padding: 2rem !important;
-}
-
-/* 用戶資訊區域 */
-.user-title {
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: #111827;
-  letter-spacing: -0.5px;
-}
-
-.user-subtitle {
-  font-size: 1rem;
-  color: #888;
-  font-weight: 400;
-}
-
-.user-icon {
-  /* 移除原本顏色設定，統一用圓形背景 */
-  color: unset;
-}
-
-.logout-btn {
-  min-width: 110px !important;
-  height: 48px !important;
-  font-size: 1.15rem !important;
-  padding: 0 20px !important;
-  background-color: #333 !important;
-  color: #fff !important;
-  border-radius: 24px !important;
-  font-weight: 600 !important;
-  letter-spacing: 1px;
-}
-
-.logout-text {
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  display: inline-block;
-}
-
-.modern-btn {
-  border-radius: 24px !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-weight: 600 !important;
   transition: all 0.3s ease !important;
+  overflow: hidden !important;
 }
 
-.modern-btn:hover {
+:deep(.v-card:hover) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-  opacity: 0.95;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* 區塊標題樣式 */
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.5px;
+/* 統計卡片樣式 */
+.stat-card {
+  height: 100%;
 }
 
-.section-icon {
-  color: #111827;
+.stat-progress {
+  opacity: 0.7;
+}
+
+/* 圓形圖標背景 */
+.rounded-circle {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.rounded-circle:hover {
+  transform: scale(1.05);
 }
 
 /* 表格樣式 */
-:deep(.v-data-table) {
-  background: transparent !important;
-  border-radius: 16px !important;
+.report-table {
+  border-radius: 20px !important;
+  overflow: hidden !important;
 }
 
-:deep(.v-data-table-header) {
-  background: transparent !important;
+:deep(.v-data-table) {
+  border-radius: 20px !important;
+  overflow: hidden !important;
 }
 
 :deep(.v-data-table-header th) {
   font-size: 0.875rem !important;
-  color: #888 !important;
-  font-weight: 500 !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  padding: 12px 16px !important;
 }
 
 :deep(.v-data-table-row) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
   transition: background-color 0.2s ease;
 }
 
-:deep(.v-data-table-row:nth-child(odd)) {
-  background-color: rgba(0, 0, 0, 0.01);
-}
-
 :deep(.v-data-table-row:hover) {
-  background-color: rgba(0, 0, 0, 0.02) !important;
+  background-color: #F8FAFC !important;
 }
 
-/* 操作按鈕 */
-.approve-btn {
-  background-color: #43AA8B !important;
-  color: white !important;
-  border-radius: 12px !important;
+:deep(.v-data-table td) {
+  padding: 12px 16px !important;
+  color: #334155 !important;
+  font-size: 0.875rem !important;
 }
 
-.reject-btn {
-  background-color: transparent !important;
-  color: #666 !important;
-  border: 1px solid #ddd !important;
-  border-radius: 12px !important;
+/* 內容單元格樣式 */
+.content-cell {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Tab 樣式 */
-:deep(.v-tab) {
+/* 日期單元格樣式 */
+.date-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+}
+
+/* 授權管理樣式 */
+.auth-tabs {
+  background-color: #F8FAFC;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.auth-window {
+  height: calc(100vh - 400px);
+  overflow-y: auto;
+}
+
+.request-list, .auth-list {
+  gap: 12px;
+}
+
+.request-item, .auth-item {
+  background-color: #F8FAFC !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+.request-item:hover, .auth-item:hover {
+  transform: translateX(4px);
+  background-color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 按鈕樣式 */
+:deep(.v-btn) {
   text-transform: none !important;
   letter-spacing: 0 !important;
-  font-weight: 500 !important;
-  color: #666 !important;
-  min-width: 120px !important;
-}
-
-:deep(.v-tab--selected) {
-  color: #111827 !important;
   font-weight: 600 !important;
+  transition: all 0.2s ease !important;
 }
 
-:deep(.v-tab--selected .v-tab__slider) {
-  background-color: #F8F441 !important;
-  height: 3px !important;
+:deep(.v-btn:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 空狀態樣式 */
 .empty-state {
+  padding: 48px 24px;
   text-align: center;
-  padding: 3rem 0;
-}
-
-.empty-icon {
-  color: #888;
-  margin-bottom: 1rem;
-}
-
-.empty-title {
-  font-size: 1.1rem;
-  color: #666;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.empty-subtitle {
-  font-size: 0.875rem;
-  color: #888;
+  background-color: #F8FAFC;
+  border-radius: 12px;
 }
 
 /* RWD 適配 */
 @media (max-width: 960px) {
   .dashboard-container {
     padding: 1rem;
-}
-  
-  :deep(.v-card) {
-    padding: 1.5rem !important;
-}
-  
-  .user-title {
-    font-size: 1.5rem;
   }
-  
-  .section-title {
-    font-size: 1.25rem;
+
+  .auth-window {
+    height: 500px;
   }
 }
 
 @media (max-width: 600px) {
-  .user-card .v-row {
-    flex-direction: column;
-}
-
-  .user-card .v-col {
-    padding: 0.5rem 0;
-}
-
-  .logout-btn {
-    width: 100%;
-}
-
-  :deep(.v-data-table) {
-    font-size: 0.875rem;
+  :deep(.v-card) {
+    border-radius: 12px !important;
   }
+
+  :deep(.v-data-table-row) {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px !important;
+    margin-bottom: 8px !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  :deep(.v-data-table td) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border: none !important;
+  }
+
+  :deep(.v-data-table td::before) {
+    content: attr(data-label);
+    font-weight: 500 !important;
+    color: #64748B !important;
+  }
+
+  .content-cell {
+    max-width: 100%;
+  }
+
+  .date-cell {
+    justify-content: flex-end;
+  }
+}
+
+/* 動畫效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>

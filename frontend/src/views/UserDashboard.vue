@@ -149,7 +149,7 @@ onMounted(async () => {
       return {
         id: report.reportId || report.report_id || report.id || '未知',
         content: previewContent,
-        date: report.createdAt || report.timestamp || report.created_at || report.date || new Date().toISOString(),
+        date: report.createdAt ? parseInt(report.createdAt) : null,
         rawData: parsedResults,
         originalReport: report // 保存原始報告數據
       };
@@ -205,13 +205,21 @@ const loadGrantedTickets = async () => {
     const response = await healthCheckService.fetchGrantedTickets();
     console.log('載入已授權票據完成:', response);
     
-    if (response.success && response.tickets) {
-      authorizedTickets.value = response.tickets;
+    if (response && response.tickets && Array.isArray(response.tickets)) {
+      authorizedTickets.value = response.tickets.map(ticket => ({
+        id: ticket.reportId,
+        requesterName: ticket.requesterName || '未知請求者',
+        reportId: ticket.reportId,
+        requestTime: parseInt(ticket.grantTime),
+        expiry: parseInt(ticket.expiryTime),
+        status: 'APPROVED',
+        companyName: ticket.companyName || '未知公司'
+      }));
     } else {
       authorizedTickets.value = [];
     }
     
-    
+    console.log('處理後的已授權票據:', authorizedTickets.value);
   } catch (error) {
     console.error('載入已授權票據失敗:', error);
     notifyError(`無法載入已授權票據：${error.message || '未知錯誤'}`);
@@ -270,43 +278,36 @@ const rejectRequest = async (requestId) => {
   }
 };
 
-// 格式化時間戳為日期
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '未設定';
+// 格式化日期顯示
+function formatDate(dateString) {
+  if (!dateString) return '未知日期';
   
   try {
-    console.log('格式化時間戳:', timestamp, typeof timestamp);
-    
-    // 如果是字符串數字，轉為數字
-    if (typeof timestamp === 'string') {
-      timestamp = parseInt(timestamp, 10);
-    }
-    
-    // 確保是以秒為單位的時間戳
-    if (timestamp < 10000000000) {
-      // 如果時間戳是以秒為單位
-      return new Date(timestamp * 1000).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } else {
-      // 如果時間戳是以毫秒為單位
+    // 處理時間戳（秒或毫秒）
+    if (typeof dateString === 'number') {
+      // 檢查是否為秒級時間戳
+      const timestamp = dateString < 10000000000 
+        ? dateString * 1000  // 轉換秒為毫秒
+        : dateString;        // 已經是毫秒
+      
       return new Date(timestamp).toLocaleDateString('zh-TW', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
       });
     }
+    
+    // 處理日期字符串
+    return new Date(dateString).toLocaleDateString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
   } catch (e) {
-    console.error('格式化時間戳失敗:', e, timestamp);
-    return timestamp.toString();
+    console.error('日期格式化錯誤:', e, dateString);
+    return '日期格式錯誤';
   }
-};
+}
 
 // 嘗試將內容解析為JSON對象
 function parseReportContent(content) {
@@ -406,24 +407,6 @@ function isOutsideNormalRange(metric) {
   return metric.status === '偏高' || metric.status === '嚴重偏高' || metric.status === '偏低';
 }
 
-// 格式化日期顯示
-function formatDate(dateString) {
-  if (!dateString) return '未知日期';
-  
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch (e) {
-    return dateString;
-  }
-}
-
 const handleLogout = () => {
   authStore.logout();
 };
@@ -502,7 +485,8 @@ const filteredAccessRequests = computed(() => {
   if (showPendingOnly.value) {
     return accessRequests.value.filter(req => req.status === 'PENDING');
   }
-  return accessRequests.value;
+  // 當顯示已授權時，返回已授權票據
+  return authorizedTickets.value;
 });
 </script>
 
@@ -635,7 +619,7 @@ const filteredAccessRequests = computed(() => {
       <v-row>
         <v-col cols="12">
           <!-- 健康檢查報告卡片 -->
-          <v-card class="mb-6" elevation="0">
+          <v-card class="mb-6 elevation-2 rounded-xl">
             <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
               <div class="d-flex align-center">
                 <v-icon size="24" color="primary" class="me-3">mdi-file-document-outline</v-icon>
@@ -665,18 +649,18 @@ const filteredAccessRequests = computed(() => {
             <v-card-text class="pa-6">
               <v-data-table
                 :headers="[
-                  { title: '報告編號', key: 'id', align: 'start', width: '120px' },
-                  { title: '檢查日期', key: 'date', align: 'center', width: '120px' },
-                  { title: '檢查項目', key: 'items', align: 'start' },
-                  { title: '狀態', key: 'status', align: 'center', width: '100px' },
-                  { title: '操作', key: 'actions', align: 'center', width: '100px' }
+                  { title: '報告編號', key: 'id', align: 'start', width: '150px' },
+                  { title: '檢查日期', key: 'date', align: 'center', width: '150px' },
+                  { title: '檢查類型', key: 'type', align: 'center', width: '150px' },
+                  { title: '操作', key: 'actions', align: 'center', width: '120px' }
                 ]"
                 :items="healthData"
                 :loading="loading"
-                class="elevation-0 mb-0"
+                class="elevation-0"
                 hover
+                density="comfortable"
               >
-                <!-- 健康報告表格內容 -->
+                <!-- 報告編號欄位 -->
                 <template v-slot:item.id="{ item }">
                   <div class="d-flex align-center">
                     <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
@@ -684,6 +668,7 @@ const filteredAccessRequests = computed(() => {
                   </div>
                 </template>
 
+                <!-- 檢查日期欄位 -->
                 <template v-slot:item.date="{ item }">
                   <div class="d-flex align-center justify-center">
                     <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
@@ -691,21 +676,19 @@ const filteredAccessRequests = computed(() => {
                   </div>
                 </template>
 
-                <template v-slot:item.items="{ item }">
-                  <div class="text-truncate">{{ item.content }}</div>
-                </template>
-
-                <template v-slot:item.status="{ item }">
+                <!-- 檢查類型欄位 -->
+                <template v-slot:item.type="{ item }">
                   <v-chip
                     size="small"
-                    :color="item.status === 'normal' ? 'success' : 'warning'"
+                    color="primary"
                     variant="tonal"
                     class="font-weight-medium"
                   >
-                    {{ item.status === 'normal' ? '正常' : '需追蹤' }}
+                    {{ item.type || '一般體檢' }}
                   </v-chip>
                 </template>
 
+                <!-- 操作欄位 -->
                 <template v-slot:item.actions="{ item }">
                   <div class="d-flex gap-2 justify-center">
                     <v-btn
@@ -744,12 +727,13 @@ const filteredAccessRequests = computed(() => {
                   </div>
                 </template>
 
+                <!-- 無資料顯示 -->
                 <template v-slot:no-data>
-                  <div class="d-flex flex-column align-center py-8">
-                    <v-icon size="64" color="grey-lighten-1" class="mb-4">
+                  <div class="text-center pa-5">
+                    <v-icon size="40" color="grey-lighten-1" class="mb-3">
                       mdi-file-document-outline
                     </v-icon>
-                    <div class="text-h6 font-weight-medium text-grey-darken-1">
+                    <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
                       尚無健康檢查報告
                     </div>
                     <div class="text-body-2 text-grey mt-2">
@@ -762,7 +746,7 @@ const filteredAccessRequests = computed(() => {
           </v-card>
 
           <!-- 授權管理卡片 -->
-          <v-card elevation="0">
+          <v-card elevation="2" class="rounded-xl">
             <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
               <div class="d-flex align-center">
                 <v-icon size="24" color="primary" class="me-3">mdi-key-chain</v-icon>
@@ -788,46 +772,60 @@ const filteredAccessRequests = computed(() => {
                   :color="!showPendingOnly ? 'primary' : 'grey'"
                   @click="showPendingOnly = false"
                 >
-                  全部
+                  已授權
                 </v-btn>
               </v-btn-group>
             </v-card-title>
 
             <v-card-text class="pa-6">
               <v-data-table
-                :headers="[
-                  { title: '請求者', key: 'requesterName', align: 'start', width: '200px' },
-                  { title: '報告編號', key: 'reportId', align: 'start', width: '120px' },
+                :headers="showPendingOnly.value ? [
+                  { title: '報告編號', key: 'reportId', align: 'start', width: '150px' },
                   { title: '請求時間', key: 'requestTime', align: 'center', width: '150px' },
-                  { title: '到期日期', key: 'expiry', align: 'center', width: '150px' },
                   { title: '狀態', key: 'status', align: 'center', width: '100px' },
                   { title: '操作', key: 'actions', align: 'center', width: '150px' }
+                ] : [
+                  { title: '報告編號', key: 'reportId', align: 'start', width: '150px' },
+                  { title: '授權時間', key: 'requestTime', align: 'center', width: '150px' },
+                  { title: '到期時間', key: 'expiry', align: 'center', width: '150px' },
+                  { title: '狀態', key: 'status', align: 'center', width: '100px' }
                 ]"
                 :items="filteredAccessRequests"
-                :loading="loadingRequests"
+                :loading="loadingRequests || loadingTickets"
                 class="elevation-0 mb-0"
                 hover
               >
-                <!-- 授權請求表格內容 -->
-                <template v-slot:item.requesterName="{ item }">
+                <!-- 報告編號欄位 -->
+                <template v-slot:item.reportId="{ item }">
                   <div class="d-flex align-center">
-                    <v-avatar size="28" color="primary" class="me-2">
-                      <v-icon color="white" size="16">mdi-account</v-icon>
-                    </v-avatar>
-                    <div class="d-flex flex-column">
-                      <span class="font-weight-medium">{{ item.requesterName }}</span>
-                      <span class="text-caption text-grey">{{ item.companyName }}</span>
-                    </div>
+                    <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                    <span class="font-weight-medium">{{ item.reportId }}</span>
                   </div>
                 </template>
 
+                <!-- 時間欄位 -->
                 <template v-slot:item.requestTime="{ item }">
                   <div class="d-flex align-center justify-center">
                     <v-icon size="16" color="grey" class="me-1">mdi-clock-outline</v-icon>
-                    {{ formatTimestamp(item.requestTime) }}
+                    {{ formatDate(item.requestTime) }}
                   </div>
                 </template>
 
+                <!-- 到期時間欄位 -->
+                <template v-slot:item.expiry="{ item }">
+                  <div class="d-flex align-center justify-center">
+                    <v-chip
+                      size="small"
+                      :color="getExpiryChipColor(item.expiry)"
+                      variant="tonal"
+                      class="font-weight-medium"
+                    >
+                      {{ formatDate(item.expiry) }}
+                    </v-chip>
+                  </div>
+                </template>
+
+                <!-- 狀態欄位 -->
                 <template v-slot:item.status="{ item }">
                   <v-chip
                     size="small"
@@ -839,10 +837,10 @@ const filteredAccessRequests = computed(() => {
                   </v-chip>
                 </template>
 
+                <!-- 操作按鈕欄位 - 只在待處理時顯示 -->
                 <template v-slot:item.actions="{ item }">
-                  <div class="d-flex gap-2 justify-center">
+                  <div v-if="showPendingOnly.value" class="d-flex gap-2 justify-center">
                     <v-btn
-                      v-if="item.status === 'PENDING'"
                       color="success"
                       size="small"
                       variant="tonal"
@@ -852,7 +850,6 @@ const filteredAccessRequests = computed(() => {
                       同意
                     </v-btn>
                     <v-btn
-                      v-if="item.status === 'PENDING'"
                       color="error"
                       size="small"
                       variant="tonal"
@@ -861,15 +858,21 @@ const filteredAccessRequests = computed(() => {
                     >
                       拒絕
                     </v-btn>
-                    <v-btn
-                      v-else
-                      icon="mdi-information"
-                      variant="text"
-                      size="small"
-                      color="grey"
-                    >
-                      <v-tooltip activator="parent" location="top">詳情</v-tooltip>
-                    </v-btn>
+                  </div>
+                </template>
+
+                <!-- 無資料顯示 -->
+                <template v-slot:no-data>
+                  <div class="text-center pa-5">
+                    <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                      mdi-file-document-outline
+                    </v-icon>
+                    <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                      {{ showPendingOnly.value ? '無待處理請求' : '無已授權報告' }}
+                    </div>
+                    <div class="text-body-2 text-grey mt-2">
+                      {{ showPendingOnly.value ? '目前沒有待處理的授權請求' : '目前沒有已授權的報告' }}
+                    </div>
                   </div>
                 </template>
               </v-data-table>

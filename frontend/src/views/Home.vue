@@ -5,6 +5,7 @@
       <v-container>
         <v-row align="center" justify="center">
           <v-col cols="12" md="8" class="text-center">
+            <h1 class="hero-title mb-6">MedledgerAI</h1>
             <h1 class="hero-title mb-6">智慧守護，鏈接健康未來</h1>
             <p class="hero-desc mb-8">
               結合 AI 與區塊鏈技術，打造安全可信的健康數據平台
@@ -27,7 +28,6 @@
                 <v-icon right class="ml-2">mdi-arrow-right</v-icon>
               </v-btn>
             </div>
-            <p class="start-desc mt-2">開始管理你的健康數據</p>
             
             <!-- 區塊鏈動畫 -->
             <div class="blockchain-animation">

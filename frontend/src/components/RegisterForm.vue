@@ -7,8 +7,7 @@
             <v-card class="register-card" elevation="0">
               <!-- 頂部標題區 -->
               <div class="header-section">
-                <h1 class="header-title">企業帳號註冊</h1>
-                <p class="header-subtitle">安全、便捷的醫療數據管理解決方案</p>
+                <h1 class="header-title">註冊</h1>
               </div>
               
               <!-- 系統訊息提示 -->
@@ -19,15 +18,15 @@
                 :icon="alertInfo.icon"
                 closable
                 border
-                class="ma-4"
+                class="ma-2"
                 @click:close="alertInfo.show = false"
               >
                 {{ alertInfo.message }}
               </v-alert>
               
-              <v-card-text class="pt-6">
+              <v-card-text class="pt-2">
                 <!-- 步驟指示器 -->
-                <div class="steps-indicator mb-6">
+                <div class="steps-indicator mb-4">
                   <div 
                     v-for="(step, idx) in steps" 
                     :key="step.value"
@@ -853,14 +852,14 @@ const steps = [
 .register-page {
   background-color: #F9F7F4;
   min-height: calc(100vh - 64px);
-  padding: 2rem 1rem;
+  padding: 1rem;
 }
 
 /* 註冊卡片 */
 .register-card {
   border-radius: 24px !important;
   background: white !important;
-  padding: 2.5rem !important;
+  padding: 1.5rem !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
@@ -868,11 +867,11 @@ const steps = [
 /* 頂部標題區 */
 .header-section {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .header-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 900;
   color: #111827;
   margin: 0;
@@ -1215,7 +1214,7 @@ const steps = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 2rem auto;
+  margin: 1rem auto;
   padding: 0;
   width: 100%;
   max-width: 600px;
@@ -1233,15 +1232,15 @@ const steps = [
 }
 
 .step-circle {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid #e5e7eb;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   color: #888;
@@ -1268,7 +1267,7 @@ const steps = [
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .step.active .step-label {

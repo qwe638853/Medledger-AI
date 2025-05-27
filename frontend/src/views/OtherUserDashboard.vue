@@ -270,23 +270,35 @@ const sendAuthRequest = async () => {
   requestLoading.value = true;
   try {
     // 使用 requestReportAccess 函數發送授權請求
-    await healthCheckService.requestReportAccess(
+    const result = await healthCheckService.requestReportAccess(
       selectedReport.value.id,
       patientId.value,
       authReason.value,
       authExpiry.value
     );
 
-    authRequestDialog.value = false;
-    snackbarMessage.value = '已送出授權請求';
-    snackbarColor.value = 'success';
-    snackbar.value = true;
-    
-    // 授權請求成功後重新獲取報告
-    await fetchReportsByPatientId(patientId.value);
+    if (result && result.success) {
+      authRequestDialog.value = false;
+      snackbarMessage.value = '已成功送出授權請求';
+      snackbarColor.value = 'success';
+      snackbar.value = true;
+      
+      // 授權請求成功後重新獲取報告和請求列表
+      await Promise.all([
+        fetchReportsByPatientId(patientId.value),
+        fetchMyAccessRequests()
+      ]);
+      
+      // 更新儀表板數據
+      dashboardStats.value.pendingRequests = pendingRequests.value.length;
+    } else {
+      throw new Error(result.message || '授權請求失敗');
+    }
   } catch (error) {
     console.error('發送授權請求時出錯:', error);
-    // 錯誤訊息已在服務層處理
+    snackbarMessage.value = error.message || '發送授權請求失敗';
+    snackbarColor.value = 'error';
+    snackbar.value = true;
   } finally {
     requestLoading.value = false;
   }
@@ -1341,6 +1353,68 @@ const getRequestStatusInfo = (status) => {
           ></v-btn>
         </template>
       </v-snackbar>
+
+      <!-- 授權請求對話框 -->
+      <v-dialog v-model="authRequestDialog" max-width="500">
+        <v-card class="rounded-lg">
+          <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
+            <v-icon size="24" color="primary" class="me-3">mdi-key-chain</v-icon>
+            <span class="text-h6 font-weight-bold">請求授權</span>
+          </v-card-title>
+
+          <v-card-text class="pa-6">
+            <v-form @submit.prevent="sendAuthRequest">
+              <div class="mb-4">
+                <div class="text-subtitle-1 font-weight-medium mb-2">報告編號</div>
+                <div class="text-body-1">{{ selectedReport?.id || '未知' }}</div>
+              </div>
+
+              <v-textarea
+                v-model="authReason"
+                label="授權理由"
+                placeholder="請說明需要授權的原因..."
+                :rules="[v => !!v || '請填寫授權理由']"
+                rows="3"
+                class="mb-4"
+                hide-details="auto"
+                variant="outlined"
+                density="comfortable"
+              ></v-textarea>
+
+              <v-text-field
+                v-model="authExpiry"
+                label="授權到期日"
+                type="date"
+                :rules="[v => !!v || '請選擇到期日']"
+                class="mb-4"
+                hide-details="auto"
+                variant="outlined"
+                density="comfortable"
+              ></v-text-field>
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions class="pa-6 pt-0">
+            <v-spacer></v-spacer>
+            <v-btn
+              color="grey-darken-1"
+              variant="outlined"
+              @click="authRequestDialog = false"
+              :disabled="requestLoading"
+            >
+              取消
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="sendAuthRequest"
+              :loading="requestLoading"
+              :disabled="requestLoading"
+            >
+              送出請求
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </div>
 </template>

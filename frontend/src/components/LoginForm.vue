@@ -8,8 +8,7 @@
               <v-card class="login-card" elevation="0">
                 <!-- 頂部標題區 -->
                 <div class="header-section">
-                  <h1 class="header-title">企業健康數據管理平台</h1>
-                  <p class="header-subtitle">安全、便捷的醫療數據管理解決方案</p>
+                  <h1 class="header-title">登入</h1>
                 </div>
             
             <!-- 系統訊息提示 -->

@@ -13,7 +13,7 @@
     </v-navigation-drawer>
 
     <v-app-bar app class="brand-app-bar" flat>
-      <v-container class="px-4">
+      <div class="px-4 w-100">
         <div class="d-flex align-center">
           <router-link to="/" class="d-flex align-center text-decoration-none">
             <v-img
@@ -23,7 +23,7 @@
               height="40"
               class="logo-image"
             />
-            <span class="brand-title ml-3">智療鏈</span>
+            <span class="brand-title">Medledger AI</span>
           </router-link>
           
           <v-spacer />
@@ -33,7 +33,7 @@
             <v-btn text class="nav-link mx-2" @click="scrollToSection('contact-section')">聯絡資訊</v-btn>
           </nav>
         </div>
-      </v-container>
+      </div>
     </v-app-bar>
 
     <v-main>
@@ -106,6 +106,15 @@ body, #app, .v-application, .v-app {
   background: #F9F7F4 !important;
   border-bottom: 1px solid #e5e7eb;
   height: 80px !important;
+}
+
+.brand-app-bar :deep(.v-toolbar__content) {
+  padding: 0;
+}
+
+.brand-app-bar :deep(.v-container) {
+  padding-left: 16px !important;
+  padding-right: 16px !important;
 }
 
 .logo-image {

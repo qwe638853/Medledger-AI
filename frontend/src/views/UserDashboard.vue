@@ -283,12 +283,17 @@ function formatDate(dateString) {
   if (!dateString) return '未知日期';
   
   try {
-    // 處理時間戳（秒或毫秒）
-    if (typeof dateString === 'number') {
+    let timestamp;
+    
+    // 處理數字或字符串形式的時間戳
+    if (typeof dateString === 'number' || !isNaN(Number(dateString))) {
+      // 將字符串轉換為數字
+      const numericTimestamp = Number(dateString);
+      
       // 檢查是否為秒級時間戳
-      const timestamp = dateString < 10000000000 
-        ? dateString * 1000  // 轉換秒為毫秒
-        : dateString;        // 已經是毫秒
+      timestamp = numericTimestamp < 10000000000 
+        ? numericTimestamp * 1000  // 轉換秒為毫秒
+        : numericTimestamp;        // 已經是毫秒
       
       return new Date(timestamp).toLocaleDateString('zh-TW', {
         year: 'numeric',
@@ -297,14 +302,14 @@ function formatDate(dateString) {
       });
     }
     
-    // 處理日期字符串
+    // 如果不是有效的時間戳，嘗試作為一般日期字符串處理
     return new Date(dateString).toLocaleDateString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
     });
   } catch (e) {
-    console.error('日期格式化錯誤:', e, dateString);
+    console.error('日期格式化錯誤:', e, '輸入值:', dateString, '類型:', typeof dateString);
     return '日期格式錯誤';
   }
 }
@@ -488,6 +493,16 @@ const filteredAccessRequests = computed(() => {
   // 當顯示已授權時，返回已授權票據
   return authorizedTickets.value;
 });
+
+// 新增計算剩餘天數的函數
+const getRemainingDays = (expiry) => {
+  if (!expiry) return '-';
+  const now = Math.floor(Date.now() / 1000);
+  const days = Math.ceil((expiry - now) / (24 * 60 * 60));
+  if (days < 0) return '已過期';
+  if (days === 0) return '今日到期';
+  return `剩餘 ${days} 天`;
+};
 </script>
 
 <template>
@@ -779,21 +794,50 @@ const filteredAccessRequests = computed(() => {
 
             <v-card-text class="pa-6">
               <v-data-table
-                :headers="showPendingOnly.value ? [
-                  { title: '報告編號', key: 'reportId', align: 'start', width: '150px' },
-                  { title: '請求時間', key: 'requestTime', align: 'center', width: '150px' },
-                  { title: '狀態', key: 'status', align: 'center', width: '100px' },
-                  { title: '操作', key: 'actions', align: 'center', width: '150px' }
-                ] : [
-                  { title: '報告編號', key: 'reportId', align: 'start', width: '150px' },
-                  { title: '授權時間', key: 'requestTime', align: 'center', width: '150px' },
-                  { title: '到期時間', key: 'expiry', align: 'center', width: '150px' },
-                  { title: '狀態', key: 'status', align: 'center', width: '100px' }
+                :headers="[
+                  { 
+                    title: '報告編號',
+                    key: 'reportId',
+                    align: 'start',
+                    width: '120px'
+                  },
+                  { 
+                    title: '請求者',
+                    key: 'requesterName',
+                    align: 'start',
+                    width: '150px'
+                  },
+                  { 
+                    title: '授權理由',
+                    key: 'reason',
+                    align: 'start'
+                  },
+                  { 
+                    title: '申請日期',
+                    key: 'requestTime',
+                    align: 'center',
+                    width: '120px'
+                  },
+                  { 
+                    title: '到期日期',
+                    key: 'expiry',
+                    align: 'center',
+                    width: '120px'
+                  },
+                  { 
+                    title: '操作',
+                    key: 'actions',
+                    align: 'center',
+                    width: '180px',
+                    sortable: false
+                  }
                 ]"
                 :items="filteredAccessRequests"
-                :loading="loadingRequests || loadingTickets"
-                class="elevation-0 mb-0"
+                :loading="showPendingOnly ? loadingRequests : loadingTickets"
+                :loading-text="showPendingOnly ? '正在載入授權請求...' : '正在載入已授權報告...'"
+                class="elevation-0"
                 hover
+                density="comfortable"
               >
                 <!-- 報告編號欄位 -->
                 <template v-slot:item.reportId="{ item }">
@@ -803,61 +847,94 @@ const filteredAccessRequests = computed(() => {
                   </div>
                 </template>
 
-                <!-- 時間欄位 -->
-                <template v-slot:item.requestTime="{ item }">
-                  <div class="d-flex align-center justify-center">
-                    <v-icon size="16" color="grey" class="me-1">mdi-clock-outline</v-icon>
-                    {{ formatDate(item.requestTime) }}
+                <!-- 請求者欄位 -->
+                <template v-slot:item.requesterName="{ item }">
+                  <div class="d-flex align-center">
+                    <v-avatar size="28" color="primary" class="me-2">
+                      <v-icon color="white" size="16">mdi-account</v-icon>
+                    </v-avatar>
+                    <div class="d-flex flex-column">
+                      <span class="font-weight-medium">{{ item.requesterName }}</span>
+                      <span class="text-caption text-grey">{{ item.companyName }}</span>
+                    </div>
                   </div>
                 </template>
 
-                <!-- 到期時間欄位 -->
-                <template v-slot:item.expiry="{ item }">
+                <!-- 授權理由欄位 -->
+                <template v-slot:item.reason="{ item }">
+                  <div class="text-body-2">{{ item.reason || '無' }}</div>
+                </template>
+
+                <!-- 申請日期欄位 -->
+                <template v-slot:item.requestTime="{ item }">
                   <div class="d-flex align-center justify-center">
+                    <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
+                    {{ formatDate(item.requestTime || item.grantTime) }}
+                  </div>
+                </template>
+
+                <!-- 到期日期欄位 -->
+                <template v-slot:item.expiry="{ item }">
+                  <div v-if="item.expiry" class="d-flex align-center justify-center">
                     <v-chip
                       size="small"
                       :color="getExpiryChipColor(item.expiry)"
                       variant="tonal"
                       class="font-weight-medium"
                     >
-                      {{ formatDate(item.expiry) }}
+                      {{ getRemainingDays(item.expiry) }}
                     </v-chip>
                   </div>
+                  <span v-else>-</span>
                 </template>
 
-                <!-- 狀態欄位 -->
-                <template v-slot:item.status="{ item }">
-                  <v-chip
-                    size="small"
-                    :color="getStatusColor(item.status)"
-                    variant="tonal"
-                    class="font-weight-medium"
-                  >
-                    {{ getStatusText(item.status) }}
-                  </v-chip>
-                </template>
-
-                <!-- 操作按鈕欄位 - 只在待處理時顯示 -->
+                <!-- 操作按鈕欄位 -->
                 <template v-slot:item.actions="{ item }">
-                  <div v-if="showPendingOnly.value" class="d-flex gap-2 justify-center">
-                    <v-btn
-                      color="success"
+                  <div class="d-flex gap-2 justify-center">
+                    <template v-if="item.status === 'PENDING'">
+                      <v-btn
+                        :loading="authProcessing"
+                        @click="approveRequest(item.id)"
+                        color="success"
+                        variant="flat"
+                        size="small"
+                        class="modern-btn approve-btn"
+                        elevation="0"
+                      >
+                        <template v-slot:prepend>
+                          <v-icon size="18">mdi-check-circle-outline</v-icon>
+                        </template>
+                        授權
+                      </v-btn>
+                      <v-btn
+                        :loading="authProcessing"
+                        @click="rejectRequest(item.id)"
+                        color="error"
+                        variant="flat"
+                        size="small"
+                        class="modern-btn reject-btn"
+                        elevation="0"
+                      >
+                        <template v-slot:prepend>
+                          <v-icon size="18">mdi-close-circle-outline</v-icon>
+                        </template>
+                        拒絕
+                      </v-btn>
+                    </template>
+                    <v-chip
+                      v-else
+                      :color="getStatusColor(item.status || 'APPROVED')"
                       size="small"
-                      variant="tonal"
-                      :loading="authProcessing"
-                      @click="approveRequest(item.id)"
+                      class="status-chip"
+                      variant="flat"
                     >
-                      同意
-                    </v-btn>
-                    <v-btn
-                      color="error"
-                      size="small"
-                      variant="tonal"
-                      :loading="authProcessing"
-                      @click="rejectRequest(item.id)"
-                    >
-                      拒絕
-                    </v-btn>
+                      <template v-slot:prepend>
+                        <v-icon size="16" :color="getStatusColor(item.status || 'APPROVED')">
+                          {{ item.status === 'REJECTED' ? 'mdi-close-circle' : 'mdi-check-circle' }}
+                        </v-icon>
+                      </template>
+                      {{ getStatusText(item.status || 'APPROVED') }}
+                    </v-chip>
                   </div>
                 </template>
 
@@ -868,10 +945,10 @@ const filteredAccessRequests = computed(() => {
                       mdi-file-document-outline
                     </v-icon>
                     <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
-                      {{ showPendingOnly.value ? '無待處理請求' : '無已授權報告' }}
+                      {{ showPendingOnly ? '無待處理請求' : '無已授權報告' }}
                     </div>
                     <div class="text-body-2 text-grey mt-2">
-                      {{ showPendingOnly.value ? '目前沒有待處理的授權請求' : '目前沒有已授權的報告' }}
+                      {{ showPendingOnly ? '目前沒有待處理的授權請求' : '目前沒有已授權的報告' }}
                     </div>
                   </div>
                 </template>
@@ -1063,5 +1140,93 @@ const filteredAccessRequests = computed(() => {
 .view-report-btn:active,
 .share-btn:active {
   transform: scale(0.95) !important;
+}
+
+/* 現代化按鈕基礎樣式 */
+.modern-btn {
+  min-width: 86px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  text-transform: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden !important;
+}
+
+/* 授權按鈕特殊樣式 */
+.approve-btn {
+  background-color: rgb(var(--v-theme-success), 0.12) !important;
+  color: rgb(var(--v-theme-success)) !important;
+  border: 1px solid rgb(var(--v-theme-success), 0.1) !important;
+}
+
+.approve-btn:hover {
+  background-color: rgb(var(--v-theme-success), 0.18) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(var(--v-theme-success), 0.15) !important;
+}
+
+/* 拒絕按鈕特殊樣式 */
+.reject-btn {
+  background-color: rgb(var(--v-theme-error), 0.12) !important;
+  color: rgb(var(--v-theme-error)) !important;
+  border: 1px solid rgb(var(--v-theme-error), 0.1) !important;
+}
+
+.reject-btn:hover {
+  background-color: rgb(var(--v-theme-error), 0.18) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(var(--v-theme-error), 0.15) !important;
+}
+
+/* 按鈕點擊效果 */
+.modern-btn:active {
+  transform: scale(0.96) !important;
+  box-shadow: none !important;
+}
+
+/* 狀態標籤樣式 */
+.status-chip {
+  min-width: 86px !important;
+  height: 32px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  border: 1px solid rgba(var(--v-theme-primary), 0.1) !important;
+}
+
+/* 按鈕圖標樣式 */
+.modern-btn .v-icon {
+  margin-right: 4px !important;
+  transition: transform 0.2s ease !important;
+}
+
+.modern-btn:hover .v-icon {
+  transform: scale(1.1) !important;
+}
+
+/* 載入狀態樣式 */
+.modern-btn.v-btn--loading {
+  opacity: 0.8;
+}
+
+/* RWD 適配 */
+@media (max-width: 600px) {
+  .modern-btn {
+    min-width: 72px !important;
+    height: 28px !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .modern-btn .v-icon {
+    font-size: 16px !important;
+  }
+  
+  .status-chip {
+    min-width: 72px !important;
+    height: 28px !important;
+    font-size: 0.8rem !important;
+  }
 }
 </style>

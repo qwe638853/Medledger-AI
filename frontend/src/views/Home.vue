@@ -26,17 +26,22 @@
     <!-- Features Section -->
     <section class="features-section" id="features">
       <v-container>
-        <v-row justify="center" align="stretch" class="feature-grid">
-          <v-col cols="12" sm="6" v-for="(feature, index) in features" :key="feature.title" :class="{ 'span-2': index === 3 }">
-            <v-card class="feature-card" elevation="0">
-              <v-card-text class="feature-info-row">
-                <v-icon size="40" :color="feature.iconColor" class="feature-icon">{{ feature.icon }}</v-icon>
-                <h3 class="feature-title ml-2">{{ feature.title }}</h3>
-                <span class="feature-desc ml-4">{{ feature.desc }}</span>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+        <div class="features-two-col">
+          <div class="features-list-col">
+            <div class="feature-list">
+              <div v-for="(feature, index) in features" :key="feature.title" class="feature-list-item">
+                <v-icon :size="36" :color="feature.iconColor" class="feature-list-icon">{{ feature.icon }}</v-icon>
+                <div class="feature-list-text">
+                  <div class="feature-list-title">{{ feature.title }}</div>
+                  <div class="feature-list-desc">{{ feature.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="features-illustration-col">
+            <img :src="featureImg" alt="醫療科技插圖" class="features-illustration" />
+          </div>
+        </div>
       </v-container>
     </section>
 
@@ -136,6 +141,7 @@
 <script setup>
 import { ref } from 'vue';
 import aboutImg from '@/assets/image.jpg';
+import featureImg from '@/assets/image2.svg';
 
 const props = defineProps({
   userRole: { type: String, default: null },
@@ -564,5 +570,92 @@ function scrollToSection(sectionId) {
   display: flex;
   align-items: center;
   min-height: 80px;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 2rem 0 3rem 0;
+}
+.feature-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: transparent;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+}
+.feature-list-item:hover {
+  background: #f3f3f3;
+}
+.feature-list-icon {
+  min-width: 36px;
+  min-height: 36px;
+  transition: transform 0.18s;
+}
+.feature-list-item:hover .feature-list-icon {
+  transform: translateX(4px);
+}
+.feature-list-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.feature-list-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 0.2rem;
+}
+.feature-list-desc {
+  font-size: 1rem;
+  color: #888;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.features-two-col {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+.features-list-col {
+  flex: 1 1 0%;
+}
+.features-illustration-col {
+  flex: 0 0 800px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+}
+.features-illustration {
+  max-width: 100%;
+  max-height: 600px;
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 18px;
+}
+@media (max-width: 900px) {
+  .features-two-col {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2.5rem;
+  }
+  .features-illustration-col {
+    max-width: 100%;
+    margin-top: 2rem;
+    justify-content: flex-start;
+  }
+  .features-illustration {
+    margin: 0 auto;
+  }
 }
 </style>

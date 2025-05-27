@@ -22,27 +22,114 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ndata.proto\x12\x06health\"Y\n\x13UploadReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x14\n\x0cpatient_hash\x18\x02 \x01(\t\x12\x19\n\x11test_results_json\x18\x03 \x01(\t\"\'\n\x14UploadReportResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"\'\n\x12\x43laimReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\"&\n\x13\x43laimReportResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"&\n\x11ReadReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\",\n\x12ReadReportResponse\x12\x16\n\x0ereport_content\x18\x01 \x01(\t2\xe7\x01\n\rHealthService\x12I\n\x0cUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\x12\x46\n\x0b\x43laimReport\x12\x1a.health.ClaimReportRequest\x1a\x1b.health.ClaimReportResponse\x12\x43\n\nReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\ndata.proto\x12\x06health\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\"T\n\x13UploadReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12\x19\n\x11test_results_json\x18\x03 \x01(\t\"8\n\x14UploadReportResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\'\n\x12\x43laimReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\"7\n\x13\x43laimReportResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"&\n\x11ReadReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\"=\n\x12ReadReportResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x16\n\x0ereport_content\x18\x02 \x01(\t\"1\n\x0cLoginRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\"@\n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\r\n\x05token\x18\x03 \x01(\t\"r\n\x13RegisterUserRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x04 \x01(\t\x12\r\n\x05\x65mail\x18\x05 \x01(\t\x12\r\n\x05phone\x18\x06 \x01(\t\"\x8a\x01\n\x16RegisterInsurerRequest\x12\x12\n\ninsurer_id\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x14\n\x0c\x63ompany_name\x18\x03 \x01(\t\x12\x16\n\x0e\x63ontact_person\x18\x04 \x01(\t\x12\r\n\x05\x65mail\x18\x05 \x01(\t\x12\r\n\x05phone\x18\x06 \x01(\t\"4\n\x10RegisterResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"m\n\x06Report\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x11\n\tclinic_id\x18\x02 \x01(\t\x12\x14\n\x0cpatient_hash\x18\x03 \x01(\t\x12\x13\n\x0bresult_json\x18\x04 \x01(\t\x12\x12\n\ncreated_at\x18\x05 \x01(\x03\"8\n\x15ListMyReportsResponse\x12\x1f\n\x07reports\x18\x01 \x03(\x0b\x32\x0e.health.Report\"]\n\x14RequestAccessRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x12\n\npatient_id\x18\x02 \x01(\t\x12\x0e\n\x06reason\x18\x03 \x01(\t\x12\x0e\n\x06\x65xpiry\x18\x04 \x01(\x03\"<\n\x15RequestAccessResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"\xa7\x01\n\rAccessRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x11\n\treport_id\x18\x02 \x01(\t\x12\x14\n\x0cpatient_hash\x18\x03 \x01(\t\x12\x13\n\x0btarget_hash\x18\x04 \x01(\t\x12\x0e\n\x06reason\x18\x05 \x01(\t\x12\x14\n\x0crequested_at\x18\x06 \x01(\x03\x12\x0e\n\x06\x65xpiry\x18\x07 \x01(\x03\x12\x0e\n\x06status\x18\x08 \x01(\t\"E\n\x1aListAccessRequestsResponse\x12\'\n\x08requests\x18\x01 \x03(\x0b\x32\x15.health.AccessRequest\"1\n\x1b\x41pproveAccessRequestRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"@\n\x1c\x41pproveAccessRequestResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"0\n\x1aRejectAccessRequestRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"?\n\x1bRejectAccessRequestResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"k\n\x1dInsurerDashboardStatsResponse\x12\x18\n\x10total_authorized\x18\x01 \x01(\x05\x12\x18\n\x10pending_requests\x18\x02 \x01(\x05\x12\x16\n\x0etotal_patients\x18\x03 \x01(\x05\"h\n\x10\x41uthorizedReport\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x12\n\npatient_id\x18\x02 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x04 \x01(\t\x12\x0e\n\x06\x65xpiry\x18\x05 \x01(\t\"J\n\x1dListAuthorizedReportsResponse\x12)\n\x07reports\x18\x01 \x03(\x0b\x32\x18.health.AuthorizedReport\"&\n\x10PatientIDRequest\x12\x12\n\npatient_id\x18\x01 \x01(\t\"F\n\nReportMeta\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x11\n\tclinic_id\x18\x02 \x01(\t\x12\x12\n\ncreated_at\x18\x03 \x01(\x03\"=\n\x16ListReportMetaResponse\x12#\n\x07reports\x18\x01 \x03(\x0b\x32\x12.health.ReportMeta\"`\n\x1a\x41nalyzeHealthReportRequest\x12\x11\n\treport_id\x18\x01 \x01(\t\x12\x14\n\x0cpatient_hash\x18\x02 \x01(\t\x12\x19\n\x11test_results_json\x18\x03 \x01(\t\"\x97\x01\n\x1aUserHealthAnalysisResponse\x12\x0f\n\x07summary\x18\x01 \x01(\t\x12\x0e\n\x06\x61\x64vice\x18\x02 \x01(\t\x12\x14\n\x07success\x18\x03 \x01(\x08H\x00\x88\x01\x01\x12\x1f\n\x12recommended_policy\x18\x04 \x01(\tH\x01\x88\x01\x01\x42\n\n\x08_successB\x15\n\x13_recommended_policy\"\xd3\x01\n\x1dInsurerHealthAnalysisResponse\x12\x0f\n\x07summary\x18\x01 \x01(\t\x12\x0f\n\x07metrics\x18\x02 \x01(\t\x12\x1b\n\x05risks\x18\x03 \x03(\x0b\x32\x0c.health.Risk\x12\x13\n\x0bpolicy_type\x18\x04 \x01(\t\x12\x14\n\x07success\x18\x05 \x01(\x08H\x00\x88\x01\x01\x12\"\n\x15insurance_suitability\x18\x06 \x01(\tH\x01\x88\x01\x01\x42\n\n\x08_successB\x18\n\x16_insurance_suitability\"<\n\x04Risk\x12\x0f\n\x07\x64isease\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0e\n\x06impact\x18\x03 \x01(\t*>\n\x13\x41\x63\x63\x65ssRequestStatus\x12\x0b\n\x07PENDING\x10\x00\x12\x0c\n\x08\x41PPROVED\x10\x01\x12\x0c\n\x08REJECTED\x10\x02\x32\x8e\x0e\n\rHealthService\x12`\n\x0cUploadReport\x12\x1b.health.UploadReportRequest\x1a\x1c.health.UploadReportResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\"\n/v1/upload:\x01*\x12\\\n\x0b\x43laimReport\x12\x1a.health.ClaimReportRequest\x1a\x1b.health.ClaimReportResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/claim:\x01*\x12\x63\n\nReadReport\x12\x19.health.ReadReportRequest\x1a\x1a.health.ReadReportResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/report/{report_id}\x12J\n\x05Login\x12\x14.health.LoginRequest\x1a\x15.health.LoginResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\"\t/v1/login:\x01*\x12\x63\n\x0cRegisterUser\x12\x1b.health.RegisterUserRequest\x1a\x18.health.RegisterResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\"\x11/v1/register/user:\x01*\x12l\n\x0fRegisterInsurer\x12\x1e.health.RegisterInsurerRequest\x1a\x18.health.RegisterResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\"\x14/v1/register/insurer:\x01*\x12[\n\rListMyReports\x12\x16.google.protobuf.Empty\x1a\x1d.health.ListMyReportsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\x0b/v1/reports\x12k\n\rRequestAccess\x12\x1c.health.RequestAccessRequest\x1a\x1d.health.RequestAccessResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\"\x12/v1/access/request:\x01*\x12m\n\x12ListAccessRequests\x12\x16.google.protobuf.Empty\x1a\".health.ListAccessRequestsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/access/requests\x12\x80\x01\n\x14\x41pproveAccessRequest\x12#.health.ApproveAccessRequestRequest\x1a$.health.ApproveAccessRequestResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\"\x12/v1/access/approve:\x01*\x12|\n\x13RejectAccessRequest\x12\".health.RejectAccessRequestRequest\x1a#.health.RejectAccessRequestResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\"\x11/v1/access/reject:\x01*\x12x\n\x18GetInsurerDashboardStats\x12\x16.google.protobuf.Empty\x1a%.health.InsurerDashboardStatsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/dashboard/summary\x12v\n\x15ListAuthorizedReports\x12\x16.google.protobuf.Empty\x1a%.health.ListAuthorizedReportsResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/reports/authorized\x12|\n\x19ListReportMetaByPatientID\x12\x18.health.PatientIDRequest\x1a\x1e.health.ListReportMetaResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/reports/meta/{patient_id}\x12\x81\x01\n\x1a\x41nalyzeHealthReportForUser\x12\".health.AnalyzeHealthReportRequest\x1a\".health.UserHealthAnalysisResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\"\x10/v1/analyze/user:\x01*\x12\x8a\x01\n\x1d\x41nalyzeHealthReportForInsurer\x12\".health.AnalyzeHealthReportRequest\x1a%.health.InsurerHealthAnalysisResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\"\x13/v1/analyze/insurer:\x01*B\x17Z\x15sdk_test/proto;healthb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'data_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_UPLOADREPORTREQUEST']._serialized_start=22
-  _globals['_UPLOADREPORTREQUEST']._serialized_end=111
-  _globals['_UPLOADREPORTRESPONSE']._serialized_start=113
-  _globals['_UPLOADREPORTRESPONSE']._serialized_end=152
-  _globals['_CLAIMREPORTREQUEST']._serialized_start=154
-  _globals['_CLAIMREPORTREQUEST']._serialized_end=193
-  _globals['_CLAIMREPORTRESPONSE']._serialized_start=195
-  _globals['_CLAIMREPORTRESPONSE']._serialized_end=233
-  _globals['_READREPORTREQUEST']._serialized_start=235
-  _globals['_READREPORTREQUEST']._serialized_end=273
-  _globals['_READREPORTRESPONSE']._serialized_start=275
-  _globals['_READREPORTRESPONSE']._serialized_end=319
-  _globals['_HEALTHSERVICE']._serialized_start=322
-  _globals['_HEALTHSERVICE']._serialized_end=553
+  _globals['DESCRIPTOR']._loaded_options = None
+  _globals['DESCRIPTOR']._serialized_options = b'Z\025sdk_test/proto;health'
+  _globals['_HEALTHSERVICE'].methods_by_name['UploadReport']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['UploadReport']._serialized_options = b'\202\323\344\223\002\017\"\n/v1/upload:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['ClaimReport']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ClaimReport']._serialized_options = b'\202\323\344\223\002\016\"\t/v1/claim:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['ReadReport']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ReadReport']._serialized_options = b'\202\323\344\223\002\030\022\026/v1/report/{report_id}'
+  _globals['_HEALTHSERVICE'].methods_by_name['Login']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['Login']._serialized_options = b'\202\323\344\223\002\016\"\t/v1/login:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['RegisterUser']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['RegisterUser']._serialized_options = b'\202\323\344\223\002\026\"\021/v1/register/user:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['RegisterInsurer']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['RegisterInsurer']._serialized_options = b'\202\323\344\223\002\031\"\024/v1/register/insurer:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['ListMyReports']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ListMyReports']._serialized_options = b'\202\323\344\223\002\r\022\013/v1/reports'
+  _globals['_HEALTHSERVICE'].methods_by_name['RequestAccess']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['RequestAccess']._serialized_options = b'\202\323\344\223\002\027\"\022/v1/access/request:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['ListAccessRequests']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ListAccessRequests']._serialized_options = b'\202\323\344\223\002\025\022\023/v1/access/requests'
+  _globals['_HEALTHSERVICE'].methods_by_name['ApproveAccessRequest']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ApproveAccessRequest']._serialized_options = b'\202\323\344\223\002\027\"\022/v1/access/approve:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['RejectAccessRequest']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['RejectAccessRequest']._serialized_options = b'\202\323\344\223\002\026\"\021/v1/access/reject:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['GetInsurerDashboardStats']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['GetInsurerDashboardStats']._serialized_options = b'\202\323\344\223\002\027\022\025/v1/dashboard/summary'
+  _globals['_HEALTHSERVICE'].methods_by_name['ListAuthorizedReports']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ListAuthorizedReports']._serialized_options = b'\202\323\344\223\002\030\022\026/v1/reports/authorized'
+  _globals['_HEALTHSERVICE'].methods_by_name['ListReportMetaByPatientID']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['ListReportMetaByPatientID']._serialized_options = b'\202\323\344\223\002\037\022\035/v1/reports/meta/{patient_id}'
+  _globals['_HEALTHSERVICE'].methods_by_name['AnalyzeHealthReportForUser']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['AnalyzeHealthReportForUser']._serialized_options = b'\202\323\344\223\002\025\"\020/v1/analyze/user:\001*'
+  _globals['_HEALTHSERVICE'].methods_by_name['AnalyzeHealthReportForInsurer']._loaded_options = None
+  _globals['_HEALTHSERVICE'].methods_by_name['AnalyzeHealthReportForInsurer']._serialized_options = b'\202\323\344\223\002\030\"\023/v1/analyze/insurer:\001*'
+  _globals['_ACCESSREQUESTSTATUS']._serialized_start=2647
+  _globals['_ACCESSREQUESTSTATUS']._serialized_end=2709
+  _globals['_UPLOADREPORTREQUEST']._serialized_start=81
+  _globals['_UPLOADREPORTREQUEST']._serialized_end=165
+  _globals['_UPLOADREPORTRESPONSE']._serialized_start=167
+  _globals['_UPLOADREPORTRESPONSE']._serialized_end=223
+  _globals['_CLAIMREPORTREQUEST']._serialized_start=225
+  _globals['_CLAIMREPORTREQUEST']._serialized_end=264
+  _globals['_CLAIMREPORTRESPONSE']._serialized_start=266
+  _globals['_CLAIMREPORTRESPONSE']._serialized_end=321
+  _globals['_READREPORTREQUEST']._serialized_start=323
+  _globals['_READREPORTREQUEST']._serialized_end=361
+  _globals['_READREPORTRESPONSE']._serialized_start=363
+  _globals['_READREPORTRESPONSE']._serialized_end=424
+  _globals['_LOGINREQUEST']._serialized_start=426
+  _globals['_LOGINREQUEST']._serialized_end=475
+  _globals['_LOGINRESPONSE']._serialized_start=477
+  _globals['_LOGINRESPONSE']._serialized_end=541
+  _globals['_REGISTERUSERREQUEST']._serialized_start=543
+  _globals['_REGISTERUSERREQUEST']._serialized_end=657
+  _globals['_REGISTERINSURERREQUEST']._serialized_start=660
+  _globals['_REGISTERINSURERREQUEST']._serialized_end=798
+  _globals['_REGISTERRESPONSE']._serialized_start=800
+  _globals['_REGISTERRESPONSE']._serialized_end=852
+  _globals['_REPORT']._serialized_start=854
+  _globals['_REPORT']._serialized_end=963
+  _globals['_LISTMYREPORTSRESPONSE']._serialized_start=965
+  _globals['_LISTMYREPORTSRESPONSE']._serialized_end=1021
+  _globals['_REQUESTACCESSREQUEST']._serialized_start=1023
+  _globals['_REQUESTACCESSREQUEST']._serialized_end=1116
+  _globals['_REQUESTACCESSRESPONSE']._serialized_start=1118
+  _globals['_REQUESTACCESSRESPONSE']._serialized_end=1178
+  _globals['_ACCESSREQUEST']._serialized_start=1181
+  _globals['_ACCESSREQUEST']._serialized_end=1348
+  _globals['_LISTACCESSREQUESTSRESPONSE']._serialized_start=1350
+  _globals['_LISTACCESSREQUESTSRESPONSE']._serialized_end=1419
+  _globals['_APPROVEACCESSREQUESTREQUEST']._serialized_start=1421
+  _globals['_APPROVEACCESSREQUESTREQUEST']._serialized_end=1470
+  _globals['_APPROVEACCESSREQUESTRESPONSE']._serialized_start=1472
+  _globals['_APPROVEACCESSREQUESTRESPONSE']._serialized_end=1536
+  _globals['_REJECTACCESSREQUESTREQUEST']._serialized_start=1538
+  _globals['_REJECTACCESSREQUESTREQUEST']._serialized_end=1586
+  _globals['_REJECTACCESSREQUESTRESPONSE']._serialized_start=1588
+  _globals['_REJECTACCESSREQUESTRESPONSE']._serialized_end=1651
+  _globals['_INSURERDASHBOARDSTATSRESPONSE']._serialized_start=1653
+  _globals['_INSURERDASHBOARDSTATSRESPONSE']._serialized_end=1760
+  _globals['_AUTHORIZEDREPORT']._serialized_start=1762
+  _globals['_AUTHORIZEDREPORT']._serialized_end=1866
+  _globals['_LISTAUTHORIZEDREPORTSRESPONSE']._serialized_start=1868
+  _globals['_LISTAUTHORIZEDREPORTSRESPONSE']._serialized_end=1942
+  _globals['_PATIENTIDREQUEST']._serialized_start=1944
+  _globals['_PATIENTIDREQUEST']._serialized_end=1982
+  _globals['_REPORTMETA']._serialized_start=1984
+  _globals['_REPORTMETA']._serialized_end=2054
+  _globals['_LISTREPORTMETARESPONSE']._serialized_start=2056
+  _globals['_LISTREPORTMETARESPONSE']._serialized_end=2117
+  _globals['_ANALYZEHEALTHREPORTREQUEST']._serialized_start=2119
+  _globals['_ANALYZEHEALTHREPORTREQUEST']._serialized_end=2215
+  _globals['_USERHEALTHANALYSISRESPONSE']._serialized_start=2218
+  _globals['_USERHEALTHANALYSISRESPONSE']._serialized_end=2369
+  _globals['_INSURERHEALTHANALYSISRESPONSE']._serialized_start=2372
+  _globals['_INSURERHEALTHANALYSISRESPONSE']._serialized_end=2583
+  _globals['_RISK']._serialized_start=2585
+  _globals['_RISK']._serialized_end=2645
+  _globals['_HEALTHSERVICE']._serialized_start=2712
+  _globals['_HEALTHSERVICE']._serialized_end=4518
 # @@protoc_insertion_point(module_scope)

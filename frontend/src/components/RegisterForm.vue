@@ -61,20 +61,25 @@
                   class="mt-4"
                   :rules="[rules.required]"
                 >
-                  <v-radio
-                    v-for="role in roles"
-                    :key="role.value"
-                    :label="role.text"
-                    :value="role.value"
-                    color="primary"
-                  >
-                    <template v-slot:label>
-                      <div class="d-flex align-center">
-                        <v-icon :color="role.color" class="me-2">{{ role.icon }}</v-icon>
-                        <span>{{ role.text }}</span>
+                  <div class="role-cards-container">
+                    <div
+                      v-for="role in roles"
+                      :key="role.value"
+                      class="role-card"
+                      :class="{ 'role-card--selected': registerForm.selectedRole === role.value }"
+                      @click="registerForm.selectedRole = role.value"
+                    >
+                      <div class="role-card__icon-wrapper">
+                        <v-icon :color="registerForm.selectedRole === role.value ? 'primary' : 'grey'" size="32">
+                          {{ role.icon }}
+                        </v-icon>
                       </div>
-                    </template>
-                  </v-radio>
+                      <div class="role-card__content">
+                        <h3 class="role-card__title">{{ role.text }}</h3>
+                        <p class="role-card__description">{{ role.description }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </v-radio-group>
                 <div class="mt-6 text-center">
                   <v-btn
@@ -466,19 +471,22 @@ const roles = [
     text: '一般用戶',
     value: 'user',
     icon: 'mdi-account',
-    color: 'blue'
+    color: 'blue',
+    description: '個人用戶註冊，管理個人健康數據'
   },
   { 
     text: '醫療機構',
     value: 'medical',
     icon: 'mdi-hospital-building',
-    color: 'green'
+    color: 'green',
+    description: '醫院、診所等醫療服務提供者'
   },
   { 
     text: '保險業者',
     value: 'insurer',
     icon: 'mdi-shield-account',
-    color: 'purple'
+    color: 'purple',
+    description: '保險公司、保險服務提供商'
   }
 ];
 
@@ -1115,5 +1123,91 @@ const steps = [
   border-color: #e5e7eb !important;
   margin: 1.5rem 0 !important;
   opacity: 0.5;
+}
+
+/* 角色選擇卡片容器 */
+.role-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+/* 角色卡片基本樣式 */
+.role-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 選中狀態樣式 */
+.role-card--selected {
+  border-color: var(--v-theme-primary);
+  background-color: var(--v-theme-primary-lighten-5);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.1);
+}
+
+/* 圖標包裝器 */
+.role-card__icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  margin-right: 1rem;
+  transition: all 0.3s ease;
+}
+
+.role-card--selected .role-card__icon-wrapper {
+  background: var(--v-theme-primary-lighten-4);
+}
+
+/* 內容區域 */
+.role-card__content {
+  flex: 1;
+}
+
+.role-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem;
+}
+
+.role-card__description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* RWD 適配 */
+@media (max-width: 768px) {
+  .role-cards-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .role-card {
+    padding: 1.25rem;
+  }
+  
+  .role-card__icon-wrapper {
+    width: 56px;
+    height: 56px;
+  }
 }
 </style>

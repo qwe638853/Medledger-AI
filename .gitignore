@@ -26,12 +26,7 @@ venv/
 *.pth
 
 # 忽略 Chroma DB 中的大檔案
-chroma_db/chroma.sqlite3
-chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/data_level0.bin
-chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/link_lists.bin
-chroma_db/7641a9e1-203e-45b4-92bf-966418ee59e7/index_metadata.pickle
-chroma_db/3636de2c-ee44-4ba8-a2bd-be706f1ef5e3/data_level0.bin
-chroma_db/3636de2c-ee44-4ba8-a2bd-be706f1ef5e3/index_metadata.pickle
+chroma_db/*
 
 # JSON 與 QA Data（大檔案）
 huatuo_medical_qa_sharegpt_traditional.json

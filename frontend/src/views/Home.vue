@@ -28,6 +28,38 @@
               </v-btn>
             </div>
             <p class="start-desc mt-2">開始管理你的健康數據</p>
+            
+            <!-- 區塊鏈動畫 -->
+            <div class="blockchain-animation">
+              <div class="chain-container">
+                <div v-for="n in 5" :key="n" class="block-item" :style="{ animationDelay: `${(n-1) * 0.2}s` }">
+                  <div class="block">
+                    <div class="block-content">
+                      <v-icon size="32" :color="blockIcons[n-1].color">{{ blockIcons[n-1].icon }}</v-icon>
+                    </div>
+                    <div class="block-hash">
+                      <span class="hash-text">{{ generateHash() }}</span>
+                    </div>
+                  </div>
+                  <div class="chain-link" v-if="n < 5">
+                    <div class="link-dot"></div>
+                    <div class="link-line"></div>
+                    <div class="link-dot"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 浮動元素 -->
+              <div class="floating-elements">
+                <div v-for="n in 6" :key="`float-${n}`" 
+                     class="float-item"
+                     :class="`float-${n}`">
+                  <v-icon size="28" :color="floatingIcons[n-1].color">
+                    {{ floatingIcons[n-1].icon }}
+                  </v-icon>
+                </div>
+              </div>
+            </div>
           </v-col>
         </v-row>
       </v-container>
@@ -149,7 +181,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import aboutImg from '@/assets/image.jpg';
 import featureImg from '@/assets/image2.svg';
 
@@ -223,6 +256,34 @@ function scrollToSection(sectionId) {
     el.scrollIntoView({ behavior: 'smooth' });
   }
 }
+
+// 區塊鏈動畫相關數據
+const blockIcons = ref([
+  { icon: 'mdi-hospital-building', color: '#4CAF50' },
+  { icon: 'mdi-account-heart', color: '#2196F3' },
+  { icon: 'mdi-shield-check', color: '#FFC107' },
+  { icon: 'mdi-database-lock', color: '#9C27B0' },
+  { icon: 'mdi-medical-bag', color: '#FF5252' }
+]);
+
+const floatingIcons = ref([
+  { icon: 'mdi-heart-pulse', color: '#FF5252' },
+  { icon: 'mdi-dna', color: '#2196F3' },
+  { icon: 'mdi-pill', color: '#4CAF50' },
+  { icon: 'mdi-hospital-box', color: '#FFC107' },
+  { icon: 'mdi-shield-check', color: '#9C27B0' },
+  { icon: 'mdi-chart-line', color: '#FF9800' }
+]);
+
+// 生成隨機哈希值
+function generateHash() {
+  const chars = '0123456789abcdef';
+  let hash = '0x';
+  for (let i = 0; i < 8; i++) {
+    hash += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return hash;
+}
 </script>
 
 <style scoped>
@@ -236,18 +297,20 @@ function scrollToSection(sectionId) {
 
 .hero-title {
   font-family: 'Inter', sans-serif;
-  font-size: 4rem;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 900;
   color: #111827;
   letter-spacing: -1.5px;
   line-height: 1.1;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .hero-desc {
-  font-size: 1.25rem;
+  font-size: clamp(1.25rem, 1.5vw, 1.5rem);
   color: #6b7280;
   font-weight: 400;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   line-height: 1.6;
 }
@@ -281,7 +344,7 @@ function scrollToSection(sectionId) {
 
 .features-section {
   background: #F9F7F4;
-  padding: 8rem 0;
+  padding: clamp(4rem, 8vw, 10rem) 0;
   overflow: hidden;
 }
 
@@ -346,12 +409,12 @@ function scrollToSection(sectionId) {
 
 .about-section {
   background: var(--background-cream);
-  padding: 6rem 0;
+  padding: clamp(4rem, 8vw, 10rem) 0;
 }
 
 .about-title {
   font-family: 'Inter', sans-serif;
-  font-size: 2.7rem;
+  font-size: clamp(2.2rem, 3vw, 3.2rem);
   color: var(--gray-dark);
   font-weight: 700;
   margin-bottom: 2rem;
@@ -359,14 +422,15 @@ function scrollToSection(sectionId) {
 }
 
 .about-desc {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 1.3vw, 1.4rem);
   color: var(--gray-medium);
   line-height: 1.8;
   margin-bottom: 1.5rem;
+  max-width: 800px;
 }
 
 .about-illustration {
-  max-width: 420px;
+  max-width: clamp(420px, 40vw, 600px);
   width: 100%;
   height: auto;
   border-radius: 20px;
@@ -394,47 +458,49 @@ function scrollToSection(sectionId) {
 
 .contact-section {
   background: #F9F7F4;
-  padding: 6rem 0 4rem 0;
+  padding: clamp(4rem, 6vw, 8rem) 0;
 }
 
 .contact-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.2rem;
-  color: #111827;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
+  font-size: clamp(2rem, 2.5vw, 2.8rem);
+  max-width: 1200px;
+  margin: 0 auto 2rem;
 }
 
 .contact-desc {
-  font-size: 1.22rem;
-  color: #666;
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.1rem, 1.2vw, 1.3rem);
+  max-width: 800px;
+  margin: 0 auto 0.5rem;
 }
 
 .who-section {
   background: #f9f7f4;
-  padding: 5rem 0 3rem 0;
+  padding: clamp(3rem, 6vw, 8rem) 0;
 }
 .who-title {
   font-family: 'Inter', sans-serif;
-  font-size: 2.3rem;
+  font-size: clamp(2rem, 3vw, 2.8rem);
   color: #111827;
   font-weight: 800;
   letter-spacing: -0.5px;
+  max-width: 1200px;
+  margin: 0 auto 2rem;
 }
 .who-row {
-  gap: 24px 0;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 .who-card {
   border-radius: 24px !important;
-  padding: 2rem 1.5rem !important;
+  padding: clamp(2rem, 3vw, 3rem) 1.5rem !important;
   min-height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f9f7f4;
   box-shadow: 0 2px 12px rgba(33, 150, 243, 0.06);
-  transition: box-shadow 0.2s;
+  transition: all 0.3s ease;
 }
 .who-card:hover {
   box-shadow: 0 8px 24px rgba(33, 150, 243, 0.12);
@@ -450,65 +516,89 @@ function scrollToSection(sectionId) {
   color: #666;
 }
 
+@media (min-width: 1921px) {
+  .hero-section,
+  .features-section,
+  .who-section,
+  .about-section,
+  .faq-section,
+  .contact-section {
+    padding-left: calc((100vw - 1920px) / 2);
+    padding-right: calc((100vw - 1920px) / 2);
+  }
+  
+  .features-two-col,
+  .who-row,
+  .about-illustration,
+  .faq-container {
+    max-width: 1920px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 1440px) {
+  .features-two-col {
+    padding: 0 1.5rem;
+  }
+  
+  .features-illustration-col {
+    max-width: 700px;
+  }
+}
+
 @media (max-width: 960px) {
   .hero-section {
-    padding: 4rem 0;
+    padding: 4rem 1rem;
   }
 
-  .hero-title {
-    font-size: 3rem;
+  .features-two-col {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2.5rem;
+    padding: 0 1rem;
   }
-  
-  .features-section {
-    padding: 6rem 0;
+
+  .features-illustration-col {
+    max-width: 100%;
   }
-  
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-  .span-2 {
-    grid-column: auto;
+
+  .who-card {
+    padding: 1.5rem !important;
   }
 }
 
 @media (max-width: 600px) {
-  .hero-title {
-    font-size: 2.5rem;
+  .hero-section {
+    padding: 3rem 1rem;
   }
-  
-  .hero-desc {
-    font-size: 1.1rem;
+
+  .features-section,
+  .who-section,
+  .about-section,
+  .faq-section,
+  .contact-section {
+    padding: 3rem 1rem;
   }
-  
-  .features-section {
-    padding: 4rem 0;
-  }
-  
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-  .span-2 {
-    grid-column: auto;
+
+  .features-two-col {
+    padding: 0 0.5rem;
   }
 }
 
 .faq-section {
   background: #f9f7f4;
-  padding: 6rem 0 4rem 0;
+  padding: clamp(4rem, 8vw, 10rem) 0;
 }
 .faq-container {
-  max-width: 720px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
 }
 .faq-title {
-  font-family: 'Inter', sans-serif;
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: #111827;
-  margin-bottom: 2.5rem;
-  letter-spacing: -1px;
-  text-align: left;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  max-width: 1200px;
+  margin: 0 auto 3rem;
 }
 .faq-item + .faq-item {
   margin-top: 2rem;
@@ -633,20 +723,24 @@ function scrollToSection(sectionId) {
   align-items: center;
   justify-content: space-between;
   gap: 3rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 .features-list-col {
   flex: 1 1 0%;
+  max-width: 600px;
 }
 .features-illustration-col {
-  flex: 0 0 800px;
+  flex: 0 0 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 800px;
+  max-width: 900px;
 }
 .features-illustration {
   max-width: 100%;
-  max-height: 600px;
+  max-height: 800px;
   width: auto;
   height: auto;
   display: block;
@@ -683,6 +777,282 @@ function scrollToSection(sectionId) {
   .hero-btn-group {
     flex-direction: column;
     gap: 0.7rem;
+  }
+}
+
+/* 區塊鏈動畫樣式 */
+.blockchain-animation {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 400px;
+  margin: 4rem auto 0;
+  overflow: hidden;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chain-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: infiniteChain 20s linear infinite;
+  width: max-content;
+}
+
+.block-item {
+  display: flex;
+  align-items: center;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.block {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  min-width: 150px;
+  transition: all 0.3s ease;
+  border: 2px solid #e5e7eb;
+  animation: blockBreath 3s ease-in-out infinite;
+  backdrop-filter: blur(8px);
+}
+
+.block:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  border-color: #2196F3;
+  z-index: 1;
+}
+
+.block-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+}
+
+.block-content :deep(.v-icon) {
+  font-size: 32px;
+}
+
+.block-hash {
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+  overflow: hidden;
+  animation: textBreath 3s ease-in-out infinite;
+}
+
+.hash-text {
+  display: inline-block;
+}
+
+.chain-link {
+  display: flex;
+  align-items: center;
+  margin: 0 1.5rem;
+  animation: pulseLink 2s ease-in-out infinite;
+  position: relative;
+}
+
+.link-dot {
+  width: 8px;
+  height: 8px;
+  background: #2196F3;
+  border-radius: 50%;
+  position: relative;
+}
+
+.link-line {
+  width: 40px;
+  height: 2px;
+  background: #2196F3;
+  margin: 0 3px;
+  position: relative;
+}
+
+.link-dot::after,
+.link-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: inherit;
+  border-radius: inherit;
+  animation: flowEffect 2s linear infinite;
+}
+
+/* 浮動元素樣式 */
+.floating-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.float-item {
+  position: absolute;
+  animation: float 6s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+.float-item :deep(.v-icon) {
+  font-size: 28px;
+}
+
+/* 浮動元素位置 */
+.float-1 { top: 15%; left: 5%; animation-delay: 0s; }
+.float-2 { top: 10%; right: 10%; animation-delay: 1s; }
+.float-3 { bottom: 25%; left: 15%; animation-delay: 2s; }
+.float-4 { bottom: 15%; right: 20%; animation-delay: 3s; }
+.float-5 { top: 35%; left: 25%; animation-delay: 4s; }
+.float-6 { top: 30%; right: 30%; animation-delay: 5s; }
+
+/* 動畫定義 */
+@keyframes fadeInScale {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes blockBreath {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.06);
+    border-color: #e5e7eb;
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.12);
+    border-color: #2196F3;
+  }
+}
+
+@keyframes textBreath {
+  0%, 100% {
+    opacity: 0.7;
+    color: #666;
+  }
+  50% {
+    opacity: 1;
+    color: #333;
+  }
+}
+
+@keyframes floatContainer {
+  0%, 100% {
+    transform: translateY(0) scale(1.2);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.2);
+  }
+}
+
+@keyframes pulseLink {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scaleX(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg) scale(1.1);
+  }
+}
+
+@keyframes infiniteChain {
+  0% {
+    transform: translateX(calc(50% + 600px)) scale(1.2);
+  }
+  100% {
+    transform: translateX(calc(-50% - 600px)) scale(1.2);
+  }
+}
+
+@keyframes flowEffect {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* RWD 適配 */
+@media (max-width: 1200px) {
+  .blockchain-animation {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+  
+  .chain-container {
+    animation: infiniteChain 20s linear infinite;
+  }
+  
+  .block {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 960px) {
+  .blockchain-animation {
+    height: 350px;
+    padding: 0 0.5rem;
+  }
+  
+  .chain-container {
+    animation: infiniteChain 15s linear infinite;
+  }
+  
+  .block {
+    min-width: 120px;
+    padding: 1rem;
+  }
+  
+  .link-line {
+    width: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .blockchain-animation {
+    height: 300px;
+    margin-top: 2rem;
+    padding: 0;
+  }
+  
+  .chain-container {
+    animation: infiniteChain 12s linear infinite;
+  }
+  
+  .block {
+    min-width: 120px;
+    padding: 1rem;
+  }
+  
+  .link-line {
+    width: 30px;
   }
 }
 </style>

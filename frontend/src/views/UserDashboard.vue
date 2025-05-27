@@ -952,15 +952,47 @@ const filteredAccessRequests = computed(() => {
 
 /* 卡片內文字統一樣式 */
 .text-h4 {
-  font-size: 2rem !important;
-  line-height: 2.5rem !important;
+  font-size: 2.25rem !important;
+  line-height: 2.75rem !important;
   font-weight: 700 !important;
 }
 
+.text-h6 {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+  font-weight: 600 !important;
+}
+
 .text-subtitle-1 {
-  font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
   opacity: 0.85;
+}
+
+.text-body-2 {
+  font-size: 0.95rem !important;
+  line-height: 1.5rem !important;
+}
+
+/* 表格樣式 */
+:deep(.v-data-table-header th) {
+  font-size: 1rem !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 14px 16px !important;
+}
+
+:deep(.v-data-table td) {
+  padding: 14px 16px !important;
+  color: #334155 !important;
+  font-size: 1rem !important;
+}
+
+/* 狀態標籤樣式 */
+:deep(.v-chip) {
+  font-size: 0.9rem !important;
 }
 
 /* RWD 適配 */
@@ -977,6 +1009,16 @@ const filteredAccessRequests = computed(() => {
     width: 40px;
     height: 40px;
   }
+  
+  .text-h4 {
+    font-size: 2rem !important;
+    line-height: 2.5rem !important;
+  }
+  
+  .text-h6 {
+    font-size: 1.15rem !important;
+    line-height: 1.6rem !important;
+  }
 }
 
 @media (max-width: 600px) {
@@ -986,6 +1028,20 @@ const filteredAccessRequests = computed(() => {
   
   .info-card .v-card-text {
     padding: 1rem !important;
+  }
+  
+  .text-h4 {
+    font-size: 1.75rem !important;
+    line-height: 2.25rem !important;
+  }
+  
+  .text-h6 {
+    font-size: 1.1rem !important;
+    line-height: 1.5rem !important;
+  }
+  
+  :deep(.v-data-table td) {
+    font-size: 0.95rem !important;
   }
 }
 

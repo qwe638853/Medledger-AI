@@ -1250,7 +1250,7 @@ const getRequestStatusInfo = (status) => {
                   { 
                     title: '申請日期',
                     key: 'requestedAt',
-                    align: 'center',
+                     align: 'center',
                     width: '120px'
                   },
                   { 
@@ -1413,15 +1413,26 @@ const getRequestStatusInfo = (status) => {
 
 /* 卡片內文字統一樣式 */
 .text-h4 {
-  font-size: 2rem !important;
-  line-height: 2.5rem !important;
+  font-size: 2.25rem !important;
+  line-height: 2.75rem !important;
   font-weight: 700 !important;
 }
 
+.text-h6 {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+  font-weight: 600 !important;
+}
+
 .text-subtitle-1 {
-  font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
   opacity: 0.85;
+}
+
+.text-body-2 {
+  font-size: 0.95rem !important;
+  line-height: 1.5rem !important;
 }
 
 /* 表格樣式 */
@@ -1435,12 +1446,12 @@ const getRequestStatusInfo = (status) => {
 }
 
 :deep(.v-data-table-header th) {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   color: #64748B !important;
   font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
-  padding: 12px 16px !important;
+  padding: 14px 16px !important;
 }
 
 :deep(.v-data-table-row) {
@@ -1453,9 +1464,9 @@ const getRequestStatusInfo = (status) => {
 }
 
 :deep(.v-data-table td) {
-  padding: 12px 16px !important;
+  padding: 14px 16px !important;
   color: #334155 !important;
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
 }
 
 /* 操作按鈕樣式 */

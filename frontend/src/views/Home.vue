@@ -54,7 +54,7 @@
                 <div v-for="n in 6" :key="`float-${n}`" 
                      class="float-item"
                      :class="`float-${n}`">
-                  <v-icon size="28" :color="floatingIcons[n-1].color">
+                  <v-icon size="24" :color="floatingIcons[n-1].color">
                     {{ floatingIcons[n-1].icon }}
                   </v-icon>
                 </div>
@@ -682,7 +682,7 @@ function generateHash() {
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.8rem;
   border-radius: 12px;
   background: transparent;
   transition: background 0.18s, box-shadow 0.18s, transform 0.18s;
@@ -692,8 +692,8 @@ function generateHash() {
   background: #f3f3f3;
 }
 .feature-list-icon {
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 48px;
+  min-height: 48px;
   transition: transform 0.18s;
 }
 .feature-list-item:hover .feature-list-icon {
@@ -705,16 +705,35 @@ function generateHash() {
   align-items: flex-start;
 }
 .feature-list-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #222;
-  margin-bottom: 0.2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
 }
 .feature-list-desc {
-  font-size: 1rem;
-  color: #888;
+  font-size: 1.25rem;
+  color: #4B5563;
   font-weight: 400;
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .feature-list-item {
+    padding: 1.25rem;
+  }
+  
+  .feature-list-icon {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .feature-list-title {
+    font-size: 1.35rem;
+  }
+  
+  .feature-list-desc {
+    font-size: 1.15rem;
+  }
 }
 
 .features-two-col {
@@ -801,6 +820,8 @@ function generateHash() {
   padding: 2rem;
   animation: infiniteChain 20s linear infinite;
   width: max-content;
+  position: relative;
+  z-index: 2;
 }
 
 .block-item {
@@ -897,25 +918,26 @@ function generateHash() {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  z-index: 1;
 }
 
 .float-item {
   position: absolute;
   animation: float 6s ease-in-out infinite;
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 .float-item :deep(.v-icon) {
-  font-size: 28px;
+  font-size: 24px;
 }
 
-/* 浮動元素位置 */
-.float-1 { top: 15%; left: 5%; animation-delay: 0s; }
-.float-2 { top: 10%; right: 10%; animation-delay: 1s; }
-.float-3 { bottom: 25%; left: 15%; animation-delay: 2s; }
-.float-4 { bottom: 15%; right: 20%; animation-delay: 3s; }
-.float-5 { top: 35%; left: 25%; animation-delay: 4s; }
-.float-6 { top: 30%; right: 30%; animation-delay: 5s; }
+/* 浮動元素位置調整 */
+.float-1 { top: 10%; left: 15%; animation-delay: 0s; }
+.float-2 { top: 15%; right: 20%; animation-delay: 1s; }
+.float-3 { bottom: 20%; left: 25%; animation-delay: 2s; }
+.float-4 { bottom: 25%; right: 15%; animation-delay: 3s; }
+.float-5 { top: 40%; left: 10%; animation-delay: 4s; }
+.float-6 { top: 35%; right: 25%; animation-delay: 5s; }
 
 /* 動畫定義 */
 @keyframes fadeInScale {
@@ -947,12 +969,12 @@ function generateHash() {
   }
 }
 
-@keyframes floatContainer {
+@keyframes float {
   0%, 100% {
-    transform: translateY(0) scale(1.2);
+    transform: translateY(0) rotate(0deg) scale(0.8);
   }
   50% {
-    transform: translateY(-15px) scale(1.2);
+    transform: translateY(-15px) rotate(5deg) scale(0.9);
   }
 }
 
@@ -967,24 +989,6 @@ function generateHash() {
   }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translateY(-20px) rotate(5deg) scale(1.1);
-  }
-}
-
-@keyframes infiniteChain {
-  0% {
-    transform: translateX(calc(50% + 600px)) scale(1.2);
-  }
-  100% {
-    transform: translateX(calc(-50% - 600px)) scale(1.2);
-  }
-}
-
 @keyframes flowEffect {
   0% {
     opacity: 0;
@@ -996,6 +1000,15 @@ function generateHash() {
   100% {
     opacity: 0;
     transform: translateX(100%);
+  }
+}
+
+@keyframes infiniteChain {
+  0% {
+    transform: translateX(calc(50% + 600px)) scale(1.2);
+  }
+  100% {
+    transform: translateX(calc(-50% - 600px)) scale(1.2);
   }
 }
 

@@ -9,14 +9,24 @@
             <p class="hero-desc mb-8">
               結合 AI 與區塊鏈技術，打造安全可信的健康數據平台
             </p>
-            <v-btn 
-              class="start-btn" 
-              elevation="0"
-              :to="{ path: '/register' }"
-            >
-              立即開始
-              <v-icon right class="ml-2">mdi-arrow-right</v-icon>
-            </v-btn>
+            <div class="hero-btn-group">
+              <v-btn 
+                class="start-btn mr-btn"
+                elevation="0"
+                :to="{ path: '/login' }"
+              >
+                直接登入
+                <v-icon right class="ml-2">mdi-login</v-icon>
+              </v-btn>
+              <v-btn 
+                class="start-btn"
+                elevation="0"
+                :to="{ path: '/register' }"
+              >
+                立即註冊
+                <v-icon right class="ml-2">mdi-arrow-right</v-icon>
+              </v-btn>
+            </div>
             <p class="start-desc mt-2">開始管理你的健康數據</p>
           </v-col>
         </v-row>
@@ -656,6 +666,23 @@ function scrollToSection(sectionId) {
   }
   .features-illustration {
     margin: 0 auto;
+  }
+}
+
+.hero-btn-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.mr-btn {
+  margin-right: 0 !important;
+}
+@media (max-width: 600px) {
+  .hero-btn-group {
+    flex-direction: column;
+    gap: 0.7rem;
   }
 }
 </style>

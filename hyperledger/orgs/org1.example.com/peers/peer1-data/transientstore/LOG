@@ -86,3 +86,13 @@
 10:21:41.133631 table@remove removed @14
 10:21:41.133668 table@remove removed @7
 10:21:41.133692 table@remove removed @2
+=============== May 27, 2025 (UTC) ===============
+16:03:27.994771 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+16:03:27.994887 version@stat F·[] S·0B[] Sc·[]
+16:03:27.994899 db@open opening
+16:03:27.994922 journal@recovery F·1
+16:03:27.996331 journal@recovery recovering @20
+16:03:27.996633 version@stat F·[] S·0B[] Sc·[]
+16:03:28.010500 db@janitor F·3 G·1
+16:03:28.011410 db@janitor removing table-19
+16:03:28.011485 db@open done T·16.57838ms

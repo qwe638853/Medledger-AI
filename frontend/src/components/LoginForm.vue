@@ -167,6 +167,7 @@
                         登入系統
                       </v-btn>
                       
+                      
                       <!-- 測試登入按鈕 -->
                       <v-btn
                         class="test-btn mt-3"
@@ -203,7 +204,7 @@
                 </v-btn>
               </div>
               
-              <!-- 開發調試資訊 -->
+              <!-- 開發調試資訊 
               <v-expand-transition>
                 <div v-if="isDevelopment" class="debug-section">
                   <v-divider class="divider"></v-divider>
@@ -219,6 +220,7 @@
                   </v-expansion-panels>
                 </div>
               </v-expand-transition>
+            -->
             </v-form>
           </v-card>
             </v-slide-y-transition>
@@ -463,7 +465,8 @@ const handleTestLogin = async () => {
 /* 全局樣式 */
 .login-page {
   background-color: #F9F7F4;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
+  padding: 2rem 1rem;
 }
 
 /* 登入卡片 */
@@ -507,46 +510,53 @@ const handleTestLogin = async () => {
 
 .form-field :deep(.v-field) {
   border-radius: 16px !important;
-  border-color: #E5E7EB !important;
-}
-
-.form-field :deep(.v-field__outline) {
-  border-color: #E5E7EB !important;
+  border: 1px solid #e5e7eb !important;
+  background: white !important;
 }
 
 .form-field :deep(.v-field--focused) {
   border-color: #111827 !important;
 }
 
+.form-field :deep(.v-label) {
+  color: #6B7280 !important;
+}
+
 /* 按鈕樣式 */
+.v-btn {
+  border-radius: 16px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  height: 48px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 .login-btn {
   background-color: #F8F441 !important;
   color: #111827 !important;
-  border-radius: 16px !important;
   font-weight: 600 !important;
   margin-bottom: 1rem !important;
-  transition: all 0.2s ease !important;
 }
 
 .login-btn:hover {
+  background-color: #f9f650 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
-  background-color: #F9F650 !important;
+  box-shadow: 0 8px 24px rgba(248, 244, 65, 0.25) !important;
 }
 
 .test-btn {
   background-color: #F3F4F6 !important;
-  color: #111827 !important;
-  border-radius: 16px !important;
+  color: #6B7280 !important;
   font-weight: 500 !important;
   margin-bottom: 1.5rem !important;
-  transition: all 0.2s ease !important;
 }
 
 .test-btn:hover {
-  transform: translateY(-2px);
   background-color: #E5E7EB !important;
+  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  color: #111827 !important;
 }
 
 /* 導航按鈕 */
@@ -554,16 +564,15 @@ const handleTestLogin = async () => {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .nav-btn {
   flex: 1;
   background-color: white !important;
   color: #6B7280 !important;
-  border: 1px solid #E5E7EB !important;
-  border-radius: 16px !important;
+  border: 1px solid #e5e7eb !important;
   font-weight: 500 !important;
-  transition: all 0.2s ease !important;
 }
 
 .nav-btn:hover {
@@ -573,53 +582,14 @@ const handleTestLogin = async () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* 提示訊息 */
-.alert-message {
-  margin-bottom: 1.5rem !important;
-  border-radius: 16px !important;
-}
-
-/* 分隔線 */
-.divider {
-  border-color: #E5E7EB !important;
-  margin: 1.5rem 0 !important;
-}
-
-/* 調試面板 */
-.debug-section {
-  margin-top: 1.5rem;
-}
-
-.debug-panel {
-  border-radius: 16px !important;
-  overflow: hidden !important;
-  border: 1px solid #E5E7EB !important;
-}
-
-.debug-title {
-  font-size: 0.875rem !important;
-  color: #6B7280 !important;
-}
-
-.debug-info {
-  background-color: #F9FAFB !important;
-  border-radius: 8px !important;
-  padding: 1rem !important;
-  font-family: monospace !important;
-  font-size: 12px !important;
-  color: #374151 !important;
-}
-
-/* 角色選擇卡片容器 */
-.role-cards-container {
+/* 角色選擇卡片 */
+.role-cards-wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  width: 100%;
-  flex: 1;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
 }
 
-/* 角色卡片基本樣式 */
 .role-card {
   position: relative;
   display: flex;
@@ -637,44 +607,27 @@ const handleTestLogin = async () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* 選中狀態樣式 */
 .role-card--selected {
-  border-color: var(--v-theme-primary);
-  background-color: var(--v-theme-primary-lighten-5);
-  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.1);
+  border-color: #F8F441;
+  background-color: rgba(248, 244, 65, 0.1);
 }
 
-/* 圖標包裝器 */
 .role-card__icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 64px;
-  min-height: 64px;
   width: 64px;
   height: 64px;
   border-radius: 50%;
   background: #f3f4f6;
   margin-right: 1rem;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: visible;
 }
 
 .role-card--selected .role-card__icon-wrapper {
-  background: var(--v-theme-primary-lighten-4);
+  background: rgba(248, 244, 65, 0.2);
 }
 
-.role-card__icon-wrapper :deep(.v-icon) {
-  font-size: 32px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.role-card--selected .role-card__icon-wrapper :deep(.v-icon) {
-  transform: scale(1.1);
-}
-
-/* 內容區域 */
 .role-card__content {
   flex: 1;
 }
@@ -693,10 +646,52 @@ const handleTestLogin = async () => {
   line-height: 1.4;
 }
 
+.role-card__check {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+/* Alert 訊息樣式 */
+.alert-message {
+  border-radius: 16px !important;
+  margin-bottom: 1.5rem !important;
+}
+
 /* RWD 適配 */
 @media (max-width: 768px) {
-  .role-cards-container {
-    grid-template-columns: 1fr;
+  .login-card {
+    padding: 1.5rem !important;
+    margin: 1rem;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
+  }
+  
+  .nav-buttons {
+    flex-direction: column;
+  }
+  
+  .nav-btn {
+    width: 100%;
+  }
+  
+  .steps-indicator {
+    padding: 0.5rem 0;
+  }
+  
+  .step-circle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .step-label {
+    font-size: 0.75rem;
+  }
+  
+  .step-line {
+    max-width: 60px;
   }
   
   .role-card {
@@ -714,8 +709,8 @@ const handleTestLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 0;
-  margin-bottom: 2rem;
+  margin: 2rem 0;
+  padding: 0;
 }
 
 .step {
@@ -738,7 +733,7 @@ const handleTestLogin = async () => {
   justify-content: center;
   margin-bottom: 0.5rem;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   color: #888;
 }
@@ -747,29 +742,35 @@ const handleTestLogin = async () => {
   border-color: #F8F441;
   background: #F8F441;
   color: #111827;
+  transform: scale(1.1);
 }
 
 .step.completed .step-circle {
   border-color: #463F3A;
   background: #463F3A;
   color: white;
+  transform: scale(1);
 }
 
 .step-label {
   font-size: 0.875rem;
   color: #888;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.8;
 }
 
 .step.active .step-label {
   color: #111827;
   font-weight: 600;
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 .step.completed .step-label {
   color: #111827;
   font-weight: 600;
+  opacity: 1;
 }
 
 .step-line {
@@ -779,32 +780,13 @@ const handleTestLogin = async () => {
   margin: 0 0.5rem;
   margin-bottom: 2rem;
   max-width: 100px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
 }
 
 .step.completed + .step-line {
   background: #111827;
-}
-
-/* RWD 適配 */
-@media (max-width: 600px) {
-  .steps-indicator {
-    padding: 0.5rem 0;
-  }
-  
-  .step-circle {
-    width: 32px;
-    height: 32px;
-    font-size: 0.875rem;
-  }
-  
-  .step-label {
-    font-size: 0.75rem;
-  }
-  
-  .step-line {
-    max-width: 60px;
-  }
+  transform: scaleX(1.1);
 }
 
 /* 返回按鈕樣式 */
@@ -894,16 +876,16 @@ const handleTestLogin = async () => {
   }
   
   .step-circle {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
   
   .step-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
   
   .step-line {
-    max-width: 60px;
+    max-width: 40px;
   }
 }
 </style>

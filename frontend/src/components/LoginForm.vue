@@ -56,17 +56,17 @@
               </div>
 
               <!-- 步驟 1：角色選擇 -->
-              <v-fade-transition>
+              <div>
                 <div v-if="currentStep === 1" class="step-container">
                   <RoleSelector
                     v-model="selectedRole"
                     @next="goToStep2"
                   />
                 </div>
-              </v-fade-transition>
+              </div>
 
               <!-- 步驟 2：帳號密碼輸入 -->
-              <v-fade-transition>
+              <div>
                 <div v-if="currentStep === 2" class="step-container">
                   <v-card flat class="mt-6 pa-4 rounded-lg">
                     <div class="section-title">
@@ -78,39 +78,37 @@
                       <v-divider class="mt-2"></v-divider>
                     </div>
 
-                    <v-slide-y-transition>
-                      <div class="login-form-fields mt-4">
-                        <!-- 帳號輸入 -->
-                        <v-text-field
-                          v-model="username"
-                          :label="usernameLabel"
-                          prepend-inner-icon="mdi-identifier"
-                          variant="outlined"
-                          :rules="[rules.required]"
-                          class="form-field"
-                          bg-color="white"
-                          density="comfortable"
-                          :placeholder="usernamePlaceholder"
-                          clearable
-                        />
-                        
-                        <!-- 密碼輸入 -->
-                        <v-text-field
-                          v-model="password"
-                          label="密碼"
-                          prepend-inner-icon="mdi-lock-outline"
-                          :type="showPassword ? 'text' : 'password'"
-                          :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                          @click:append-inner="showPassword = !showPassword"
-                          variant="outlined"
-                          :rules="[rules.required, rules.minLength]"
-                          class="form-field"
-                          bg-color="white"
-                          density="comfortable"
-                          clearable
-                        />
-                      </div>
-                    </v-slide-y-transition>
+                    <div class="login-form-fields mt-4">
+                      <!-- 帳號輸入 -->
+                      <v-text-field
+                        v-model="username"
+                        :label="usernameLabel"
+                        prepend-inner-icon="mdi-identifier"
+                        variant="outlined"
+                        :rules="[rules.required]"
+                        class="form-field"
+                        bg-color="white"
+                        density="comfortable"
+                        :placeholder="usernamePlaceholder"
+                        clearable
+                      />
+                      
+                      <!-- 密碼輸入 -->
+                      <v-text-field
+                        v-model="password"
+                        label="密碼"
+                        prepend-inner-icon="mdi-lock-outline"
+                        :type="showPassword ? 'text' : 'password'"
+                        :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                        @click:append-inner="showPassword = !showPassword"
+                        variant="outlined"
+                        :rules="[rules.required, rules.minLength]"
+                        class="form-field"
+                        bg-color="white"
+                        density="comfortable"
+                        clearable
+                      />
+                    </div>
 
                     <div class="mt-6 d-flex justify-space-between">
                       <v-btn class="secondary-btn" @click="currentStep = 1">
@@ -129,7 +127,7 @@
                     </div>
                   </v-card>
                 </div>
-              </v-fade-transition>
+              </div>
               
               <!-- 導航按鈕組 -->
               <div class="nav-links">
@@ -422,7 +420,8 @@ body, #app, .v-application, .v-app {
 /* 登入卡片 */
 .auth-card {
   max-width: 1200px;
-  width: 100%;
+  width: 969.43px !important;
+  height: 843.02px !important;
   border-radius: 32px !important;
   background: #fff !important;
   padding: 3rem 2.5rem !important;

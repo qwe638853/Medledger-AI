@@ -50,14 +50,12 @@
                 </div>
 
                 <!-- 步驟 1: 角色選擇 -->
-                <v-fade-transition>
-                  <div v-if="currentStep === '1'" class="step-container">
-                    <RoleSelector
-                      v-model="selectedRole"
-                      @next="goToStep2"
-                    />
-                  </div>
-                </v-fade-transition>
+                <div v-if="currentStep === '1'" class="step-container">
+                  <RoleSelector
+                    v-model="selectedRole"
+                    @next="goToStep2"
+                  />
+                </div>
 
                 <!-- 步驟 2: 基本資料 -->
                 <div v-if="currentStep === '2'">

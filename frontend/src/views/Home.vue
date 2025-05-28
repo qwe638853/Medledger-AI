@@ -316,8 +316,8 @@ function generateHash() {
 }
 
 .start-btn {
-  background: #F8F441 !important;
-  color: #111827 !important;
+  background: #00B8D9 !important;
+  color: white !important;
   font-weight: 700 !important;
   font-size: 1.6rem !important;
   border-radius: 48px !important;
@@ -325,7 +325,14 @@ function generateHash() {
   height: auto !important;
   min-width: 220px;
   min-height: 64px;
-  box-shadow: 0 4px 24px rgba(248, 244, 65, 0.13) !important;
+  box-shadow: 0 4px 24px rgba(0, 184, 217, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.start-btn:hover {
+  background: #0095B0 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 184, 217, 0.35) !important;
 }
 
 .start-btn .v-icon {
@@ -453,8 +460,10 @@ function generateHash() {
 }
 
 .nav-btn:hover {
-  background: #F8F441 !important;
-  color: #333 !important;
+  background: #00B8D9 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 184, 217, 0.25) !important;
 }
 
 .contact-section {

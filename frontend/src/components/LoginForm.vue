@@ -1,11 +1,11 @@
 <template>
-  <div class="login-page">
+  <div class="auth-page">
     <v-container class="fill-height">
       <v-row align="center" justify="center">
         <v-col cols="12" sm="10" md="10" lg="10" xl="8" style="display: flex; justify-content: center;">
           <v-slide-y-transition>
             <!-- 主要登入卡片 -->
-            <v-card class="login-card" elevation="0">
+            <v-card class="auth-card" elevation="0">
               <!-- 頂部標題區 -->
               <div class="header-section">
                 <h1 class="header-title">登入</h1>
@@ -16,10 +16,10 @@
               v-if="alertInfo.show"
               :type="alertInfo.type"
               :title="alertInfo.title"
-              density="comfortable"
-              variant="tonal"
-              class="alert-message"
+              :icon="alertInfo.icon"
               closable
+              border
+              class="ma-2"
               @click:close="alertInfo.show = false"
             >
               {{ alertInfo.message }}
@@ -31,10 +31,10 @@
               ref="form"
               v-model="valid"
               lazy-validation
-              class="login-form"
+              class="auth-form pt-2"
             >
               <!-- 步驟指示器 -->
-              <div class="steps-indicator mb-6">
+              <div class="steps-indicator mb-4">
                 <div 
                   class="step"
                   :class="{ 'active': currentStep === 1, 'completed': currentStep > 1 }"
@@ -58,148 +58,94 @@
               <!-- 步驟 1：角色選擇 -->
               <v-fade-transition>
                 <div v-if="currentStep === 1" class="step-container">
-                  <div class="role-cards-wrapper">
-                    <v-slide-y-transition group>
-                      <div
-                        v-for="role in roles"
-                        :key="role.value"
-                        class="role-card"
-                        :class="{ 'role-card--selected': selectedRole === role.value }"
-                        @click="handleRoleSelect(role.value)"
-                      >
-                        <div class="role-card__icon-wrapper">
-                          <v-icon 
-                            :color="selectedRole === role.value ? 'primary' : 'grey'" 
-                            size="32"
-                          >{{ role.icon }}</v-icon>
-                        </div>
-                        <div class="role-card__content">
-                          <h3 class="role-card__title">{{ role.text }}</h3>
-                          <p class="role-card__description">{{ role.description }}</p>
-                        </div>
-                        <v-scale-transition>
-                          <div v-if="selectedRole === role.value" class="role-card__check">
-                            <v-icon color="primary" size="24">mdi-check-circle</v-icon>
-                          </div>
-                        </v-scale-transition>
-                      </div>
-                    </v-slide-y-transition>
-                  </div>
-                  
-                  <v-slide-y-transition>
-                    <div class="step-actions" v-if="selectedRole">
-                      <v-btn
-                        class="next-btn"
-                        block
-                        @click="goToStep2"
-                        elevation="0"
-                        height="48"
-                      >
-                        下一步
-                        <v-icon class="ms-2">mdi-arrow-right</v-icon>
-                      </v-btn>
-                    </div>
-                  </v-slide-y-transition>
+                  <RoleSelector
+                    v-model="selectedRole"
+                    @next="goToStep2"
+                  />
                 </div>
               </v-fade-transition>
 
               <!-- 步驟 2：帳號密碼輸入 -->
               <v-fade-transition>
                 <div v-if="currentStep === 2" class="step-container">
-                  <!-- 返回按鈕 -->
-                  <v-btn
-                    class="back-btn mb-6"
-                    variant="text"
-                    @click="currentStep = 1"
-                    prepend-icon="mdi-arrow-left"
-                  >
-                    返回選擇角色
-                  </v-btn>
-
-                  <v-slide-y-transition>
-                    <div class="login-form-fields">
-                      <!-- 帳號輸入 -->
-                      <v-text-field
-                        v-model="username"
-                        :label="usernameLabel"
-                        prepend-inner-icon="mdi-identifier"
-                        variant="outlined"
-                        :rules="[rules.required]"
-                        class="form-field"
-                        bg-color="white"
-                        density="comfortable"
-                        :placeholder="usernamePlaceholder"
-                        clearable
-                      />
-                      
-                      <!-- 密碼輸入 -->
-                      <v-text-field
-                        v-model="password"
-                        label="密碼"
-                        prepend-inner-icon="mdi-lock-outline"
-                        :type="showPassword ? 'text' : 'password'"
-                        :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                        @click:append-inner="showPassword = !showPassword"
-                        variant="outlined"
-                        :rules="[rules.required, rules.minLength]"
-                        class="form-field"
-                        bg-color="white"
-                        density="comfortable"
-                        clearable
-                      />
+                  <v-card flat class="mt-6 pa-4 rounded-lg">
+                    <div class="section-title">
+                      <h3 class="text-h5 font-weight-bold">
+                        <v-icon color="primary" class="me-2">mdi-account-key</v-icon>
+                        帳號登入
+                      </h3>
+                      <div class="text-body-2 text-grey">請輸入您的帳號密碼</div>
+                      <v-divider class="mt-2"></v-divider>
                     </div>
-                  </v-slide-y-transition>
 
-                  <v-slide-y-transition>
-                    <div class="step-actions">
-                      <!-- 登入按鈕 -->
+                    <v-slide-y-transition>
+                      <div class="login-form-fields mt-4">
+                        <!-- 帳號輸入 -->
+                        <v-text-field
+                          v-model="username"
+                          :label="usernameLabel"
+                          prepend-inner-icon="mdi-identifier"
+                          variant="outlined"
+                          :rules="[rules.required]"
+                          class="form-field"
+                          bg-color="white"
+                          density="comfortable"
+                          :placeholder="usernamePlaceholder"
+                          clearable
+                        />
+                        
+                        <!-- 密碼輸入 -->
+                        <v-text-field
+                          v-model="password"
+                          label="密碼"
+                          prepend-inner-icon="mdi-lock-outline"
+                          :type="showPassword ? 'text' : 'password'"
+                          :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                          @click:append-inner="showPassword = !showPassword"
+                          variant="outlined"
+                          :rules="[rules.required, rules.minLength]"
+                          class="form-field"
+                          bg-color="white"
+                          density="comfortable"
+                          clearable
+                        />
+                      </div>
+                    </v-slide-y-transition>
+
+                    <div class="mt-6 d-flex justify-space-between">
+                      <v-btn class="secondary-btn" @click="currentStep = 1">
+                        <v-icon class="me-2">mdi-arrow-left</v-icon>
+                        返回
+                      </v-btn>
                       <v-btn
                         :loading="loading"
-                        class="login-btn"
-                        block
+                        class="primary-btn"
                         type="submit"
                         :disabled="!valid"
-                        elevation="0"
-                        height="48"
-                        prepend-icon="mdi-login-variant"
                       >
                         登入系統
-                      </v-btn>
-                      
-                      
-                      <!-- 測試登入按鈕 -->
-                      <v-btn
-                        class="test-btn mt-3"
-                        block
-                        @click="handleTestLogin"
-                        elevation="0"
-                        height="48"
-                        prepend-icon="mdi-test-tube-outline"
-                      >
-                        測試登入
+                        <v-icon class="ms-2">mdi-login-variant</v-icon>
                       </v-btn>
                     </div>
-                  </v-slide-y-transition>
+                  </v-card>
                 </div>
               </v-fade-transition>
               
               <!-- 導航按鈕組 -->
-              <div class="nav-buttons mt-6">
+              <div class="nav-links">
                 <v-btn
                   class="nav-btn"
-                  elevation="0"
                   @click="goToHome"
-                  prepend-icon="mdi-home-outline"
                 >
+                  <v-icon class="me-2">mdi-home-outline</v-icon>
                   返回首頁
                 </v-btn>
                 <v-btn
                   class="nav-btn"
-                  elevation="0"
                   @click="goToRegister"
-                  prepend-icon="mdi-account-plus-outline"
                 >
-                  註冊帳號
+                  <v-icon class="me-2">mdi-account-plus-outline</v-icon>
+                  還沒有帳號？註冊
                 </v-btn>
               </div>
               
@@ -233,6 +179,8 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores';
+import RoleSelector from './common/RoleSelector.vue';
+import '@/styles/auth-forms.css';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -248,19 +196,16 @@ const roles = [
     text: '一般用戶', 
     value: 'user',
     icon: 'mdi-account',
-    description: '個人用戶登入，查看健康數據'
   },
   { 
     text: '醫療機構', 
     value: 'medical',
     icon: 'mdi-hospital-building',
-    description: '醫院、診所等醫療服務提供者'
   },
   { 
     text: '保險業者', 
     value: 'insurer',
     icon: 'mdi-shield-account',
-    description: '保險公司、保險服務提供商'
   }
 ];
 const form = ref(null);
@@ -462,28 +407,34 @@ const handleTestLogin = async () => {
 
 <style scoped>
 /* 全局樣式 */
-.login-page {
-  background-color: #F9F7F4;
-  min-height: calc(100vh - 64px);
-  padding: 2rem 1rem;
+body, #app, .v-application, .v-app {
+  background: #f9f7f4 !important;
+  font-size: 1.18rem !important;
+  line-height: 1.7 !important;
 }
 
-/* 登入卡片樣式與註冊一致 */
-.login-card {
+.auth-page {
+  background-color: #F9F7F4;
+  min-height: calc(100vh - 64px);
+  padding: 1rem;
+}
+
+/* 登入卡片 */
+.auth-card {
   max-width: 1200px;
   width: 100%;
   border-radius: 32px !important;
   background: #fff !important;
-  padding: 3.5rem 2.5rem !important;
+  padding: 3rem 2.5rem !important;
   border: 1px solid #e5e7eb !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
-  font-size: 1.5rem !important;
+  font-size: 1.18rem !important;
 }
 
 /* 頂部標題區 */
 .header-section {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .header-title {
@@ -494,227 +445,15 @@ const handleTestLogin = async () => {
   letter-spacing: -0.5px;
 }
 
-.header-subtitle {
-  font-size: 1rem;
-  color: #6B7280;
-  margin: 0.5rem 0 0;
-}
-
 /* 表單樣式 */
-.login-form {
+.auth-form {
   max-width: 1000px;
   margin: 0 auto;
-  font-size: 1.5rem;
+  font-size: 1.18rem;
 }
 
 .form-field {
-  margin-bottom: 2rem !important;
-}
-
-.form-field :deep(.v-field),
-.form-field :deep(.v-label) {
-  font-size: 1.3rem !important;
-  min-height: 56px !important;
-}
-
-.form-field :deep(.v-field--focused) {
-  border-color: #111827 !important;
-}
-
-.form-field :deep(.v-label) {
-  color: #6B7280 !important;
-}
-
-/* 按鈕樣式 */
-.v-btn, .login-btn, .test-btn, .next-btn, .nav-btn {
-  font-size: 1.5rem !important;
-  height: 56px !important;
-  min-width: 140px !important;
-  border-radius: 20px !important;
-}
-
-.login-btn {
-  background-color: #F8F441 !important;
-  color: #111827 !important;
-  font-weight: 700 !important;
   margin-bottom: 1.5rem !important;
-}
-
-.login-btn:hover {
-  background-color: #f9f650 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(248, 244, 65, 0.25) !important;
-}
-
-.test-btn {
-  background-color: #F3F4F6 !important;
-  color: #6B7280 !important;
-  font-weight: 500 !important;
-  margin-bottom: 1.5rem !important;
-}
-
-.test-btn:hover {
-  background-color: #E5E7EB !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-  color: #111827 !important;
-}
-
-/* 導航按鈕 */
-.nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.nav-btn {
-  flex: 1;
-  background-color: white !important;
-  color: #6B7280 !important;
-  border: 1px solid #e5e7eb !important;
-  font-weight: 500 !important;
-}
-
-.nav-btn:hover {
-  transform: translateY(-2px);
-  color: #111827 !important;
-  border-color: #9CA3AF !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* 角色卡片樣式完全與註冊頁圖片一致 (藍色選中狀態) */
-.role-cards-wrapper {
-  display: flex;
-  flex-direction: row;
-  gap: 1.5rem;
-  width: 100%;
-  margin: 1rem 0; /* 與註冊頁圖片排版一致 */
-  justify-content: center;
-  flex-wrap: nowrap; /* 確保橫向排列不換行 */
-  overflow-x: unset; /* 桌面不顯示滾動條 */
-}
-.role-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-width: 280px; /* 與註冊頁圖片卡片寬度接近 */
-  max-width: 340px; /* 與註冊頁圖片卡片寬度接近 */
-  flex: 1 1 0;
-  padding: 2.2rem; /* 與註冊頁圖片 padding 一致 */
-  font-size: 1.15rem; /* 與註冊頁圖片字體大小一致 */
-  border: 2px solid #e5e7eb; /* 未選中時的邊框，與註冊頁圖片一致 */
-  border-radius: 20px; /* 圓角，與註冊頁圖片一致 */
-  background: white; /* 未選中時背景 */
-  cursor: pointer;
-  transition: all 0.3s ease;
-  height: auto;
-  box-sizing: border-box;
-}
-.role-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-.role-card--selected {
-  border-color: #00B8D9; /* 選中時的邊框顏色，與模板圖片一致 (藍色) */
-  background-color: #E6FDFF; /* 選中時的背景顏色，與模板圖片一致 (淡藍色) */
-  box-shadow: 0 6px 24px rgba(0, 184, 217, 0.18); /* 選中時的陰影，與模板圖片一致 */
-}
-.role-card__icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px; /* icon 容器大小，與註冊頁圖片一致 */
-  height: 80px; /* icon 容器大小，與註冊頁圖片一致 */
-  border-radius: 50%;
-  background: #f3f4f6; /* icon 容器背景 */
-  margin-right: 1rem; /* icon 與文字間距，與註冊頁圖片一致 */
-  transition: all 0.3s ease;
-  font-size: 2.2rem; /* icon 大小，與註冊頁圖片一致 */
-}
-.role-card--selected .role-card__icon-wrapper {
-  background: #B2EBf2; /* 選中時 icon 容器背景，與模板圖片一致 */
-}
-.role-card .v-icon {
-  /* icon 顏色通過 template 中的 :color 綁定控制 */
-}
-.role-card__content {
-  flex: 1;
-}
-.role-card__title {
-  font-size: 1.35rem; /* 標題字體大小，與註冊頁圖片一致 */
-  font-weight: 600;
-  color: #111827; /* 標題字體顏色，與模板圖片一致 */
-  margin: 0 0 0.5rem;
-}
-.role-card__description {
-  font-size: 1.1rem; /* 描述字體大小，與註冊頁圖片一致 */
-  color: #6b7280; /* 描述字體顏色，與模板圖片一致 */
-  margin: 0;
-  line-height: 1.4;
-}
-.role-card__check {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-.role-card__check .v-icon {
-  font-size: 36px !important; /* 打勾 Icon 大小，與模板圖片一致 */
-  color: #00B8D9 !important; /* 打勾 Icon 顏色，與模板圖片一致 (藍色) */
-}
-
-/* Alert 訊息樣式 */
-.alert-message {
-  border-radius: 16px !important;
-  margin-bottom: 1.5rem !important;
-}
-
-/* RWD 適配 */
-@media (max-width: 900px) {
-  .login-card {
-    padding: 2rem 1rem !important;
-    font-size: 1.1rem;
-  }
-  .header-title {
-    font-size: 1.5rem !important;
-  }
-  .login-form {
-    max-width: 98vw;
-    font-size: 1rem;
-  }
-  .form-field :deep(.v-field),
-  .form-field :deep(.v-label) {
-    font-size: 1rem !important;
-    min-height: 48px !important;
-  }
-  .v-btn, .login-btn, .test-btn, .next-btn, .nav-btn {
-    font-size: 1rem !important;
-    height: 48px !important;
-    min-width: 120px !important;
-  }
-  .role-card {
-    padding: 1.2rem;
-    font-size: 1rem;
-  }
-  .role-card__icon-wrapper {
-    width: 56px;
-    height: 56px;
-    font-size: 1.3rem;
-  }
-  .role-card__title {
-    font-size: 1.1rem;
-  }
-  .role-card__description {
-    font-size: 0.95rem;
-  }
-  .step-circle {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
-  .step-label {
-    font-size: 0.85rem;
-  }
 }
 
 /* 步驟指示器樣式 */
@@ -722,9 +461,22 @@ const handleTestLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 2.5rem 0;
+  margin: 0 auto 3rem;
   padding: 0;
-  font-size: 1.6rem;
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+}
+
+.steps-indicator::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: 80px;
+  right: 80px;
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 1;
 }
 
 .step {
@@ -732,8 +484,9 @@ const handleTestLogin = async () => {
   flex-direction: column;
   align-items: center;
   position: relative;
-  flex: 1;
-  max-width: 120px;
+  z-index: 2;
+  flex: 0 1 auto;
+  margin: 0 2rem;
 }
 
 .step-circle {
@@ -745,126 +498,223 @@ const handleTestLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
-  position: relative;
+  margin-bottom: 0.75rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   color: #888;
   font-size: 1.7rem;
+  position: relative;
+  z-index: 2;
 }
 
 .step.active .step-circle {
-  border-color: #F8F441;
-  background: #F8F441;
-  color: #111827;
+  border-color: #00B8D9;
+  background: #00B8D9;
+  color: white;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.25);
 }
 
 .step.completed .step-circle {
-  border-color: #463F3A;
-  background: #463F3A;
+  border-color: #9CA3AF;
+  background: #9CA3AF;
   color: white;
-  transform: scale(1);
 }
 
 .step-label {
-  font-size: 1.5rem;
+  font-size: 1.18rem;
   color: #888;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.8;
+  white-space: nowrap;
+  margin-top: 0.25rem;
 }
 
 .step.active .step-label {
   color: #111827;
   font-weight: 600;
-  opacity: 1;
-  transform: translateY(-2px);
 }
 
 .step.completed .step-label {
-  color: #111827;
+  color: #6B7280;
   font-weight: 600;
-  opacity: 1;
 }
 
-.step-line {
-  flex: 1;
-  height: 2px;
-  background: #e5e7eb;
-  margin: 0 0.5rem;
-  margin-bottom: 2rem;
-  max-width: 100px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: left center;
-}
-
-.step.completed + .step-line {
-  background: #111827;
-  transform: scaleX(1.1);
-}
-
-/* 返回按鈕樣式 */
-.back-btn {
-  color: #6b7280 !important;
-  font-weight: 500;
-}
-
-.back-btn:hover {
-  color: #111827 !important;
-  background: rgba(0, 0, 0, 0.04);
-}
-
-/* 步驟容器 */
-.step-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 400px; /* 確保容器有足夠的高度 */
-}
-
-/* 步驟操作按鈕容器 */
-.step-actions {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 1rem 0;
-  margin-top: auto;
-  width: 100%;
-}
-
-/* 下一步按鈕樣式 */
-.next-btn {
-  background-color: #F8F441 !important;
-  color: #111827 !important;
-  font-weight: 600 !important;
-  border-radius: 16px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  height: 48px !important;
-  letter-spacing: 0.5px !important;
+/* 按鈕樣式 */
+.v-btn {
+  border-radius: 20px !important;
   text-transform: none !important;
-  font-size: 1.15rem !important;
-  border: 2px solid transparent !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  height: 48px !important;
+  min-width: 140px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.next-btn:hover {
+.primary-btn {
+  background-color: #00B8D9 !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(0, 184, 217, 0.25) !important;
+}
+
+.primary-btn:hover {
+  background-color: #0095B0 !important;
   transform: translateY(-2px);
-  background-color: #F9F650 !important;
-  box-shadow: 0 8px 24px rgba(248, 244, 65, 0.25) !important;
-  border-color: #F8F441 !important;
+  box-shadow: 0 8px 24px rgba(0, 184, 217, 0.35) !important;
 }
 
-.next-btn:active {
-  transform: translateY(0);
-  background-color: #F7F332 !important;
-  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.15) !important;
+.secondary-btn {
+  background-color: white !important;
+  color: #6B7280 !important;
+  border: 1px solid #e5e7eb !important;
 }
 
-.next-btn:disabled {
-  background-color: #F3F4F6 !important;
-  color: #9CA3AF !important;
-  transform: none;
-  box-shadow: none;
-  border-color: transparent !important;
+.secondary-btn:hover {
+  background-color: #f9fafb !important;
+  color: #00B8D9 !important;
+  border-color: #00B8D9 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
+/* 區塊標題樣式 */
+.section-title {
+  margin-bottom: 2rem;
+}
+
+.section-title h3 {
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.section-title .text-body-2 {
+  font-size: 1.1rem !important;
+  color: #6B7280 !important;
+  line-height: 1.5;
+}
+
+.section-title .v-divider {
+  margin-top: 1rem !important;
+  opacity: 0.1;
+}
+
+/* 導航按鈕組 */
+.nav-links {
+  margin-top: 3rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0 1rem;
+}
+
+.nav-btn {
+  flex: 1;
+  background: transparent !important;
+  color: #6B7280 !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 16px !important;
+  padding: 1rem 1.5rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.nav-btn .v-icon {
+  margin-right: 0.5rem;
+}
+
+.nav-btn:hover {
+  color: #00B8D9 !important;
+  border-color: #00B8D9 !important;
+  background: rgba(0, 184, 217, 0.05) !important;
+  text-decoration: none;
+}
+
+/* RWD 適配 */
+@media (max-width: 900px) {
+  .auth-card {
+    padding: 2rem 1.5rem !important;
+  }
+  
+  .header-title {
+    font-size: 2.5rem !important;
+  }
+  
+  .steps-indicator {
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+  
+  .steps-indicator::before {
+    left: 60px;
+    right: 60px;
+  }
+  
+  .step {
+    margin: 0 1rem;
+  }
+  
+  .step-circle {
+    width: 48px;
+    height: 48px;
+    font-size: 1.4rem;
+  }
+  
+  .step-label {
+    font-size: 1rem;
+  }
+  
+  .nav-links {
+    margin-top: 2rem;
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 1.5rem 1rem !important;
+  }
+  
+  .header-section {
+    margin-bottom: 2rem;
+  }
+  
+  .steps-indicator {
+    margin-bottom: 1.5rem;
+  }
+  
+  .steps-indicator::before {
+    left: 40px;
+    right: 40px;
+  }
+  
+  .step {
+    margin: 0 0.5rem;
+  }
+  
+  .step-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .nav-links {
+    flex-direction: column;
+    margin-top: 1.5rem;
+    gap: 1rem;
+  }
+  
+  .nav-btn {
+    width: 100%;
+  }
+}
 </style>

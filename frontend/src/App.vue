@@ -19,19 +19,19 @@
             <v-img
               :src="logo"
               alt="智療鏈 Logo"
-              width="80"
-              height="80"
+              width="40"
+              height="40"
               class="logo-image"
             />
             <span class="brand-title">Medledger AI</span>
           </router-link>
           
-          <v-spacer />
-          
-          <nav class="d-flex align-center">
+          <nav class="d-flex align-center ml-4">
             <v-btn text class="nav-link mx-2" @click="scrollToSection('about-section')">關於我們</v-btn>
             <v-btn text class="nav-link mx-2" @click="scrollToSection('contact-section')">聯絡資訊</v-btn>
           </nav>
+
+          <v-spacer />
         </div>
       </div>
     </v-app-bar>
@@ -42,7 +42,7 @@
 
     <v-footer app class="footer-brand" height="56">
       <v-container class="d-flex align-center justify-center fill-height">
-        <span class="footer-title">© {{ new Date().getFullYear() }} 智療鏈 | 智慧守護，鏈接健康未來</span>
+        <span class="footer-title">© {{ new Date().getFullYear() }} Medledger | 智慧守護，鏈接健康未來</span>
       </v-container>
     </v-footer>
 
@@ -120,8 +120,8 @@ body, #app, .v-application, .v-app {
 .logo-image {
   border-radius: 8px;
   transition: transform 0.2s ease;
-  width: 100px !important;
-  height: 100px !important;
+  width: 60px !important;
+  height: 60px !important;
   filter: none !important;
 }
 
@@ -134,15 +134,15 @@ body, #app, .v-application, .v-app {
 }
 
 .nav-link {
-  color: #6b7280 !important;
-  font-weight: 500;
-  font-size: 0.95rem;
+  color: #111827 !important;
+  font-weight: 900;
+  font-size: 2.2rem;
   text-transform: none;
-  letter-spacing: 0;
+  letter-spacing: -0.5px;
 }
 
 .nav-link:hover {
-  color: #111827 !important;
+  opacity: 0.8;
 }
 
 .footer-brand {

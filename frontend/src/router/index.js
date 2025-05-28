@@ -14,13 +14,13 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('../components/LoginForm.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, transitionName: 'slide' }
   },
   {
     path: '/register',
     name: 'Register',
     component: () => import('../components/RegisterForm.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, transitionName: 'slide' }
   },
   {
     path: '/user-dashboard',

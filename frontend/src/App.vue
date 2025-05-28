@@ -37,7 +37,11 @@
     </v-app-bar>
 
     <v-main>
-      <router-view />
+      <router-view v-slot="{ Component, route }">
+        <transition :name="route.meta.transitionName || 'fade'" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </v-main>
 
     <v-footer app class="footer-brand" height="56">
@@ -204,5 +208,29 @@ h6, .text-h6 { font-size: 1.2rem !important; }
 
 input, textarea, .v-input__slot, .v-label {
   font-size: 1.15rem !important;
+}
+
+/* fade transition (default) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* slide transition */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease-out;
+}
+.slide-enter-from {
+  transform: translateX(20px);
+  opacity: 0;
+}
+.slide-leave-to {
+  transform: translateX(-20px);
+  opacity: 0;
 }
 </style>

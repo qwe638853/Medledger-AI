@@ -382,7 +382,7 @@ const handleTestLogin = async () => {
   // 設置登入狀態與 localStorage
   authStore.isLoggedIn = true;
   authStore.userRole = role;
-  authStore.currentUser = role === 'user' ? 'test_user' : 
+  authStore.currentUser = role === 'user' ? 'test_user' :
                          (role === 'medical' ? 'test_hospital' : 'test_insurer');
   localStorage.setItem('token', 'testtoken');
   localStorage.setItem('role', role);

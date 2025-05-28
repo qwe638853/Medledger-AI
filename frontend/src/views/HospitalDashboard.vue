@@ -374,17 +374,17 @@ const formatJSONDisplay = (data) => {
 
 <template>
   <div class="dashboard-page">
-    <v-container class="py-8">
-      <v-row>
-        <v-col cols="12">
+    <v-container class="py-2">
+      <v-row justify="center">
+        <v-col cols="12" sm="10" md="10" lg="10" xl="10">
           <!-- 主要卡片容器 -->
           <v-card class="main-card" elevation="0">
             <!-- 頂部標題區 -->
             <div class="header-section">
               <div class="d-flex align-center mb-6">
                 <v-icon size="32" class="header-icon">mdi-hospital-building</v-icon>
-                <div>
-                  <h1 class="header-title">健檢中心儀表板</h1>
+                <div class="ml-6">
+                  <h1 class="header-title">健檢中心</h1>
                   <p class="header-subtitle">歡迎，{{ currentUser }}</p>
                 </div>
               </div>
@@ -392,7 +392,7 @@ const formatJSONDisplay = (data) => {
 
             <!-- 病人身分證字號輸入區 -->
             <v-row class="mb-8">
-              <v-col cols="12" md="6">
+              <v-col cols="12" md="8" lg="9" xl="10">
                 <v-text-field
                   v-model="patientId"
                   label="病人身分證字號"
@@ -405,10 +405,20 @@ const formatJSONDisplay = (data) => {
                   hide-details="auto"
                 >
                   <template v-slot:prepend>
-                    <v-icon size="20">mdi-account-outline</v-icon>
+                    <v-icon size="28">mdi-account-outline</v-icon>
                   </template>
                 </v-text-field>
                 <div class="input-hint">請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字</div>
+              </v-col>
+              <v-col cols="12" md="4" lg="3" xl="2" class="d-flex justify-end align-center">
+                <v-btn
+                  class="logout-btn"
+                  elevation="0"
+                  @click="handleLogout"
+                >
+                  <v-icon start size="20">mdi-logout-variant</v-icon>
+                  登出
+                </v-btn>
               </v-col>
             </v-row>
 
@@ -425,7 +435,7 @@ const formatJSONDisplay = (data) => {
                 <v-icon size="48" class="upload-icon">mdi-cloud-upload-outline</v-icon>
                 <h3 class="upload-title">拖曳健檢報告至此處上傳</h3>
                 <p class="upload-text">
-                  或者
+                  
                   <v-btn
                     class="select-btn"
                     elevation="0"
@@ -556,18 +566,6 @@ const formatJSONDisplay = (data) => {
                 </div>
               </template>
             </v-card>
-
-            <!-- 底部操作區 -->
-            <div class="d-flex justify-end mt-8">
-              <v-btn
-                class="logout-btn"
-                elevation="0"
-                @click="handleLogout"
-              >
-                <v-icon start size="20">mdi-logout-variant</v-icon>
-                登出
-              </v-btn>
-            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -698,7 +696,7 @@ const formatJSONDisplay = (data) => {
 .main-card {
   border-radius: 28px !important;
   background: white !important;
-  padding: 2rem !important;
+  padding: 1rem 5rem !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
@@ -709,7 +707,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .header-title {
-  font-size: 1.75rem;
+  font-size: 2.1rem;
   font-weight: 900;
   color: #111827;
   margin: 0;
@@ -717,7 +715,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .header-subtitle {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #6B7280;
   margin: 0.25rem 0 0;
 }
@@ -732,7 +730,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .input-hint {
-  font-size: 0.875rem;
+  font-size: 1.05rem;
   color: #888;
   margin-top: 0.5rem;
 }
@@ -772,27 +770,27 @@ const formatJSONDisplay = (data) => {
 }
 
 .upload-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #111827;
   margin-bottom: 1rem;
 }
 
 .upload-text {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #6B7280;
   margin-bottom: 1rem;
 }
 
 .upload-hint {
-  font-size: 0.875rem;
+  font-size: 1.05rem;
   color: #888;
   margin: 0;
 }
 
 /* 選擇檔案按鈕 */
 .select-btn {
-  background-color: #F8F441 !important;
+  background-color: #00B8D9 !important;
   color: #111827 !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
@@ -803,9 +801,9 @@ const formatJSONDisplay = (data) => {
 }
 
 .select-btn:hover {
+  background-color: #00B8D9 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
-  background-color: #F9F650 !important;
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.25) !important;
 }
 
 /* 已選擇文件列表 */
@@ -815,7 +813,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .selected-title {
-  font-size: 1.125rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: #111827;
 }
@@ -833,18 +831,18 @@ const formatJSONDisplay = (data) => {
 }
 
 .file-name {
-  font-size: 0.875rem !important;
+  font-size: 1.05rem !important;
   color: #111827 !important;
 }
 
 .file-size {
-  font-size: 0.75rem !important;
+  font-size: 0.9rem !important;
   color: #6B7280 !important;
 }
 
 /* 預覽按鈕 */
 .preview-btn {
-  background-color: #F8F441 !important;
+  background-color: #00B8D9 !important;
   color: #111827 !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
@@ -854,8 +852,9 @@ const formatJSONDisplay = (data) => {
 }
 
 .preview-btn:hover {
+  background-color: #00B8D9 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.25) !important;
 }
 
 /* 已上傳列表 */
@@ -866,7 +865,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .uploaded-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
   margin: 0;
@@ -886,12 +885,12 @@ const formatJSONDisplay = (data) => {
 }
 
 .report-patient {
-  font-size: 0.875rem !important;
+  font-size: 1.05rem !important;
   color: #111827 !important;
 }
 
 .report-info {
-  font-size: 0.75rem !important;
+  font-size: 0.9rem !important;
   color: #6B7280 !important;
 }
 
@@ -907,31 +906,33 @@ const formatJSONDisplay = (data) => {
 }
 
 .empty-text {
-  font-size: 1.125rem;
+  font-size: 1.35rem;
   color: #374151;
   margin-bottom: 0.5rem;
 }
 
 .empty-hint {
-  font-size: 0.875rem;
+  font-size: 1.05rem;
   color: #6B7280;
   margin: 0;
 }
 
 /* 登出按鈕 */
 .logout-btn {
-  background-color: #F8F441 !important;
+  background-color: #00B8D9 !important;
   color: #111827 !important;
-  border-radius: 16px !important;
   font-weight: 600 !important;
   padding: 0 24px !important;
-  height: 44px !important;
+  height: 56px !important;
+  border-radius: 16px !important;
+  margin-top: -36px;
   transition: all 0.2s ease !important;
 }
 
 .logout-btn:hover {
+  background-color: #00B8D9 !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(248, 244, 65, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 184, 217, 0.25) !important;
 }
 
 /* 預覽對話框 */
@@ -945,13 +946,14 @@ const formatJSONDisplay = (data) => {
 }
 
 .preview-header {
-  font-size: 1.25rem !important;
+  font-size: 1.5rem !important;
   font-weight: 700 !important;
   color: #111827 !important;
   padding: 1.5rem !important;
 }
 
 .preview-subtitle {
+  font-size: 1.2rem !important;
   color: #6B7280 !important;
   padding: 0 1.5rem 1rem !important;
 }
@@ -968,7 +970,7 @@ const formatJSONDisplay = (data) => {
 }
 
 .preview-panel-title {
-  font-size: 0.875rem !important;
+  font-size: 1.05rem !important;
   color: #111827 !important;
 }
 
@@ -987,14 +989,14 @@ const formatJSONDisplay = (data) => {
   background: #F9FAFB !important;
   color: #374151 !important;
   font-weight: 600 !important;
-  font-size: 0.875rem !important;
+  font-size: 1.05rem !important;
   padding: 0.75rem 1rem !important;
 }
 
 .preview-table td {
   padding: 0.75rem 1rem !important;
   color: #111827 !important;
-  font-size: 0.875rem !important;
+  font-size: 1.05rem !important;
 }
 
 .preview-actions {
@@ -1003,10 +1005,11 @@ const formatJSONDisplay = (data) => {
 
 .cancel-btn {
   color: #6B7280 !important;
+  background-color: #00B8D9 !important;
 }
 
 .confirm-btn {
-  background-color: #F8F441 !important;
+  background-color: #00B8D9 !important;
   color: #111827 !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
@@ -1024,7 +1027,7 @@ const formatJSONDisplay = (data) => {
   }
   
   .header-title {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
   }
   
   .upload-content {
@@ -1032,7 +1035,7 @@ const formatJSONDisplay = (data) => {
   }
   
   .upload-title {
-    font-size: 1.125rem;
+    font-size: 1.35rem;
   }
 }
 
@@ -1053,6 +1056,10 @@ const formatJSONDisplay = (data) => {
   
   .preview-dialog :deep(.v-overlay__content) {
     width: 90vw !important;
+  }
+  
+  .upload-title {
+    font-size: 1.35rem;
   }
 }
 </style>

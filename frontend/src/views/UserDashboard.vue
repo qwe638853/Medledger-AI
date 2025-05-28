@@ -304,10 +304,10 @@ function formatDate(dateString) {
     
     // 如果不是有效的時間戳，嘗試作為一般日期字符串處理
     return new Date(dateString).toLocaleDateString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
   } catch (e) {
     console.error('日期格式化錯誤:', e, '輸入值:', dateString, '類型:', typeof dateString);
     return '日期格式錯誤';
@@ -518,16 +518,16 @@ const getRemainingDays = (expiry) => {
                 <div class="rounded-circle bg-primary-lighten-5 p-3">
                   <v-icon size="28" color="primary">mdi-account</v-icon>
                 </div>
-                <v-btn
+              <v-btn
                   color="grey-darken-1"
-                  @click="handleLogout"
+                @click="handleLogout"
                   variant="text"
                   icon
                   size="small"
                   class="ml-auto"
-                >
+              >
                   <v-icon size="20">mdi-logout</v-icon>
-                </v-btn>
+              </v-btn>
               </div>
               <div class="mt-4">
                 <div class="text-subtitle-1 text-grey-darken-1">歡迎回來</div>
@@ -552,7 +552,7 @@ const getRemainingDays = (expiry) => {
               </div>
             </v-card-text>
           </v-card>
-        </v-col>
+            </v-col>
 
         <!-- 健康報告統計卡片 -->
         <v-col cols="12" sm="6" md="3">
@@ -576,7 +576,7 @@ const getRemainingDays = (expiry) => {
                 </div>
               </div>
             </v-card-text>
-          </v-card>
+        </v-card>
         </v-col>
 
         <!-- 待處理授權請求卡片 -->
@@ -586,7 +586,7 @@ const getRemainingDays = (expiry) => {
               <div class="d-flex align-center mb-4">
                 <div class="rounded-circle bg-warning-lighten-5 p-3">
                   <v-icon size="28" color="warning">mdi-clock-outline</v-icon>
-                </div>
+          </div>
               </div>
               <div class="mt-4">
                 <div class="text-subtitle-1 text-grey-darken-1">待處理授權</div>
@@ -662,15 +662,15 @@ const getRemainingDays = (expiry) => {
             </v-card-title>
 
             <v-card-text class="pa-6">
-              <v-data-table
-                :headers="[
+          <v-data-table
+            :headers="[
                   { title: '報告編號', key: 'id', align: 'start', width: '150px' },
                   { title: '檢查日期', key: 'date', align: 'center', width: '150px' },
                   { title: '檢查類型', key: 'type', align: 'center', width: '150px' },
                   { title: '操作', key: 'actions', align: 'center', width: '120px' }
-                ]"
-                :items="healthData"
-                :loading="loading"
+            ]"
+            :items="healthData"
+            :loading="loading"
                 class="elevation-0"
                 hover
                 density="comfortable"
@@ -681,16 +681,16 @@ const getRemainingDays = (expiry) => {
                     <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.id }}</span>
                   </div>
-                </template>
-
+            </template>
+            
                 <!-- 檢查日期欄位 -->
-                <template v-slot:item.date="{ item }">
+            <template v-slot:item.date="{ item }">
                   <div class="d-flex align-center justify-center">
                     <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
                     {{ formatDate(item.date) }}
                   </div>
-                </template>
-
+            </template>
+            
                 <!-- 檢查類型欄位 -->
                 <template v-slot:item.type="{ item }">
                   <v-chip
@@ -704,14 +704,14 @@ const getRemainingDays = (expiry) => {
                 </template>
 
                 <!-- 操作欄位 -->
-                <template v-slot:item.actions="{ item }">
+            <template v-slot:item.actions="{ item }">
                   <div class="d-flex gap-2 justify-center">
-                    <v-btn
-                      icon
-                      variant="text"
+                  <v-btn
+                    icon
+                variant="text"
                       size="small"
                       color="primary"
-                      @click="viewReportDetail(item)"
+                    @click="viewReportDetail(item)"
                       class="view-report-btn"
                     >
                       <v-icon>mdi-eye</v-icon>
@@ -722,7 +722,7 @@ const getRemainingDays = (expiry) => {
                       >
                         查看詳情
                       </v-tooltip>
-                    </v-btn>
+                  </v-btn>
                     <v-btn
                       icon
                       variant="text"
@@ -743,7 +743,7 @@ const getRemainingDays = (expiry) => {
                 </template>
 
                 <!-- 無資料顯示 -->
-                <template v-slot:no-data>
+            <template v-slot:no-data>
                   <div class="text-center pa-5">
                     <v-icon size="40" color="grey-lighten-1" class="mb-3">
                       mdi-file-document-outline
@@ -754,11 +754,11 @@ const getRemainingDays = (expiry) => {
                     <div class="text-body-2 text-grey mt-2">
                       您目前沒有任何健康檢查報告記錄
                     </div>
-                  </div>
-                </template>
-              </v-data-table>
+              </div>
+            </template>
+          </v-data-table>
             </v-card-text>
-          </v-card>
+        </v-card>
 
           <!-- 授權管理卡片 -->
           <v-card elevation="2" class="rounded-xl">
@@ -774,7 +774,7 @@ const getRemainingDays = (expiry) => {
                 >
                   {{ pendingRequestsCount }} 個待處理
                 </v-chip>
-              </div>
+          </div>
               <v-spacer></v-spacer>
               <v-btn-group density="comfortable" variant="tonal">
                 <v-btn
@@ -892,9 +892,9 @@ const getRemainingDays = (expiry) => {
                 <template v-slot:item.actions="{ item }">
                   <div class="d-flex gap-2 justify-center">
                     <template v-if="item.status === 'PENDING'">
-                      <v-btn
-                        :loading="authProcessing"
-                        @click="approveRequest(item.id)"
+                    <v-btn
+                      :loading="authProcessing"
+                      @click="approveRequest(item.id)"
                         color="success"
                         variant="flat"
                         size="small"
@@ -905,21 +905,21 @@ const getRemainingDays = (expiry) => {
                           <v-icon size="18">mdi-check-circle-outline</v-icon>
                         </template>
                         授權
-                      </v-btn>
-                      <v-btn
-                        :loading="authProcessing"
-                        @click="rejectRequest(item.id)"
+                    </v-btn>
+                    <v-btn
+                      :loading="authProcessing"
+                      @click="rejectRequest(item.id)"
                         color="error"
                         variant="flat"
                         size="small"
                         class="modern-btn reject-btn"
                         elevation="0"
-                      >
+                    >
                         <template v-slot:prepend>
                           <v-icon size="18">mdi-close-circle-outline</v-icon>
                         </template>
-                        拒絕
-                      </v-btn>
+                      拒絕
+                    </v-btn>
                     </template>
                     <v-chip
                       v-else
@@ -950,14 +950,14 @@ const getRemainingDays = (expiry) => {
                     <div class="text-body-2 text-grey mt-2">
                       {{ showPendingOnly ? '目前沒有待處理的授權請求' : '目前沒有已授權的報告' }}
                     </div>
-                  </div>
+              </div>
                 </template>
               </v-data-table>
             </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
   </div>
 </template>
 

@@ -31,7 +31,7 @@ body, .v-application, .v-app, .dashboard-bg, .dashboard-container, .report-conta
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--text-color);
   line-height: 1.6;
-  font-size: 1.15rem;
+  font-size: 18px;
 }
 
 /* 設置標題樣式 */

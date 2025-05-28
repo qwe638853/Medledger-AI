@@ -19,8 +19,8 @@
             <v-img
               :src="logo"
               alt="智療鏈 Logo"
-              width="40"
-              height="40"
+              width="80"
+              height="80"
               class="logo-image"
             />
             <span class="brand-title">Medledger AI</span>
@@ -120,8 +120,8 @@ body, #app, .v-application, .v-app {
 .logo-image {
   border-radius: 8px;
   transition: transform 0.2s ease;
-  width: 60px !important;
-  height: 60px !important;
+  width: 100px !important;
+  height: 100px !important;
   filter: none !important;
 }
 

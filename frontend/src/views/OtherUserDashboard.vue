@@ -278,11 +278,11 @@ const sendAuthRequest = async () => {
     );
 
     if (result && result.success) {
-      authRequestDialog.value = false;
+    authRequestDialog.value = false;
       snackbarMessage.value = '已成功送出授權請求';
-      snackbarColor.value = 'success';
-      snackbar.value = true;
-      
+    snackbarColor.value = 'success';
+    snackbar.value = true;
+    
       // 授權請求成功後重新獲取報告和請求列表
       await Promise.all([
         fetchReportsByPatientId(patientId.value),
@@ -511,13 +511,13 @@ const getRequestStatusInfo = (status) => {
               <div class="d-flex align-center mb-4">
                 <div class="rounded-circle bg-primary-lighten-5 p-3">
                   <v-icon size="28" color="primary">mdi-briefcase-account</v-icon>
-                </div>
-                <v-btn
+              </div>
+              <v-btn 
                   color="grey-darken-1"
-                  @click="handleLogout"
+                @click="handleLogout" 
                   variant="text"
                   icon
-                  size="small"
+                size="small"
                   class="ml-auto"
                 >
                   <v-icon size="20">mdi-logout</v-icon>
@@ -765,60 +765,60 @@ const getRequestStatusInfo = (status) => {
             
             <v-card-text class="pa-6">
               <v-window v-model="tab">
-                <!-- 尚未授權報告標籤內容 -->
+              <!-- 尚未授權報告標籤內容 -->
                 <v-window-item value="unauthorized">
-                  <v-data-table
-                    :headers="[
+                <v-data-table
+                  :headers="[
                       { title: '報告編號', key: 'id', align: 'start', width: '120px' },
                       { title: '健康數據', key: 'content', align: 'start' },
                       { title: '日期', key: 'date', align: 'center', width: '120px' },
                       { title: '狀態', key: 'status', align: 'center', width: '100px' },
                       { title: '操作', key: 'actions', align: 'center', width: '100px' }
-                    ]"
-                    :items="unauthorizedReports"
-                    :loading="loading"
-                    loading-text="資料載入中..."
+                  ]"
+                  :items="unauthorizedReports"
+                  :loading="loading"
+                  loading-text="資料載入中..."
                     class="elevation-0"
-                    hover
+                  hover
                     density="comfortable"
                   >
                     <template v-slot:item.id="{ item }">
                       <div class="d-flex align-center">
                         <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                         <span class="font-weight-medium">{{ item.id }}</span>
-                      </div>
-                    </template>
+                    </div>
+                  </template>
 
                     <template v-slot:item.content="{ item }">
                       <div class="text-truncate">{{ item.content }}</div>
                     </template>
 
-                    <template v-slot:item.date="{ item }">
+                  <template v-slot:item.date="{ item }">
                       <div class="d-flex align-center justify-center">
                         <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
                         {{ formatDate(item.date) }}
                       </div>
-                    </template>
+                  </template>
 
-                    <template v-slot:item.status="{ item }">
-                      <v-chip
+                  <template v-slot:item.status="{ item }">
+                    <v-chip
                         size="small"
                         color="warning"
                         variant="tonal"
                         class="font-weight-medium"
-                      >
-                        未授權
-                      </v-chip>
-                    </template>
+                    >
+                      未授權
+                    </v-chip>
+                  </template>
 
-                    <template v-slot:item.actions="{ item }">
+                  <template v-slot:item.actions="{ item }">
                       <div class="d-flex gap-2 justify-center">
-                        <v-btn
+                      <v-btn 
                           icon
                           variant="text"
-                          size="small"
+                        size="small"
                           color="primary"
-                          @click="openAuthRequestDialog(item)"
+                        @click="openAuthRequestDialog(item)"
                           class="view-report-btn"
                         >
                           <v-icon>mdi-key-chain</v-icon>
@@ -829,11 +829,11 @@ const getRequestStatusInfo = (status) => {
                           >
                             請求授權
                           </v-tooltip>
-                        </v-btn>
-                      </div>
-                    </template>
+                      </v-btn>
+                    </div>
+                  </template>
 
-                    <template v-slot:no-data>
+                  <template v-slot:no-data>
                       <div class="text-center pa-5">
                         <v-icon size="40" color="grey-lighten-1" class="mb-3">
                           mdi-file-document-outline
@@ -844,34 +844,34 @@ const getRequestStatusInfo = (status) => {
                         <div class="text-body-2 text-grey mt-2">
                           該病患沒有未授權的健康報告
                         </div>
-                      </div>
-                    </template>
-                  </v-data-table>
-                </v-window-item>
-                
-                <!-- 已授權報告標籤內容 -->
+                    </div>
+                  </template>
+                </v-data-table>
+              </v-window-item>
+              
+              <!-- 已授權報告標籤內容 -->
                 <v-window-item value="authorized">
-                  <v-data-table
-                    :headers="[
+          <v-data-table
+            :headers="[
                       { title: '報告編號', key: 'id', align: 'start', width: '120px' },
                       { title: '授權對象', key: 'requester', align: 'start', width: '200px' },
                       { title: '授權日期', key: 'granted_at', align: 'center', width: '120px' },
                       { title: '到期日期', key: 'expiry', align: 'center', width: '120px' },
                       { title: '操作', key: 'actions', align: 'center', width: '100px' }
-                    ]"
-                    :items="authorizedReports"
-                    :loading="loading"
-                    loading-text="資料載入中..."
+            ]"
+                  :items="authorizedReports"
+            :loading="loading"
+            loading-text="資料載入中..."
                     class="elevation-0"
-                    hover
+                  hover
                     density="comfortable"
                   >
                     <template v-slot:item.id="{ item }">
                       <div class="d-flex align-center">
                         <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                         <span class="font-weight-medium">{{ item.id }}</span>
-                      </div>
-                    </template>
+                    </div>
+            </template>
 
                     <template v-slot:item.requester="{ item }">
                       <div class="d-flex align-center">
@@ -883,7 +883,7 @@ const getRequestStatusInfo = (status) => {
                           <span class="text-caption text-grey">{{ item.company_name }}</span>
                         </div>
                       </div>
-                    </template>
+            </template>
 
                     <template v-slot:item.granted_at="{ item }">
                       <div class="d-flex align-center justify-center">
@@ -894,16 +894,16 @@ const getRequestStatusInfo = (status) => {
 
                     <template v-slot:item.expiry="{ item }">
                       <div class="d-flex flex-column align-center">
-                        <v-chip
+                    <v-chip
                           size="small"
                           :color="getExpiryChipColor(item.expiry)"
                           variant="tonal"
                           class="font-weight-medium"
                         >
                           {{ formatExpiryDate(item.expiry) }}
-                        </v-chip>
+                    </v-chip>
                       </div>
-                    </template>
+                  </template>
 
                     <template v-slot:item.actions="{ item }">
                       <div class="d-flex gap-2 justify-center">
@@ -925,9 +925,9 @@ const getRequestStatusInfo = (status) => {
                           </v-tooltip>
                         </v-btn>
                       </div>
-                    </template>
+                  </template>
 
-                    <template v-slot:no-data>
+                  <template v-slot:no-data>
                       <div class="text-center pa-5">
                         <v-icon size="40" color="grey-lighten-1" class="mb-3">
                           mdi-file-document-outline
@@ -938,13 +938,13 @@ const getRequestStatusInfo = (status) => {
                         <div class="text-body-2 text-grey mt-2">
                           目前您沒有任何已授權的健康報告
                         </div>
-                      </div>
-                    </template>
-                  </v-data-table>
-                </v-window-item>
-              </v-window>
+                    </div>
+            </template>
+          </v-data-table>
+              </v-window-item>
+            </v-window>
             </v-card-text>
-          </v-card>
+        </v-card>
         </v-col>
       </v-row>
 
@@ -952,17 +952,17 @@ const getRequestStatusInfo = (status) => {
       <v-row v-if="viewMode === 'authorized'" justify="center">
         <v-col cols="12">
           <!-- 返回按鈕 -->
-          <v-btn
-            color="grey-darken-1"
+              <v-btn
+                color="grey-darken-1"
             variant="outlined"
-            size="small"
-            @click="switchToSearchView"
+                size="small"
+                @click="switchToSearchView"
             class="mb-6"
             elevation="0"
-          >
+              >
             <v-icon start size="18">mdi-arrow-left</v-icon>
-            返回搜尋
-          </v-btn>
+                返回搜尋
+              </v-btn>
 
           <v-card class="mb-6 elevation-2 rounded-xl">
             <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
@@ -990,10 +990,10 @@ const getRequestStatusInfo = (status) => {
                 </v-btn>
               </div>
             </v-card-title>
-
+            
             <v-card-text class="pa-6">
-              <v-data-table
-                :headers="[
+            <v-data-table
+              :headers="[
                   { 
                     title: '報告編號',
                     key: 'id',
@@ -1019,13 +1019,13 @@ const getRequestStatusInfo = (status) => {
                     width: '100px',
                     sortable: false
                   }
-                ]"
-                :items="allAuthorizedReports"
-                :loading="loadingAuthorizedReports"
-                loading-text="正在載入已授權報告..."
+              ]"
+              :items="allAuthorizedReports"
+              :loading="loadingAuthorizedReports"
+              loading-text="正在載入已授權報告..."
                 class="elevation-0"
-                hover
-                density="comfortable"
+              hover
+              density="comfortable"
                 v-model:items-per-page="itemsPerPage"
                 :items-per-page-options="[5, 10, 15]"
               >
@@ -1035,30 +1035,30 @@ const getRequestStatusInfo = (status) => {
                     <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.id }}</span>
                   </div>
-                </template>
-
+              </template>
+              
                 <!-- 授權對象欄位 -->
                 <template v-slot:item.requester_name="{ item }">
                   <div class="d-flex align-center">
                     <v-icon size="18" color="grey" class="me-2">mdi-account</v-icon>
                     <span class="font-weight-medium">{{ item.requester_name }}</span>
                   </div>
-                </template>
-
+              </template>
+              
                 <!-- 授權到期日欄位 -->
-                <template v-slot:item.expiry="{ item }">
-                  <v-chip
-                    size="small"
-                    :color="getExpiryChipColor(item.expiry)"
+              <template v-slot:item.expiry="{ item }">
+                <v-chip
+                  size="small"
+                  :color="getExpiryChipColor(item.expiry)"
                     variant="tonal"
                     class="font-weight-medium"
-                  >
-                    {{ formatExpiryDate(item.expiry) }}
-                  </v-chip>
-                </template>
-
+                >
+                  {{ formatExpiryDate(item.expiry) }}
+                </v-chip>
+              </template>
+              
                 <!-- 操作按鈕欄位 -->
-                <template v-slot:item.actions="{ item }">
+              <template v-slot:item.actions="{ item }">
                   <div class="d-flex gap-2 justify-center">
                     <v-btn
                       icon
@@ -1078,11 +1078,11 @@ const getRequestStatusInfo = (status) => {
                       </v-tooltip>
                     </v-btn>
                   </div>
-                </template>
-
+              </template>
+              
                 <!-- 無資料顯示 -->
-                <template v-slot:no-data>
-                  <div class="text-center pa-5">
+              <template v-slot:no-data>
+                <div class="text-center pa-5">
                     <v-icon size="40" color="grey-lighten-1" class="mb-3">
                       mdi-file-document-outline
                     </v-icon>
@@ -1092,9 +1092,9 @@ const getRequestStatusInfo = (status) => {
                     <div class="text-body-2 text-grey mt-2">
                       目前您沒有任何已授權的健康報告
                     </div>
-                  </div>
-                </template>
-              </v-data-table>
+                </div>
+              </template>
+            </v-data-table>
             </v-card-text>
           </v-card>
         </v-col>
@@ -1108,10 +1108,10 @@ const getRequestStatusInfo = (status) => {
             <div class="text-h6 font-weight-medium text-blue-grey-darken-1 mb-1">請輸入病患身分證字號查詢健康報告</div>
             <div class="text-body-2 text-grey px-6 mb-0">
               您可以輸入病患身分證字號查詢特定病患，或點擊「授權報告」查看所有已授權報告
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
 
       <!-- 待授權請求列表區塊 -->
       <v-row v-if="viewMode === 'pending'" justify="center">
@@ -1143,8 +1143,8 @@ const getRequestStatusInfo = (status) => {
                   {{ pendingRequests.length }} 筆請求
                 </v-chip>
               </div>
-            </v-card-title>
-
+          </v-card-title>
+          
             <v-card-text class="pa-6">
               <v-data-table
                 :headers="[
@@ -1181,15 +1181,15 @@ const getRequestStatusInfo = (status) => {
                   <div class="d-flex align-center">
                     <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.reportId }}</span>
-                  </div>
+              </div>
                 </template>
 
                 <!-- 病患雜湊欄位 -->
                 <template v-slot:item.patientHash="{ item }">
-                  <div class="d-flex align-center">
+                <div class="d-flex align-center">
                     <v-icon size="18" color="grey" class="me-2">mdi-identifier</v-icon>
                     <span class="font-weight-medium">{{ item.patientHash }}</span>
-                  </div>
+                </div>
                 </template>
 
                 <!-- 申請日期欄位 -->
@@ -1238,10 +1238,10 @@ const getRequestStatusInfo = (status) => {
 
           <v-card class="mb-6 elevation-2 rounded-xl">
             <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-              <div class="d-flex align-center">
+                <div class="d-flex align-center">
                 <v-icon size="24" color="primary" class="me-3">mdi-history</v-icon>
                 <span class="text-h6 font-weight-bold">授權請求歷史紀錄</span>
-              </div>
+                </div>
             </v-card-title>
 
             <v-card-text class="pa-6">
@@ -1283,10 +1283,10 @@ const getRequestStatusInfo = (status) => {
               >
                 <!-- 報告編號欄位 -->
                 <template v-slot:item.reportId="{ item }">
-                  <div class="d-flex align-center">
+                <div class="d-flex align-center">
                     <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.reportId }}</span>
-                  </div>
+                </div>
                 </template>
 
                 <!-- 病患雜湊欄位 -->
@@ -1294,7 +1294,7 @@ const getRequestStatusInfo = (status) => {
                   <div class="d-flex align-center">
                     <v-icon size="18" color="grey" class="me-2">mdi-identifier</v-icon>
                     <span class="font-weight-medium">{{ item.patientHash }}</span>
-                  </div>
+              </div>
                 </template>
 
                 <!-- 申請日期欄位 -->
@@ -1369,20 +1369,20 @@ const getRequestStatusInfo = (status) => {
                 <div class="text-body-1">{{ selectedReport?.id || '未知' }}</div>
               </div>
 
-              <v-textarea
-                v-model="authReason"
-                label="授權理由"
+            <v-textarea
+              v-model="authReason"
+              label="授權理由"
                 placeholder="請說明需要授權的原因..."
                 :rules="[v => !!v || '請填寫授權理由']"
-                rows="3"
+              rows="3"
                 class="mb-4"
-                hide-details="auto"
+              hide-details="auto"
                 variant="outlined"
                 density="comfortable"
-              ></v-textarea>
+            ></v-textarea>
 
               <v-text-field
-                v-model="authExpiry"
+              v-model="authExpiry"
                 label="授權到期日"
                 type="date"
                 :rules="[v => !!v || '請選擇到期日']"
@@ -1393,7 +1393,7 @@ const getRequestStatusInfo = (status) => {
               ></v-text-field>
             </v-form>
           </v-card-text>
-
+          
           <v-card-actions class="pa-6 pt-0">
             <v-spacer></v-spacer>
             <v-btn
@@ -1415,7 +1415,7 @@ const getRequestStatusInfo = (status) => {
           </v-card-actions>
         </v-card>
       </v-dialog>
-    </v-container>
+  </v-container>
   </div>
 </template>
 
@@ -1517,9 +1517,9 @@ const getRequestStatusInfo = (status) => {
 
 :deep(.v-data-table-header) {
   background-color: #F8FAFC !important;
-}
-
-:deep(.v-data-table-header th) {
+  }
+  
+  :deep(.v-data-table-header th) {
   font-size: 1rem !important;
   color: #64748B !important;
   font-weight: 600 !important;
@@ -1602,7 +1602,7 @@ const getRequestStatusInfo = (status) => {
   .info-card .v-card-text {
     padding: 1rem !important;
   }
-  
+
   :deep(.v-data-table-row) {
     display: flex !important;
     flex-direction: column !important;
@@ -1612,7 +1612,7 @@ const getRequestStatusInfo = (status) => {
     border-radius: 8px !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
   }
-  
+
   :deep(.v-data-table td) {
     display: flex !important;
     justify-content: space-between !important;

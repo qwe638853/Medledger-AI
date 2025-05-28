@@ -512,23 +512,37 @@ const getRemainingDays = (expiry) => {
       <v-row class="mb-8">
         <!-- 用戶資訊卡片 -->
         <v-col cols="12" sm="6" md="3">
-          <v-card class="info-card user-card" elevation="0">
+          <v-card class="info-card user-info-card" elevation="0">
             <v-card-text class="pa-0">
-              <div class="card-content">
-                <div class="icon-container">
-                  <v-icon>mdi-account-circle</v-icon>
+              <div class="user-card-wrapper">
+                <!-- 背景裝飾 -->
+                <div class="user-card-bg-decoration"></div>
+                
+                <!-- 用戶資訊主體 -->
+                <div class="user-card-main">
+                  <div class="user-avatar-section">
+                    <div class="user-avatar-container">
+                      <v-icon class="user-avatar-icon">mdi-account-circle</v-icon>
+                    </div>
+                    <div class="user-status-indicator"></div>
+                  </div>
+                  
+                  <div class="user-info-content">
+                    <div class="user-name">{{ currentUser }}</div>
+                    <div class="user-role">
+                      <v-icon size="14" class="me-1">mdi-account</v-icon>
+                      一般使用者
+                    </div>
+                  </div>
                 </div>
                 
-                <div class="card-info">
-                  <div class="card-title">{{ currentUser }}</div>
-                  <div class="card-subtitle">一般使用者</div>
-                </div>
-                
+                <!-- 登出按鈕 -->
                 <v-btn
-                  class="logout-btn"
+                  class="user-logout-btn"
                   @click="handleLogout"
                   icon
                   size="small"
+                  variant="text"
                 >
                   <v-icon>mdi-logout</v-icon>
                   <v-tooltip activator="parent" location="bottom">
@@ -1128,7 +1142,7 @@ const getRemainingDays = (expiry) => {
 
 /* 保持原有的表格樣式但優化 */
 :deep(.v-table) {
-  font-size: 22px !important;
+  font-size: 20px !important;
 }
 
 :deep(.v-data-table) {
@@ -1295,6 +1309,7 @@ const getRemainingDays = (expiry) => {
 :deep(.view-report-btn),
 :deep(.share-btn) {
   border-radius: 12px !important;
+  margin-left: 5px;
   background: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
   transition: all 0.3s ease !important;
@@ -1544,9 +1559,9 @@ const getRemainingDays = (expiry) => {
   }
 
   .logout-btn {
-    top: 1.25rem !important;
-    right: 1.25rem !important;
-    width: 32px !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 20px !important;
     height: 32px !important;
   }
 
@@ -1811,5 +1826,299 @@ const getRemainingDays = (expiry) => {
 
 :deep(.v-chip .v-icon[class*="mdi-clock"]) {
   color: #f59e0b !important;
+}
+
+/* 用戶資訊卡片統一樣式 */
+.user-info-card {
+  height: 100%;
+  min-height: 180px;
+  border-radius: 24px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: none !important;
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15) !important;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-info-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.25) !important;
+}
+
+.user-info-card .v-card-text {
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* 用戶卡片包裝器 */
+.user-card-wrapper {
+  height: 100%;
+  min-height: 180px;
+  padding: 2rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+/* 背景裝飾 */
+.user-card-bg-decoration {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.user-card-bg-decoration::before {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: -40px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* 用戶卡片主體 */
+.user-card-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* 用戶頭像區域 */
+.user-avatar-section {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.user-avatar-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 3px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.user-avatar-container:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.user-avatar-icon {
+  font-size: 36px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 狀態指示器 */
+.user-status-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background: #4ade80;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* 用戶資訊內容 */
+.user-info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-name {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.user-role {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.user-role .v-icon {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* 登出按鈕 */
+.user-logout-btn {
+  position: absolute !important;
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  z-index: 3;
+}
+
+.user-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.8) !important;
+  color: white !important;
+  transform: scale(1.05) rotate(5deg) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3) !important;
+}
+
+.user-logout-btn .v-icon {
+  font-size: 20px !important;
+  transition: all 0.3s ease;
+}
+
+.user-logout-btn:hover .v-icon {
+  transform: rotate(-5deg);
+}
+
+/* 用戶資訊卡片響應式設計 */
+@media (max-width: 1200px) {
+  .user-card-wrapper {
+    min-height: 160px;
+    padding: 1.75rem !important;
+  }
+  
+  .user-avatar-container {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 32px !important;
+  }
+  
+  .user-name {
+    font-size: 1.3rem !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .user-info-card {
+    min-height: 160px;
+  }
+  
+  .user-card-wrapper {
+    min-height: 160px;
+    padding: 1.5rem !important;
+    gap: 1.25rem;
+  }
+  
+  .user-card-main {
+    gap: 1.25rem;
+  }
+  
+  .user-avatar-container {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 28px !important;
+  }
+  
+  .user-name {
+    font-size: 1.2rem !important;
+  }
+  
+  .user-role {
+    font-size: 0.95rem !important;
+  }
+  
+  .user-logout-btn {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .user-logout-btn .v-icon {
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-info-card {
+    min-height: 140px;
+  }
+  
+  .user-card-wrapper {
+    min-height: 140px;
+    padding: 1.25rem !important;
+    gap: 1rem;
+  }
+  
+  .user-card-main {
+    gap: 1rem;
+  }
+  
+  .user-avatar-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 24px !important;
+  }
+  
+  .user-name {
+    font-size: 1.1rem !important;
+  }
+  
+  .user-role {
+    font-size: 0.9rem !important;
+  }
+  
+  .user-logout-btn {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .user-logout-btn .v-icon {
+    font-size: 16px !important;
+  }
 }
 </style>

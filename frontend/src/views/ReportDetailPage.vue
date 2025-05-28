@@ -177,37 +177,154 @@ function evaluateRisk(metrics = {}) {
 // 保險分析相關資料
 const insuranceAnalysis = ref({
   riskScore: 75,
-  mainRisks: [
-    { type: '心血管疾病', level: '中度', description: '血壓和膽固醇指標略高' },
-    { type: '糖尿病', level: '低度', description: '血糖指標在正常範圍內，但接近上限' }
+  overallRiskLevel: 'medium', // low, medium, high
+  riskCategories: {
+    cardiovascular: {
+      score: 68,
+      level: 'medium',
+      factors: ['總膽固醇偏高', 'HDL-C略低', '年齡因素'],
+      impact: 'medium',
+      description: '心血管風險較一般人略高，建議定期追蹤'
+    },
+    diabetes: {
+      score: 45,
+      level: 'low',
+      factors: ['空腹血糖正常', '糖化血色素正常'],
+      impact: 'low',
+      description: '糖尿病風險低，維持現狀即可'
+    },
+    liver: {
+      score: 72,
+      level: 'medium',
+      factors: ['ALT略高', 'AST正常', '工作壓力'],
+      impact: 'medium',
+      description: '肝功能需要關注，建議改善生活習慣'
+    },
+    cancer: {
+      score: 35,
+      level: 'low',
+      factors: ['腫瘤標記正常', '無家族史'],
+      impact: 'low',
+      description: '癌症風險相對較低'
+    }
+  },
+  healthMetrics: [
+    { name: '血壓', value: 125, unit: 'mmHg', status: 'normal', weight: 0.25 },
+    { name: '血糖', value: 95, unit: 'mg/dL', status: 'normal', weight: 0.20 },
+    { name: '膽固醇', value: 215, unit: 'mg/dL', status: 'elevated', weight: 0.30 },
+    { name: '肝功能', value: 45, unit: 'U/L', status: 'elevated', weight: 0.25 }
   ],
-  suggestions: [
-    '建議定期追蹤血壓和血脂指標',
-    '建議進行年度心臟功能檢查',
-    '建議調整飲食習慣，減少高油脂食物攝入'
+  ageRiskFactors: {
+    currentAge: 35,
+    riskIncrease: {
+      '5years': 15,
+      '10years': 35,
+      '15years': 60
+    }
+  },
+  riskMitigation: [
+    {
+      category: '生活習慣改善',
+      actions: ['戒菸', '規律運動', '控制飲酒'],
+      riskReduction: 25,
+      timeframe: '6個月'
+    },
+    {
+      category: '醫療追蹤',
+      actions: ['定期健檢', '專科諮詢', '藥物治療'],
+      riskReduction: 15,
+      timeframe: '持續進行'
+    },
+    {
+      category: '飲食調整',
+      actions: ['低脂飲食', '減少糖分', '增加蔬果'],
+      riskReduction: 20,
+      timeframe: '3個月'
+    }
+  ],
+  recommendations: [
+    {
+      type: 'immediate',
+      title: '立即建議',
+      items: ['承保標準體保費', '建議加強肝功能檢查', '心血管風險評估']
+    },
+    {
+      type: 'monitoring',
+      title: '持續監控',
+      items: ['每6個月追蹤膽固醇', '年度完整健檢', '生活習慣改善追蹤']
+    },
+    {
+      type: 'assessment',
+      title: '風險評估',
+      items: ['定期重新評估風險等級', '追蹤健康指標變化', '調整承保策略']
+    }
   ]
 });
 
 // AI 分析和保單推薦
 const aiAnalysis = ref({
   summary: '根據您的健康檢查結果，整體健康狀況良好。血壓和血糖指標在正常範圍內，但膽固醇指標略高，建議注意飲食控制。',
+  healthScore: 85,
+  riskLevel: 'low', // low, medium, high
+  diseaseRisks: [
+    {
+      name: '心血管疾病',
+      risk: 25,
+      level: 'low',
+      factors: ['膽固醇略高', '血壓正常'],
+      prevention: '控制飲食，增加運動'
+    },
+    {
+      name: '糖尿病',
+      risk: 15,
+      level: 'low',
+      factors: ['血糖正常', '體重適中'],
+      prevention: '維持現有生活習慣'
+    },
+    {
+      name: '肝功能異常',
+      risk: 35,
+      level: 'medium',
+      factors: ['ALT略高', '工作壓力大'],
+      prevention: '減少熬夜，定期追蹤'
+    }
+  ],
+  healthTrends: [
+    { metric: '血糖', trend: 'stable', change: 0 },
+    { metric: '血壓', trend: 'improving', change: -5 },
+    { metric: '膽固醇', trend: 'concern', change: 8 }
+  ],
   recommendations: [
-    '增加每週運動次數至3-4次',
-    '控制飲食中的膽固醇攝入',
-    '保持充足睡眠，維持作息規律'
+    {
+      type: 'diet',
+      title: '飲食建議',
+      items: ['減少高膽固醇食物攝入', '增加高纖維食物', '控制總熱量攝取']
+    },
+    {
+      type: 'exercise',
+      title: '運動建議',
+      items: ['每週至少150分鐘中等強度運動', '加強心肺功能訓練', '增加阻力訓練']
+    },
+    {
+      type: 'lifestyle',
+      title: '生活習慣',
+      items: ['保持充足睡眠', '減少工作壓力', '定期健康檢查']
+    }
   ],
   insuranceRecommendations: [
     {
       name: '優質醫療保障計劃',
       coverage: '住院醫療、手術、門診',
       features: ['免等待期', '一年一約', '可選擇醫院'],
-      monthlyPremium: 2500
+      monthlyPremium: 2500,
+      suitability: 90
     },
     {
       name: '重大疾病防護計劃',
       coverage: '癌症、心臟病、中風等重大疾病',
       features: ['保額最高500萬', '保費豁免權益', '理賠無等待期'],
-      monthlyPremium: 3200
+      monthlyPremium: 3200,
+      suitability: 75
     }
   ]
 });
@@ -312,6 +429,17 @@ function getMetricNumber(value) {
 
 const aiBtnHover = ref(false);
 const riskBtnHover = ref(false);
+const activeTab = ref('diet');
+const insuranceActiveTab = ref('immediate');
+
+// 競爭對手分析表格標題
+const competitorHeaders = [
+  { title: '公司', key: 'company', align: 'start' },
+  { title: '保費', key: 'premium', align: 'center' },
+  { title: '保額', key: 'coverage', align: 'center' },
+  { title: '風險調整', key: 'riskAdjustment', align: 'center' },
+  { title: '競爭力評分', key: 'score', align: 'center' }
+];
 
 onMounted(() => {
   fetchReportData();
@@ -326,6 +454,7 @@ onMounted(() => {
         @click="router.back()"
         class="back-btn mb-8"
         elevation="0"
+        color="#00B8D9"
       >
         <v-icon start size="20">mdi-arrow-left</v-icon>
         返回
@@ -347,134 +476,27 @@ onMounted(() => {
             v-if="userRole === 'user'"
             class="action-btn ai-btn"
             elevation="0"
-            @click="showAISummary = !showAISummary"
+            color="#00B8D9"
+            @click="showAISummary = true"
           >
             <v-icon start size="20">mdi-robot-outline</v-icon>
-            AI 分析摘要
+            AI 智能分析
           </v-btn>
           
           <v-btn
             v-if="userRole === 'insurer'"
             class="action-btn risk-btn"
             elevation="0"
-            @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = !showRisk; }"
+            color="#00B8D9"
+            @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = true; }"
           >
             <v-icon start size="20">mdi-shield-outline</v-icon>
-            保險風險分析
+            專業風險評估
           </v-btn>
         </div>
 
-        <!-- 分析結果區域 -->
-        <div class="analysis-section" v-if="showAISummary || showRisk">
-          <!-- 病患看到的 AI 分析和保單推薦 -->
-          <template v-if="userRole === 'user'">
-            <v-card v-if="showAISummary" class="analysis-card ai-card" elevation="0">
-              <h3 class="analysis-title">AI 分析摘要</h3>
-              <p class="analysis-content">{{ aiAnalysis.summary }}</p>
-              
-              <v-divider class="my-4" />
-              
-              <h4 class="recommendations-title">健康建議</h4>
-              <ul class="recommendations-list">
-                <li v-for="(rec, index) in aiAnalysis.recommendations" :key="index">
-                  {{ rec }}
-                </li>
-              </ul>
-
-              <v-divider class="my-4" />
-              
-              <h4 class="recommendations-title">推薦保險方案</h4>
-              <div class="insurance-recommendations">
-                <v-card
-                  v-for="(plan, index) in aiAnalysis.insuranceRecommendations"
-                  :key="index"
-                  class="insurance-plan-card"
-                  elevation="0"
-                  variant="outlined"
-                >
-                  <div class="d-flex justify-space-between align-center mb-2">
-                    <h5 class="plan-name">{{ plan.name }}</h5>
-                    <v-chip color="primary" size="small">
-                      月繳 ${{ plan.monthlyPremium }}
-                    </v-chip>
-                  </div>
-                  <p class="plan-coverage">承保範圍：{{ plan.coverage }}</p>
-                  <div class="plan-features">
-                    <v-chip
-                      v-for="(feature, fIndex) in plan.features"
-                      :key="fIndex"
-                      size="x-small"
-                      class="me-2"
-                      color="grey-lighten-3"
-                    >
-                      {{ feature }}
-                    </v-chip>
-                  </div>
-                </v-card>
-              </div>
-            </v-card>
-          </template>
-
-          <!-- 保險業者看到的風險分析 -->
-          <template v-else-if="userRole === 'insurer' && showRisk">
-            <v-card class="analysis-card risk-card" elevation="0">
-              <h3 class="analysis-title">保險風險評估報告</h3>
-              
-              <div class="risk-score-section text-center mb-4">
-                <v-progress-circular
-                  :model-value="insuranceAnalysis.riskScore"
-                  :color="insuranceAnalysis.riskScore > 80 ? 'red' : insuranceAnalysis.riskScore > 60 ? 'orange' : 'green'"
-                  size="100"
-                  width="12"
-                >
-                  <span class="text-h5 font-weight-bold">{{ insuranceAnalysis.riskScore }}</span>
-                </v-progress-circular>
-                <div class="mt-2 text-body-1 font-weight-medium">風險評分</div>
-              </div>
-
-              <v-divider class="mb-4" />
-
-              <h4 class="risk-subtitle mb-3">主要風險項目</h4>
-              <v-list class="risk-list">
-                <v-list-item
-                  v-for="(risk, index) in insuranceAnalysis.mainRisks"
-                  :key="index"
-                  class="risk-item"
-                >
-                  <template v-slot:prepend>
-                    <v-icon
-                      :color="risk.level === '高度' ? 'red' : risk.level === '中度' ? 'orange' : 'green'"
-                      size="small"
-                    >
-                      mdi-alert-circle
-                    </v-icon>
-                  </template>
-                  <v-list-item-title class="risk-type">
-                    {{ risk.type }}
-                    <v-chip
-                      size="x-small"
-                      :color="risk.level === '高度' ? 'red-lighten-4' : risk.level === '中度' ? 'orange-lighten-4' : 'green-lighten-4'"
-                      class="ms-2"
-                    >
-                      {{ risk.level }}風險
-                    </v-chip>
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="risk-description">
-                    {{ risk.description }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-
-              <v-divider class="my-4" />
-
-              <h4 class="risk-subtitle mb-3">建議措施</h4>
-              <ul class="suggestions-list">
-                <li v-for="(suggestion, index) in insuranceAnalysis.suggestions" :key="index">
-                  {{ suggestion }}
-                </li>
-              </ul>
-            </v-card>
-          </template>
+        <!-- 保險業者風險分析區域 -->
+        <div class="analysis-section" v-if="showRisk && userRole === 'insurer'">
         </div>
         <!-- 報告總覽卡片 -->
         <v-card class="overview-card mb-8" elevation="0">
@@ -597,6 +619,523 @@ onMounted(() => {
         
       </template>
     </v-container>
+
+    <!-- AI 智能分析彈窗 -->
+    <v-dialog v-model="showAISummary" max-width="900" scrollable>
+      <v-card class="ai-dialog-card">
+        <!-- 對話框標題 -->
+        <v-card-title class="ai-dialog-header">
+          <div class="d-flex align-center">
+            <v-avatar class="ai-avatar mr-3" color="gradient">
+              <v-icon color="white" size="24">mdi-robot-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="ai-dialog-title">AI 智能健康分析</div>
+              <div class="ai-dialog-subtitle">基於您的健康數據進行專業分析</div>
+            </div>
+          </div>
+          <v-spacer></v-spacer>
+          <v-btn
+            icon
+            variant="text"
+            @click="showAISummary = false"
+            class="close-btn"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text class="ai-dialog-content">
+          <!-- 健康評分區域 -->
+          <div class="health-score-section">
+            <div class="health-score-container">
+              <v-progress-circular
+                :model-value="aiAnalysis.healthScore"
+                :color="aiAnalysis.healthScore > 80 ? '#4CAF50' : aiAnalysis.healthScore > 60 ? '#FF9800' : '#F44336'"
+                size="120"
+                width="12"
+                class="health-score-circle"
+              >
+                <div class="health-score-content">
+                  <div class="health-score-number">{{ aiAnalysis.healthScore }}</div>
+                  <div class="health-score-label">健康評分</div>
+                </div>
+              </v-progress-circular>
+              <div class="health-level">
+                <v-chip
+                  :color="aiAnalysis.riskLevel === 'low' ? 'success' : aiAnalysis.riskLevel === 'medium' ? 'warning' : 'error'"
+                  size="large"
+                  class="health-level-chip"
+                >
+                  {{ aiAnalysis.riskLevel === 'low' ? '健康狀況良好' : aiAnalysis.riskLevel === 'medium' ? '需要注意' : '需要關注' }}
+                </v-chip>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI 分析摘要 -->
+          <div class="ai-summary-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-brain</v-icon>
+              AI 分析摘要
+            </h3>
+            <div class="ai-summary-content">
+              {{ aiAnalysis.summary }}
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 疾病風險分析 -->
+          <div class="disease-risk-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-shield-alert</v-icon>
+              疾病風險評估
+            </h3>
+            <div class="disease-risk-grid">
+              <v-card
+                v-for="(disease, index) in aiAnalysis.diseaseRisks"
+                :key="index"
+                class="disease-risk-card"
+                elevation="2"
+              >
+                <div class="disease-risk-header">
+                  <div class="disease-name">{{ disease.name }}</div>
+                  <v-chip
+                    :color="disease.level === 'low' ? 'success' : disease.level === 'medium' ? 'warning' : 'error'"
+                    size="small"
+                  >
+                    {{ disease.risk }}% 風險
+                  </v-chip>
+                </div>
+                
+                <v-progress-linear
+                  :model-value="disease.risk"
+                  :color="disease.level === 'low' ? 'success' : disease.level === 'medium' ? 'warning' : 'error'"
+                  height="8"
+                  rounded
+                  class="risk-progress"
+                ></v-progress-linear>
+
+                <div class="disease-details">
+                  <div class="risk-factors">
+                    <div class="detail-label">影響因子：</div>
+                    <div class="risk-factor-tags">
+                      <v-chip
+                        v-for="factor in disease.factors"
+                        :key="factor"
+                        size="x-small"
+                        color="grey-lighten-3"
+                        class="mr-1 mb-1"
+                      >
+                        {{ factor }}
+                      </v-chip>
+                    </div>
+                  </div>
+                  <div class="prevention">
+                    <div class="detail-label">預防建議：</div>
+                    <div class="prevention-text">{{ disease.prevention }}</div>
+                  </div>
+                </div>
+              </v-card>
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 健康趨勢 -->
+          <div class="health-trends-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-trending-up</v-icon>
+              健康趨勢分析
+            </h3>
+            <div class="trends-grid">
+              <div
+                v-for="trend in aiAnalysis.healthTrends"
+                :key="trend.metric"
+                class="trend-item"
+              >
+                <div class="trend-metric">{{ trend.metric }}</div>
+                <div class="trend-indicator">
+                  <v-icon
+                    :color="trend.trend === 'improving' ? 'success' : trend.trend === 'concern' ? 'error' : 'grey'"
+                    size="20"
+                  >
+                    {{ trend.trend === 'improving' ? 'mdi-trending-up' : trend.trend === 'concern' ? 'mdi-trending-down' : 'mdi-trending-neutral' }}
+                  </v-icon>
+                  <span class="trend-text">
+                    {{ trend.trend === 'improving' ? '改善中' : trend.trend === 'concern' ? '需關注' : '穩定' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 健康建議 -->
+          <div class="recommendations-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-lightbulb</v-icon>
+              個人化健康建議
+            </h3>
+            <div class="recommendations-tabs">
+              <v-tabs v-model="activeTab" color="#00B8D9" align-tabs="center">
+                <v-tab
+                  v-for="rec in aiAnalysis.recommendations"
+                  :key="rec.type"
+                  :value="rec.type"
+                >
+                  <v-icon start>
+                    {{ rec.type === 'diet' ? 'mdi-food-apple' : rec.type === 'exercise' ? 'mdi-run' : 'mdi-heart' }}
+                  </v-icon>
+                  {{ rec.title }}
+                </v-tab>
+              </v-tabs>
+              
+              <v-window v-model="activeTab" class="recommendations-content">
+                <v-window-item
+                  v-for="rec in aiAnalysis.recommendations"
+                  :key="rec.type"
+                  :value="rec.type"
+                >
+                  <div class="recommendation-items">
+                    <div
+                      v-for="(item, index) in rec.items"
+                      :key="index"
+                      class="recommendation-item"
+                    >
+                      <v-icon color="#00B8D9" size="16" class="mr-2">mdi-check-circle</v-icon>
+                      {{ item }}
+                    </div>
+                  </div>
+                </v-window-item>
+              </v-window>
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 保險推薦 -->
+          <div class="insurance-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-shield-account</v-icon>
+              智能保險推薦
+            </h3>
+            <div class="insurance-grid">
+              <v-card
+                v-for="(plan, index) in aiAnalysis.insuranceRecommendations"
+                :key="index"
+                class="insurance-card"
+                elevation="3"
+              >
+                <div class="insurance-header">
+                  <div class="insurance-name">{{ plan.name }}</div>
+                  <div class="insurance-premium">
+                    <span class="premium-amount">NT$ {{ plan.monthlyPremium }}</span>
+                    <span class="premium-period">/月</span>
+                  </div>
+                </div>
+                
+                <div class="insurance-coverage">{{ plan.coverage }}</div>
+                
+                <div class="suitability-section">
+                  <div class="suitability-label">適合度</div>
+                  <v-progress-linear
+                    :model-value="plan.suitability"
+                    color="#00B8D9"
+                    height="6"
+                    rounded
+                  ></v-progress-linear>
+                  <div class="suitability-percentage">{{ plan.suitability }}%</div>
+                </div>
+
+                <div class="insurance-features">
+                  <v-chip
+                    v-for="feature in plan.features"
+                    :key="feature"
+                    size="small"
+                    color="blue-grey-lighten-4"
+                    class="mr-1 mb-1"
+                  >
+                    {{ feature }}
+                  </v-chip>
+                </div>
+              </v-card>
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- 保險風險分析彈窗 -->
+    <v-dialog v-model="showRisk" max-width="1000" scrollable>
+      <v-card class="insurance-dialog-card">
+        <!-- 對話框標題 -->
+        <v-card-title class="insurance-dialog-header">
+          <div class="d-flex align-center">
+            <v-avatar class="insurance-avatar mr-3" color="gradient">
+              <v-icon color="white" size="24">mdi-shield-check</v-icon>
+            </v-avatar>
+            <div>
+              <div class="insurance-dialog-title">專業保險風險評估</div>
+              <div class="insurance-dialog-subtitle">基於健康數據的精準風險分析與保費定價</div>
+            </div>
+          </div>
+          <v-spacer></v-spacer>
+          <v-btn
+            icon
+            variant="text"
+            @click="showRisk = false"
+            class="close-btn"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text class="insurance-dialog-content">
+          <!-- 風險評分總覽 -->
+          <div class="risk-overview-section">
+            <div class="risk-score-center">
+              <div class="risk-score-card">
+                <v-progress-circular
+                  :model-value="insuranceAnalysis.riskScore"
+                  :color="insuranceAnalysis.riskScore > 80 ? '#F44336' : insuranceAnalysis.riskScore > 60 ? '#FF9800' : '#4CAF50'"
+                  size="120"
+                  width="12"
+                >
+                  <div class="risk-score-content">
+                    <div class="risk-score-number">{{ insuranceAnalysis.riskScore }}</div>
+                    <div class="risk-score-label">風險評分</div>
+                  </div>
+                </v-progress-circular>
+                <div class="risk-level-indicator">
+                  <v-chip
+                    :color="insuranceAnalysis.overallRiskLevel === 'low' ? 'success' : insuranceAnalysis.overallRiskLevel === 'medium' ? 'warning' : 'error'"
+                    size="large"
+                  >
+                    {{ insuranceAnalysis.overallRiskLevel === 'low' ? '低風險' : insuranceAnalysis.overallRiskLevel === 'medium' ? '中等風險' : '高風險' }}
+                  </v-chip>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 風險分類詳細分析 -->
+          <div class="risk-categories-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-chart-donut</v-icon>
+              疾病風險分類評估
+            </h3>
+            <v-row>
+              <v-col
+                v-for="(category, key) in insuranceAnalysis.riskCategories"
+                :key="key"
+                cols="12" md="6"
+              >
+                <v-card class="risk-category-card" elevation="2">
+                  <div class="category-header">
+                    <div class="category-name">
+                      {{ key === 'cardiovascular' ? '心血管疾病' : 
+                         key === 'diabetes' ? '糖尿病' : 
+                         key === 'liver' ? '肝臟疾病' : 
+                         key === 'cancer' ? '癌症' : key }}
+                    </div>
+                    <v-chip
+                      :color="category.level === 'low' ? 'success' : category.level === 'medium' ? 'warning' : 'error'"
+                      size="small"
+                    >
+                      {{ category.score }}分
+                    </v-chip>
+                  </div>
+                  
+                  <v-progress-linear
+                    :model-value="category.score"
+                    :color="category.level === 'low' ? 'success' : category.level === 'medium' ? 'warning' : 'error'"
+                    height="12"
+                    rounded
+                    class="category-progress"
+                  ></v-progress-linear>
+
+                  <div class="category-details">
+                    <div class="category-description">{{ category.description }}</div>
+                    <div class="category-factors">
+                      <div class="factors-label">關鍵因素：</div>
+                      <div class="factors-chips">
+                        <v-chip
+                          v-for="factor in category.factors"
+                          :key="factor"
+                          size="x-small"
+                          color="grey-lighten-3"
+                          class="mr-1 mb-1"
+                        >
+                          {{ factor }}
+                        </v-chip>
+                      </div>
+                    </div>
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 健康指標影響分析 -->
+          <div class="health-metrics-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-heart-pulse</v-icon>
+              健康指標風險權重分析
+            </h3>
+            <v-row>
+              <v-col
+                v-for="metric in insuranceAnalysis.healthMetrics"
+                :key="metric.name"
+                cols="12" sm="6" md="3"
+              >
+                <div class="metric-weight-card">
+                  <div class="metric-header">
+                    <div class="metric-name">{{ metric.name }}</div>
+                    <v-icon
+                      :color="metric.status === 'normal' ? 'success' : 'warning'"
+                      size="20"
+                    >
+                      {{ metric.status === 'normal' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+                    </v-icon>
+                  </div>
+                  <div class="metric-value">{{ metric.value }} {{ metric.unit }}</div>
+                  <div class="metric-weight">
+                    <span class="weight-label">風險權重:</span>
+                    <span class="weight-value">{{ (metric.weight * 100).toFixed(0) }}%</span>
+                  </div>
+                  <v-progress-linear
+                    :model-value="metric.weight * 100"
+                    color="#00B8D9"
+                    height="6"
+                    rounded
+                  ></v-progress-linear>
+                </div>
+              </v-col>
+            </v-row>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 年齡風險趨勢 -->
+          <div class="age-risk-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-trending-up</v-icon>
+              年齡風險趨勢預測
+            </h3>
+            <div class="age-risk-chart">
+              <div class="current-age">
+                <div class="age-label">目前年齡</div>
+                <div class="age-value">{{ insuranceAnalysis.ageRiskFactors.currentAge }}歲</div>
+              </div>
+              <div class="age-projections">
+                <div
+                  v-for="(increase, period) in insuranceAnalysis.ageRiskFactors.riskIncrease"
+                  :key="period"
+                  class="age-projection-item"
+                >
+                  <div class="projection-period">{{ period.replace('years', '年後') }}</div>
+                  <div class="projection-increase">風險增加 {{ increase }}%</div>
+                  <v-progress-linear
+                    :model-value="increase"
+                    color="orange"
+                    height="8"
+                    rounded
+                  ></v-progress-linear>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 風險緩解策略 -->
+          <div class="risk-mitigation-section">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-shield-plus</v-icon>
+              風險緩解策略建議
+            </h3>
+            <v-row>
+              <v-col
+                v-for="strategy in insuranceAnalysis.riskMitigation"
+                :key="strategy.category"
+                cols="12" md="4"
+              >
+                <v-card class="mitigation-card" elevation="2">
+                  <div class="mitigation-header">
+                    <div class="mitigation-category">{{ strategy.category }}</div>
+                    <v-chip color="success" size="small">
+                      -{{ strategy.riskReduction }}% 風險
+                    </v-chip>
+                  </div>
+                  <div class="mitigation-actions">
+                    <div
+                      v-for="action in strategy.actions"
+                      :key="action"
+                      class="mitigation-action"
+                    >
+                      <v-icon color="success" size="16" class="mr-2">mdi-check</v-icon>
+                      {{ action }}
+                    </div>
+                  </div>
+                  <div class="mitigation-timeframe">
+                    <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>
+                    執行期程: {{ strategy.timeframe }}
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+
+          <v-divider class="my-6"></v-divider>
+
+          <!-- 專業建議 -->
+          <div class="professional-recommendations">
+            <h3 class="section-header">
+              <v-icon class="section-icon">mdi-lightbulb-on</v-icon>
+              專業核保建議
+            </h3>
+            <v-tabs v-model="insuranceActiveTab" color="#00B8D9" align-tabs="center">
+              <v-tab
+                v-for="rec in insuranceAnalysis.recommendations"
+                :key="rec.type"
+                :value="rec.type"
+              >
+                <v-icon start>
+                  {{ rec.type === 'immediate' ? 'mdi-lightning-bolt' : rec.type === 'monitoring' ? 'mdi-monitor-eye' : 'mdi-clipboard-check' }}
+                </v-icon>
+                {{ rec.title }}
+              </v-tab>
+            </v-tabs>
+            
+            <v-window v-model="insuranceActiveTab" class="recommendations-content">
+              <v-window-item
+                v-for="rec in insuranceAnalysis.recommendations"
+                :key="rec.type"
+                :value="rec.type"
+              >
+                <div class="recommendation-items">
+                  <div
+                    v-for="(item, index) in rec.items"
+                    :key="index"
+                    class="recommendation-item"
+                  >
+                    <v-icon color="#00B8D9" size="16" class="mr-2">mdi-arrow-right-circle</v-icon>
+                    {{ item }}
+                  </div>
+                </div>
+              </v-window-item>
+            </v-window>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -609,8 +1148,8 @@ onMounted(() => {
 
 /* 返回按鈕 */
 .back-btn {
-  background-color: #F8F441 !important;
-  color: #111827 !important;
+  background-color: #00B8D9 !important;
+  color: white !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
   padding: 0 24px !important;
@@ -637,7 +1176,7 @@ onMounted(() => {
 }
 
 .report-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 900;
   color: #111827;
   letter-spacing: -0.5px;
@@ -645,19 +1184,19 @@ onMounted(() => {
 }
 
 .report-subtitle {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #888;
   margin: 0.5rem 0 0;
 }
 
 .meta-label {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #888;
   margin-bottom: 0.25rem;
 }
 
 .meta-value {
-  font-size: 1.125rem;
+  font-size: 1.3rem;
   color: #111827;
   font-weight: 500;
 }
@@ -669,7 +1208,7 @@ onMounted(() => {
 
 /* 區塊標題 */
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.5px;
@@ -732,7 +1271,7 @@ onMounted(() => {
 
 /* 單位樣式 */
 .metric-unit {
-  font-size: 14px;
+  font-size: 16px;
   color: #888;
   font-weight: 500;
   margin-bottom: 1rem;  /* 與下方標題保持間距 */
@@ -740,14 +1279,14 @@ onMounted(() => {
 }
 
 .metric-name {
-  font-size: 1.125rem;
+  font-size: 1.3rem;
   color: #222;
   margin-bottom: 0.75rem;
   font-weight: 600;
 }
 
 .metric-range {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #666;
   margin: 0;
   line-height: 1.5;
@@ -765,12 +1304,12 @@ onMounted(() => {
 }
 
 .text-metric-name {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #888;
 }
 
 .text-metric-value {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #111827;
 }
 
@@ -791,14 +1330,14 @@ onMounted(() => {
 }
 
 .ai-btn {
-  background-color: #F8F441 !important;
-  color: #111827 !important;
+  background-color: #00B8D9 !important;
+  color: white !important;
 }
 
 .risk-btn {
-  background-color: white !important;
-  color: #111827 !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background-color: #00B8D9 !important;
+  color: white !important;
+  border: 1px solid #00B8D9 !important;
 }
 
 .action-btn:hover {
@@ -818,7 +1357,7 @@ onMounted(() => {
 }
 
 .analysis-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 1rem;
@@ -829,6 +1368,7 @@ onMounted(() => {
   color: #666;
   line-height: 1.6;
   margin: 0;
+  font-size: 1.1rem;
 }
 
 .risk-level {
@@ -849,11 +1389,11 @@ onMounted(() => {
   }
   
   .report-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
   
   .section-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
   
   .metric-ring {
@@ -863,11 +1403,11 @@ onMounted(() => {
   }
   
   .ring-value {
-    font-size: 24px;
+    font-size: 28px;
   }
   
   .metric-unit {
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 0.75rem;
   }
 }
@@ -892,11 +1432,11 @@ onMounted(() => {
   }
   
   .ring-value {
-    font-size: 20px;
+    font-size: 24px;
   }
   
   .metric-unit {
-    font-size: 11px;
+    font-size: 13px;
     margin-bottom: 0.5rem;
   }
 }
@@ -907,7 +1447,7 @@ onMounted(() => {
 }
 
 .risk-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #333;
 }
@@ -925,11 +1465,11 @@ onMounted(() => {
 
 .risk-type {
   font-weight: 500 !important;
-  font-size: 1rem !important;
+  font-size: 1.1rem !important;
 }
 
 .risk-description {
-  font-size: 0.875rem !important;
+  font-size: 1rem !important;
   color: #666 !important;
   margin-top: 4px !important;
 }
@@ -945,6 +1485,7 @@ onMounted(() => {
   color: #444;
   position: relative;
   padding-left: 24px;
+  font-size: 1.1rem;
 }
 
 .suggestions-list li::before {
@@ -956,7 +1497,7 @@ onMounted(() => {
 
 /* 保險推薦相關樣式 */
 .recommendations-title {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #333;
   margin-bottom: 1rem;
@@ -973,6 +1514,7 @@ onMounted(() => {
   color: #444;
   position: relative;
   padding-left: 24px;
+  font-size: 1.1rem;
 }
 
 .recommendations-list li::before {
@@ -995,14 +1537,14 @@ onMounted(() => {
 }
 
 .plan-name {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #333;
   margin: 0;
 }
 
 .plan-coverage {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #666;
   margin: 0.5rem 0;
 }
@@ -1020,6 +1562,843 @@ onMounted(() => {
 
   .plan-features {
     margin-top: 8px;
+  }
+}
+
+/* AI 彈窗樣式 */
+.ai-dialog-card {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.ai-dialog-header {
+  background: linear-gradient(135deg, #00B8D9 0%, #0093A6 100%) !important;
+  color: white !important;
+  padding: 1.5rem 2rem !important;
+}
+
+.ai-avatar {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.ai-dialog-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.ai-dialog-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.close-btn {
+  color: white !important;
+}
+
+.ai-dialog-content {
+  padding: 2rem !important;
+  max-height: 70vh;
+}
+
+/* 健康評分區域 */
+.health-score-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.health-score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.health-score-circle {
+  margin-bottom: 1rem;
+}
+
+.health-score-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.health-score-number {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.health-score-label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+.health-level-chip {
+  font-weight: 600 !important;
+}
+
+/* 區塊標題 */
+.section-header {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.section-icon {
+  margin-right: 0.5rem;
+  color: #00B8D9;
+}
+
+/* AI 分析摘要 */
+.ai-summary-section {
+  margin-bottom: 2rem;
+}
+
+.ai-summary-content {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  color: #555;
+  background: #f8f9fa;
+  padding: 1.8rem;
+  border-radius: 12px;
+  border-left: 4px solid #00B8D9;
+}
+
+/* 疾病風險分析 */
+.disease-risk-section {
+  margin-bottom: 2rem;
+}
+
+.disease-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.disease-risk-card {
+  padding: 1.5rem;
+  border-radius: 16px !important;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.disease-risk-card:hover {
+  transform: translateY(-2px);
+  border-color: #00B8D9;
+}
+
+.disease-risk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.disease-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.risk-progress {
+  margin: 1rem 0;
+}
+
+.disease-details {
+  margin-top: 1rem;
+}
+
+.detail-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.risk-factor-tags {
+  margin-bottom: 1rem;
+}
+
+.prevention-text {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+/* 健康趨勢 */
+.health-trends-section {
+  margin-bottom: 2rem;
+}
+
+.trends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.trend-item {
+  background: #f8f9fa;
+  padding: 1.2rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.trend-metric {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.trend-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.trend-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* 健康建議 */
+.recommendations-section {
+  margin-bottom: 2rem;
+}
+
+.recommendations-tabs {
+  margin-top: 1rem;
+}
+
+.recommendations-content {
+  padding: 1.5rem 0;
+}
+
+.recommendation-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* 保險推薦 */
+.insurance-section {
+  margin-bottom: 1rem;
+}
+
+.insurance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.insurance-card {
+  padding: 1.5rem;
+  border-radius: 16px !important;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.insurance-card:hover {
+  transform: translateY(-2px);
+  border-color: #00B8D9;
+}
+
+.insurance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.insurance-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.insurance-premium {
+  text-align: right;
+}
+
+.premium-amount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #00B8D9;
+}
+
+.premium-period {
+  font-size: 1rem;
+  color: #666;
+}
+
+.insurance-coverage {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.suitability-section {
+  margin: 1rem 0;
+}
+
+.suitability-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.suitability-percentage {
+  font-size: 1rem;
+  color: #00B8D9;
+  font-weight: 600;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.insurance-features {
+  margin-top: 1rem;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .ai-dialog-content {
+    padding: 1rem !important;
+  }
+  
+  .disease-risk-grid,
+  .insurance-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .trends-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .health-score-number {
+    font-size: 1.5rem;
+  }
+  
+  .insurance-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .insurance-premium {
+    text-align: left;
+  }
+  
+  /* 調整小螢幕字體大小 */
+  .ai-summary-content {
+    font-size: 1.1rem;
+    padding: 1.5rem;
+  }
+  
+  .disease-name {
+    font-size: 1.2rem;
+  }
+  
+  .detail-label {
+    font-size: 1rem;
+  }
+  
+  .prevention-text {
+    font-size: 1rem;
+  }
+  
+  .trend-metric {
+    font-size: 1.1rem;
+  }
+  
+  .recommendation-item {
+    font-size: 1.1rem;
+  }
+  
+  .insurance-name {
+    font-size: 1.3rem;
+  }
+  
+  .insurance-coverage {
+    font-size: 1.1rem;
+  }
+  
+  .section-header {
+    font-size: 1.3rem;
+  }
+}
+
+/* 保險風險分析彈窗樣式 */
+.insurance-dialog-card {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.insurance-dialog-header {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
+  color: white !important;
+  padding: 1.5rem 2rem !important;
+}
+
+.insurance-avatar {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.insurance-dialog-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.insurance-dialog-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.insurance-dialog-content {
+  padding: 2rem !important;
+  max-height: 75vh;
+}
+
+/* 風險評分總覽 */
+.risk-overview-section {
+  margin-bottom: 2rem;
+}
+
+.risk-score-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.risk-score-card {
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.risk-score-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.risk-score-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.risk-score-label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+.risk-level-indicator {
+  margin-top: 1rem;
+}
+
+.premium-recommendation,
+.claims-prediction {
+  text-align: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  height: 100%;
+}
+
+.premium-title,
+.claims-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.premium-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1976D2;
+  margin-bottom: 0.5rem;
+}
+
+.premium-comparison {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.standard-premium {
+  color: #888;
+}
+
+.claims-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.claims-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.claims-period {
+  font-weight: 600;
+  color: #333;
+}
+
+.claims-probability {
+  font-weight: 700;
+  color: #FF5722;
+}
+
+/* 風險分類卡片 */
+.risk-categories-section {
+  margin-bottom: 2rem;
+}
+
+.risk-category-card {
+  padding: 1.5rem;
+  border-radius: 16px !important;
+  height: 100%;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.risk-category-card:hover {
+  transform: translateY(-2px);
+  border-color: #1976D2;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.category-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.category-progress {
+  margin: 1rem 0;
+}
+
+.category-details {
+  margin-top: 1rem;
+}
+
+.category-description {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.category-factors {
+  margin-top: 1rem;
+}
+
+.factors-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.factors-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* 健康指標權重 */
+.health-metrics-section {
+  margin-bottom: 2rem;
+}
+
+.metric-weight-card {
+  background: #f8f9fa;
+  padding: 1.2rem;
+  border-radius: 12px;
+  text-align: center;
+  height: 100%;
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.metric-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.metric-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1976D2;
+  margin: 0.5rem 0;
+}
+
+.metric-weight {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.weight-label {
+  color: #666;
+}
+
+.weight-value {
+  font-weight: 600;
+  color: #333;
+}
+
+/* 年齡風險趨勢 */
+.age-risk-section {
+  margin-bottom: 2rem;
+}
+
+.age-risk-chart {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.current-age {
+  text-align: center;
+  min-width: 120px;
+}
+
+.age-label {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.age-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1976D2;
+}
+
+.age-projections {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.age-projection-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.projection-period {
+  min-width: 80px;
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.projection-increase {
+  min-width: 120px;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* 風險緩解策略 */
+.risk-mitigation-section {
+  margin-bottom: 2rem;
+}
+
+.mitigation-card {
+  padding: 1.5rem;
+  border-radius: 16px !important;
+  height: 100%;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.mitigation-card:hover {
+  transform: translateY(-2px);
+  border-color: #4CAF50;
+}
+
+.mitigation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.mitigation-category {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.mitigation-actions {
+  margin: 1rem 0;
+}
+
+.mitigation-action {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.mitigation-timeframe {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #666;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+/* 競爭對手分析表格 */
+.competitor-section {
+  margin-bottom: 2rem;
+}
+
+.competitor-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.competitor-table .v-data-table__wrapper) {
+  border-radius: 12px;
+}
+
+:deep(.competitor-table th) {
+  background: #f5f5f5 !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.premium-cell {
+  font-weight: 600;
+  color: #1976D2;
+}
+
+.coverage-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+.score-cell {
+  min-width: 80px;
+}
+
+/* 專業建議 */
+.professional-recommendations {
+  margin-bottom: 1rem;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .insurance-dialog-content {
+    padding: 1rem !important;
+  }
+  
+  .age-risk-chart {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .age-projections {
+    width: 100%;
+  }
+  
+  .age-projection-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .risk-score-card {
+    padding: 1.5rem;
+  }
+  
+  .risk-score-number {
+    font-size: 1.5rem;
+  }
+  
+  /* 調整保險風險分析字體大小 */
+  .category-name {
+    font-size: 1.2rem;
+  }
+  
+  .category-description {
+    font-size: 1rem;
+  }
+  
+  .metric-name {
+    font-size: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 1.3rem;
+  }
+  
+  .mitigation-category {
+    font-size: 1.2rem;
+  }
+  
+  .mitigation-action {
+    font-size: 1rem;
+  }
+  
+  .projection-period,
+  .projection-increase {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .risk-overview-section .v-col {
+    margin-bottom: 1rem;
   }
 }
 </style> 

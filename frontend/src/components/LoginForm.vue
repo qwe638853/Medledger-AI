@@ -2,14 +2,14 @@
   <div class="login-page">
     <v-container class="fill-height">
       <v-row align="center" justify="center">
-                  <v-col cols="12" sm="8" md="6" lg="4">
-            <v-slide-y-transition>
-              <!-- 主要登入卡片 -->
-              <v-card class="login-card" elevation="0">
-                <!-- 頂部標題區 -->
-                <div class="header-section">
-                  <h1 class="header-title">登入</h1>
-                </div>
+        <v-col cols="12" sm="10" md="10" lg="10" xl="8" style="display: flex; justify-content: center;">
+          <v-slide-y-transition>
+            <!-- 主要登入卡片 -->
+            <v-card class="login-card" elevation="0">
+              <!-- 頂部標題區 -->
+              <div class="header-section">
+                <h1 class="header-title">登入</h1>
+              </div>
             
             <!-- 系統訊息提示 -->
             <v-alert
@@ -222,7 +222,7 @@
             -->
             </v-form>
           </v-card>
-            </v-slide-y-transition>
+          </v-slide-y-transition>
         </v-col>
       </v-row>
     </v-container>
@@ -468,13 +468,16 @@ const handleTestLogin = async () => {
   padding: 2rem 1rem;
 }
 
-/* 登入卡片 */
+/* 登入卡片樣式與註冊一致 */
 .login-card {
-  border-radius: 24px !important;
-  background: white !important;
-  padding: 2.5rem !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+  max-width: 1200px;
+  width: 100%;
+  border-radius: 32px !important;
+  background: #fff !important;
+  padding: 3.5rem 2.5rem !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
+  font-size: 1.5rem !important;
 }
 
 /* 頂部標題區 */
@@ -484,7 +487,7 @@ const handleTestLogin = async () => {
 }
 
 .header-title {
-  font-size: 1.75rem;
+  font-size: 3rem !important;
   font-weight: 900;
   color: #111827;
   margin: 0;
@@ -499,18 +502,19 @@ const handleTestLogin = async () => {
 
 /* 表單樣式 */
 .login-form {
-  max-width: 400px;
+  max-width: 1000px;
   margin: 0 auto;
+  font-size: 1.5rem;
 }
 
 .form-field {
-  margin-bottom: 1.25rem !important;
+  margin-bottom: 2rem !important;
 }
 
-.form-field :deep(.v-field) {
-  border-radius: 16px !important;
-  border: 1px solid #e5e7eb !important;
-  background: white !important;
+.form-field :deep(.v-field),
+.form-field :deep(.v-label) {
+  font-size: 1.3rem !important;
+  min-height: 56px !important;
 }
 
 .form-field :deep(.v-field--focused) {
@@ -522,20 +526,18 @@ const handleTestLogin = async () => {
 }
 
 /* 按鈕樣式 */
-.v-btn {
-  border-radius: 16px !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-  letter-spacing: 0 !important;
-  height: 48px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+.v-btn, .login-btn, .test-btn, .next-btn, .nav-btn {
+  font-size: 1.5rem !important;
+  height: 56px !important;
+  min-width: 140px !important;
+  border-radius: 20px !important;
 }
 
 .login-btn {
   background-color: #F8F441 !important;
   color: #111827 !important;
-  font-weight: 600 !important;
-  margin-bottom: 1rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1.5rem !important;
 }
 
 .login-btn:hover {
@@ -581,74 +583,84 @@ const handleTestLogin = async () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* 角色選擇卡片 */
+/* 角色卡片樣式完全與註冊頁圖片一致 (藍色選中狀態) */
 .role-cards-wrapper {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  margin: 1rem 0;
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  width: 100%;
+  margin: 1rem 0; /* 與註冊頁圖片排版一致 */
+  justify-content: center;
+  flex-wrap: nowrap; /* 確保橫向排列不換行 */
+  overflow-x: unset; /* 桌面不顯示滾動條 */
 }
-
 .role-card {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 1.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  background: white;
+  min-width: 280px; /* 與註冊頁圖片卡片寬度接近 */
+  max-width: 340px; /* 與註冊頁圖片卡片寬度接近 */
+  flex: 1 1 0;
+  padding: 2.2rem; /* 與註冊頁圖片 padding 一致 */
+  font-size: 1.15rem; /* 與註冊頁圖片字體大小一致 */
+  border: 2px solid #e5e7eb; /* 未選中時的邊框，與註冊頁圖片一致 */
+  border-radius: 20px; /* 圓角，與註冊頁圖片一致 */
+  background: white; /* 未選中時背景 */
   cursor: pointer;
   transition: all 0.3s ease;
+  height: auto;
+  box-sizing: border-box;
 }
-
 .role-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 .role-card--selected {
-  border-color: #F8F441;
-  background-color: rgba(248, 244, 65, 0.1);
+  border-color: #00B8D9; /* 選中時的邊框顏色，與模板圖片一致 (藍色) */
+  background-color: #E6FDFF; /* 選中時的背景顏色，與模板圖片一致 (淡藍色) */
+  box-shadow: 0 6px 24px rgba(0, 184, 217, 0.18); /* 選中時的陰影，與模板圖片一致 */
 }
-
 .role-card__icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 80px; /* icon 容器大小，與註冊頁圖片一致 */
+  height: 80px; /* icon 容器大小，與註冊頁圖片一致 */
   border-radius: 50%;
-  background: #f3f4f6;
-  margin-right: 1rem;
+  background: #f3f4f6; /* icon 容器背景 */
+  margin-right: 1rem; /* icon 與文字間距，與註冊頁圖片一致 */
   transition: all 0.3s ease;
+  font-size: 2.2rem; /* icon 大小，與註冊頁圖片一致 */
 }
-
 .role-card--selected .role-card__icon-wrapper {
-  background: rgba(248, 244, 65, 0.2);
+  background: #B2EBf2; /* 選中時 icon 容器背景，與模板圖片一致 */
 }
-
+.role-card .v-icon {
+  /* icon 顏色通過 template 中的 :color 綁定控制 */
+}
 .role-card__content {
   flex: 1;
 }
-
 .role-card__title {
-  font-size: 1.125rem;
+  font-size: 1.35rem; /* 標題字體大小，與註冊頁圖片一致 */
   font-weight: 600;
-  color: #111827;
+  color: #111827; /* 標題字體顏色，與模板圖片一致 */
   margin: 0 0 0.5rem;
 }
-
 .role-card__description {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 1.1rem; /* 描述字體大小，與註冊頁圖片一致 */
+  color: #6b7280; /* 描述字體顏色，與模板圖片一致 */
   margin: 0;
   line-height: 1.4;
 }
-
 .role-card__check {
   position: absolute;
   top: 1rem;
   right: 1rem;
+}
+.role-card__check .v-icon {
+  font-size: 36px !important; /* 打勾 Icon 大小，與模板圖片一致 */
+  color: #00B8D9 !important; /* 打勾 Icon 顏色，與模板圖片一致 (藍色) */
 }
 
 /* Alert 訊息樣式 */
@@ -658,48 +670,50 @@ const handleTestLogin = async () => {
 }
 
 /* RWD 適配 */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .login-card {
-    padding: 1.5rem !important;
-    margin: 1rem;
+    padding: 2rem 1rem !important;
+    font-size: 1.1rem;
   }
-  
   .header-title {
-    font-size: 1.5rem;
+    font-size: 1.5rem !important;
   }
-  
-  .nav-buttons {
-    flex-direction: column;
+  .login-form {
+    max-width: 98vw;
+    font-size: 1rem;
   }
-  
-  .nav-btn {
-    width: 100%;
+  .form-field :deep(.v-field),
+  .form-field :deep(.v-label) {
+    font-size: 1rem !important;
+    min-height: 48px !important;
   }
-  
-  .steps-indicator {
-    padding: 0.5rem 0;
+  .v-btn, .login-btn, .test-btn, .next-btn, .nav-btn {
+    font-size: 1rem !important;
+    height: 48px !important;
+    min-width: 120px !important;
   }
-  
-  .step-circle {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .step-label {
-    font-size: 0.75rem;
-  }
-  
-  .step-line {
-    max-width: 60px;
-  }
-  
   .role-card {
-    padding: 1.25rem;
+    padding: 1.2rem;
+    font-size: 1rem;
   }
-  
   .role-card__icon-wrapper {
     width: 56px;
     height: 56px;
+    font-size: 1.3rem;
+  }
+  .role-card__title {
+    font-size: 1.1rem;
+  }
+  .role-card__description {
+    font-size: 0.95rem;
+  }
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+  .step-label {
+    font-size: 0.85rem;
   }
 }
 
@@ -708,8 +722,9 @@ const handleTestLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 2rem 0;
+  margin: 2.5rem 0;
   padding: 0;
+  font-size: 1.6rem;
 }
 
 .step {
@@ -722,8 +737,8 @@ const handleTestLogin = async () => {
 }
 
 .step-circle {
-  width: 36px;
-  height: 36px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: 2px solid #e5e7eb;
   background: white;
@@ -735,6 +750,7 @@ const handleTestLogin = async () => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   color: #888;
+  font-size: 1.7rem;
 }
 
 .step.active .step-circle {
@@ -752,7 +768,7 @@ const handleTestLogin = async () => {
 }
 
 .step-label {
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   color: #888;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -826,7 +842,7 @@ const handleTestLogin = async () => {
   height: 48px !important;
   letter-spacing: 0.5px !important;
   text-transform: none !important;
-  font-size: 1rem !important;
+  font-size: 1.15rem !important;
   border: 2px solid transparent !important;
 }
 
@@ -851,40 +867,4 @@ const handleTestLogin = async () => {
   border-color: transparent !important;
 }
 
-/* RWD 適配 */
-@media (max-width: 600px) {
-  .login-card {
-    padding: 1.5rem !important;
-    margin: 1rem;
-  }
-  
-  .header-title {
-    font-size: 1.5rem;
-  }
-  
-  .nav-buttons {
-    flex-direction: column;
-  }
-  
-  .nav-btn {
-    width: 100%;
-  }
-  
-  .steps-indicator {
-    padding: 0.5rem 0;
-  }
-  
-  .step-circle {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .step-label {
-    font-size: 0.7rem;
-  }
-  
-  .step-line {
-    max-width: 40px;
-  }
-}
 </style>

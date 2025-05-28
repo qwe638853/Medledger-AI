@@ -19,14 +19,14 @@
                 直接登入
                 <v-icon right class="ml-2">mdi-login</v-icon>
               </v-btn>
-              <v-btn 
-                class="start-btn"
-                elevation="0"
-                :to="{ path: '/register' }"
-              >
+            <v-btn 
+              class="start-btn" 
+              elevation="0"
+              :to="{ path: '/register' }"
+            >
                 立即註冊
-                <v-icon right class="ml-2">mdi-arrow-right</v-icon>
-              </v-btn>
+              <v-icon right class="ml-2">mdi-arrow-right</v-icon>
+            </v-btn>
             </div>
             
             <!-- 區塊鏈動畫 -->
@@ -82,8 +82,8 @@
           </div>
           <div class="features-illustration-col">
             <img :src="featureImg" alt="醫療科技插圖" class="features-illustration" />
-          </div>
-        </div>
+                  </div>
+                  </div>
       </v-container>
     </section>
 
@@ -116,10 +116,10 @@
                 <v-icon size="38" color="#F9A825" class="mb-3">mdi-shield-account</v-icon>
                 <div class="who-role">保險公司</div>
                 <div class="who-desc">查閱經授權的歷史健康數據以輔助理賠。</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
       </v-container>
     </section>
 
@@ -307,7 +307,7 @@ function generateHash() {
 }
 
 .hero-desc {
-  font-size: clamp(1.25rem, 1.5vw, 1.5rem);
+  font-size: clamp(1.5rem, 2vw, 2rem);
   color: #6b7280;
   font-weight: 400;
   max-width: 800px;
@@ -319,19 +319,18 @@ function generateHash() {
   background: #F8F441 !important;
   color: #111827 !important;
   font-weight: 700 !important;
-  font-size: 1.125rem !important;
-  border-radius: 9999px !important;
-  padding: 12px 32px !important;
+  font-size: 1.6rem !important;
+  border-radius: 48px !important;
+  padding: 22px 56px !important;
   height: auto !important;
-  letter-spacing: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-width: 220px;
+  min-height: 64px;
+  box-shadow: 0 4px 24px rgba(248, 244, 65, 0.13) !important;
 }
 
-.start-btn:hover {
-  background: #e6e000 !important;
-  color: #111827 !important;
-  box-shadow: 0 6px 20px rgba(248, 244, 65, 0.25) !important;
-  transform: translateY(-2px) scale(1.04);
+.start-btn .v-icon {
+  font-size: 2.1rem !important;
+  margin-left: 1.2rem !important;
 }
 
 .start-desc {
@@ -445,10 +444,12 @@ function generateHash() {
   font-weight: 600 !important;
   border-radius: 9999px !important;
   margin-left: 12px !important;
-  padding: 12px 28px !important;
-  font-size: 1.05rem !important;
+  padding: 16px 32px !important;
+  font-size: 1.2rem !important;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
   transition: all 0.2s;
+  height: auto !important;
+  min-height: 50px;
 }
 
 .nav-btn:hover {
@@ -583,6 +584,12 @@ function generateHash() {
 
   .features-two-col {
     padding: 0 0.5rem;
+  }
+
+  .nav-btn {
+    font-size: 1rem !important;
+    padding: 10px 20px !important;
+    min-height: 40px;
   }
 }
 

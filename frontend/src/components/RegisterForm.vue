@@ -2,7 +2,7 @@
   <div class="register-page">
     <v-container class="fill-height">
       <v-row align="center" justify="center">
-        <v-col cols="12" sm="8" md="6" lg="4">
+        <v-col cols="12" sm="10" md="10" lg="10" xl="8" style="display: flex; justify-content: center;">
           <v-slide-y-transition>
             <v-card class="register-card" elevation="0">
               <!-- 頂部標題區 -->
@@ -83,6 +83,12 @@
                             <h3 class="role-card__title">{{ role.text }}</h3>
                             <p class="role-card__description">{{ role.description }}</p>
                           </div>
+                          <!-- 打勾 Icon -->
+                          <v-scale-transition>
+                            <div v-if="registerForm.selectedRole === role.value" class="role-card__check">
+                              <v-icon color="primary" size="24">mdi-check-circle</v-icon>
+                            </div>
+                          </v-scale-transition>
                         </div>
                       </div>
                     </v-radio-group>
@@ -857,11 +863,14 @@ const steps = [
 
 /* 註冊卡片 */
 .register-card {
-  border-radius: 24px !important;
-  background: white !important;
-  padding: 1.5rem !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+  max-width: 1200px;
+  width: 100%;
+  border-radius: 32px !important;
+  background: #fff !important;
+  padding: 3.5rem 2.5rem !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
+  font-size: 1.5rem !important;
 }
 
 /* 頂部標題區 */
@@ -871,7 +880,7 @@ const steps = [
 }
 
 .header-title {
-  font-size: 1.5rem;
+  font-size: 3rem !important;
   font-weight: 900;
   color: #111827;
   margin: 0;
@@ -924,15 +933,15 @@ const steps = [
 
 /* 步驟圓圈 */
 .step-circle {
-  width: 32px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: white;
   border: 2px solid #E5E7EB;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 1.7rem;
   font-weight: 600;
   color: #6B7280;
   margin-bottom: 8px;
@@ -954,7 +963,7 @@ const steps = [
 
 /* 步驟標籤 */
 .step-label {
-  font-size: 14px;
+  font-size: 1.3rem;
   color: #6B7280;
   font-weight: 500;
   text-align: center;
@@ -1019,10 +1028,11 @@ const steps = [
 .v-btn {
   border-radius: 16px !important;
   text-transform: none !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
   letter-spacing: 0 !important;
-  height: 48px !important;
-  min-width: 120px !important;
+  height: 56px !important;
+  min-width: 140px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
@@ -1054,33 +1064,40 @@ const steps = [
 
 /* 角色選擇卡片 */
 .role-cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: flex;
+  flex-direction: row;
   gap: 1.5rem;
   width: 100%;
-  margin: 1rem 0;
+  margin: 1.5rem 0;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: unset;
 }
 
 .role-card {
   position: relative;
-  display: flex;
-  align-items: center;
-  padding: 1.5rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.role-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  min-width: 260px;
+  max-width: 300px;
+  flex: 1 1 0;
+  padding: 1.5rem 1.2rem;
+  font-size: 1.1rem;
+  border: 3px solid #ececec;
+  border-radius: 20px;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .role-card--selected {
-  border-color: #F8F441;
-  background-color: rgba(248, 244, 65, 0.1);
+  border-color: #00B8D9;
+  background-color: #E6FDFF;
+  box-shadow: 0 6px 24px rgba(0, 184, 217, 0.18);
+}
+
+.role-card--selected .role-card__icon-wrapper {
+  background: #B2EBf2;
+}
+
+.role-card--selected .v-icon {
+  color: #00B8D9 !important;
 }
 
 .role-card__icon-wrapper {
@@ -1095,26 +1112,22 @@ const steps = [
   transition: all 0.3s ease;
 }
 
-.role-card--selected .role-card__icon-wrapper {
-  background: rgba(248, 244, 65, 0.2);
-}
-
 .role-card__content {
   flex: 1;
 }
 
 .role-card__title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 0.5rem;
+  font-size: 1.7rem;
+  font-weight: 700;
 }
 
 .role-card__description {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-  line-height: 1.4;
+  font-size: 1.25rem;
+}
+
+.role-card__icon-wrapper {
+  margin-bottom: 0.7rem;
+  font-size: 2.5rem;
 }
 
 /* 文件上傳區域 */
@@ -1153,59 +1166,50 @@ const steps = [
   margin-bottom: 1.5rem !important;
 }
 
+/* 打勾 Icon 定位 */
+.role-card__check {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+/* 打勾 Icon 放大 */
+.role-card__check .v-icon {
+  font-size: 36px !important;
+}
+
 /* RWD 適配 */
-@media (max-width: 768px) {
-  .register-card {
-    padding: 1.5rem !important;
+@media (max-width: 900px) {
+  .role-card {
+    min-width: 260px;
+    max-width: 320px;
+    font-size: 1.1rem;
+    padding: 1.2rem;
   }
-  
+  .role-card__title {
+    font-size: 1.3rem;
+  }
+  .role-card__description {
+    font-size: 1rem;
+  }
   .header-title {
     font-size: 1.5rem;
   }
-  
-  .steps-container {
-    padding: 1.5rem 0;
+  .section-title h3 {
+    font-size: 1.1rem !important;
   }
-  
-  .steps-wrapper {
-    padding: 0 1.5rem;
+  .v-btn {
+    font-size: 1rem !important;
+    height: 48px !important;
+    min-width: 120px !important;
   }
-  
-  .steps-lines {
-    top: 14px;
-    padding: 0 calc(28px + 0.75rem);
-  }
-  
   .step-circle {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
-  
   .step-label {
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .steps-wrapper {
-    padding: 0 1rem;
-  }
-  
-  .steps-lines {
-    top: 12px;
-    padding: 0 calc(24px + 0.5rem);
-  }
-  
-  .step-circle {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-    margin-bottom: 6px;
-  }
-  
-  .step-label {
-    font-size: 11px;
+    font-size: 0.85rem;
   }
 }
 
@@ -1219,6 +1223,7 @@ const steps = [
   width: 100%;
   max-width: 600px;
   position: relative;
+  font-size: 1.6rem;
 }
 
 .step {
@@ -1262,7 +1267,7 @@ const steps = [
 }
 
 .step-label {
-  font-size: 0.875rem;
+  font-size: 1.5rem;
   color: #888;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1330,5 +1335,13 @@ const steps = [
   .step-line {
     top: 14px;
   }
+}
+
+/* 角色選擇區標題字體加大 */
+.section-title h3 {
+  font-size: 2.2rem !important;
+}
+.section-title .text-caption {
+  font-size: 1.4rem !important;
 }
 </style>

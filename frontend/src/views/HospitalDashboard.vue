@@ -407,7 +407,6 @@ const formatJSONDisplay = (data) => {
                     <v-icon size="36">mdi-account-outline</v-icon>
                   </template>
                 </v-text-field>
-                <div class="input-hint">請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字</div>
               </v-col>
               <v-col cols="12" md="4" lg="3" xl="2" class="d-flex justify-end align-center">
                 <v-btn
@@ -694,6 +693,7 @@ const formatJSONDisplay = (data) => {
 /* 主卡片容器 */
 .main-card {
   border-radius: 28px !important;
+  margin-top: 30px;
   background: white !important;
   padding: 1rem 5rem !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -703,18 +703,20 @@ const formatJSONDisplay = (data) => {
 /* 頂部標題區 */
 .header-icon {
   color: #111827;
+  margin: 20px 0 0 0;
 }
 
 .header-title {
-  font-size: 2.1rem;
+
+  font-size: 2.5rem !important;
   font-weight: 900;
   color: #111827;
-  margin: 0;
+  margin: 20px 0 0 0;
   letter-spacing: -0.5px;
 }
 
 .header-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.2rem; 
   color: #6B7280;
   margin: 0.25rem 0 0;
 }
@@ -783,6 +785,7 @@ const formatJSONDisplay = (data) => {
 
 .upload-hint {
   font-size: 1.05rem;
+  font-weight: 600;
   color: #888;
   margin: 0;
 }
@@ -910,12 +913,14 @@ const formatJSONDisplay = (data) => {
 
 .empty-text {
   font-size: 1.35rem;
+  font-weight: 600;
   color: #374151;
   margin-bottom: 0.5rem;
 }
 
 .empty-hint {
   font-size: 1.05rem;
+  font-weight: 600;
   color: #6B7280;
   margin: 0;
 }

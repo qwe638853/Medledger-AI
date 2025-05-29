@@ -566,14 +566,14 @@ const getRequestStatusInfo = (status) => {
                 
                 <div class="card-action-section">
                   <v-btn
-                    class="view-btn-new"
+                    class="view-btn-simple"
                     @click="switchToAuthorizedView"
-                    variant="tonal"
+                    variant="text"
                     color="primary"
-                    size="small"
+                    size="large"
                     block
                   >
-                    <v-icon start size="16">mdi-eye</v-icon>
+                    <v-icon start size="30">mdi-eye</v-icon>
                     查看詳情
                   </v-btn>
                 </div>
@@ -600,14 +600,14 @@ const getRequestStatusInfo = (status) => {
                 
                 <div class="card-action-section">
                   <v-btn
-                    class="view-btn-new"
+                    class="view-btn-simple"
                     @click="switchToPendingView"
-                    variant="tonal"
+                    variant="text"
                     color="warning"
-                    size="small"
+                    size="large"
                     block
                   >
-                    <v-icon start size="16">mdi-eye</v-icon>
+                    <v-icon start size="30">mdi-eye</v-icon>
                     查看詳情
                   </v-btn>
                 </div>
@@ -634,14 +634,14 @@ const getRequestStatusInfo = (status) => {
                 
                 <div class="card-action-section">
                   <v-btn
-                    class="view-btn-new"
+                    class="view-btn-simple"
                     @click="switchToHistoryView"
-                    variant="tonal"
+                    variant="text"
                     color="info"
-                    size="small"
+                    size="large"
                     block
                   >
-                    <v-icon start size="16">mdi-eye</v-icon>
+                    <v-icon start size="30">mdi-eye</v-icon>
                     查看詳情
                   </v-btn>
                 </div>
@@ -705,49 +705,52 @@ const getRequestStatusInfo = (status) => {
         <v-col cols="12">
           <v-card class="main-card result-card" elevation="0">
             <div class="card-header">
-              <div class="card-title">
-                <div class="card-title-icon">
-                  <v-icon>mdi-file-document-outline</v-icon>
+              <div class="card-title-row">
+                <div class="card-title">
+                  <div class="card-title-icon">
+                    <v-icon>mdi-file-document-outline</v-icon>
+                  </div>
+                  <div>
+                    <div class="card-title-text">病患「{{ patientId }}」的健康報告</div>
+                  </div>
                 </div>
-                <div>
-                  <div class="card-title-text">病患「{{ patientId }}」的健康報告</div>
-                </div>
+                
+                <!-- 標籤頁移到右上角 -->
+                <v-tabs
+                  v-model="tab"
+                  color="primary"
+                  align-tabs="end"
+                  class="header-tabs"
+                >
+                  <v-tab value="unauthorized" class="font-weight-medium">
+                    <v-icon start class="me-2" size="18">mdi-lock-open-alert</v-icon>
+                    尚未授權報告
+                    <v-badge
+                      :content="unauthorizedReports.length.toString()"
+                      :color="unauthorizedReports.length > 0 ? 'warning' : 'grey'"
+                      offset-x="8"
+                      offset-y="-8"
+                      size="small"
+                      class="ms-2"
+                    ></v-badge>
+                  </v-tab>
+                  <v-tab value="authorized" class="font-weight-medium">
+                    <v-icon start class="me-2" size="18">mdi-lock-check</v-icon>
+                    已授權報告
+                    <v-badge
+                      :content="authorizedReports.length.toString()"
+                      :color="authorizedReports.length > 0 ? 'success' : 'grey'"
+                      offset-x="8"
+                      offset-y="-8"
+                      size="small"
+                      class="ms-2"
+                    ></v-badge>
+                  </v-tab>
+                </v-tabs>
               </div>
             </div>
 
-            <!-- 標籤頁 -->
-            <v-tabs
-              v-model="tab"
-              color="primary"
-              align-tabs="start"
-              class="px-6 pt-4"
-            >
-              <v-tab value="unauthorized" class="font-weight-medium">
-                <v-icon start class="me-2" size="18">mdi-lock-open-alert</v-icon>
-                尚未授權報告
-                <v-badge
-                  :content="unauthorizedReports.length.toString()"
-                  :color="unauthorizedReports.length > 0 ? 'warning' : 'grey'"
-                  offset-x="8"
-                  offset-y="-8"
-                  size="small"
-                  class="ms-2"
-                ></v-badge>
-              </v-tab>
-              <v-tab value="authorized" class="font-weight-medium">
-                <v-icon start class="me-2" size="18">mdi-lock-check</v-icon>
-                已授權報告
-                <v-badge
-                  :content="authorizedReports.length.toString()"
-                  :color="authorizedReports.length > 0 ? 'success' : 'grey'"
-                  offset-x="8"
-                  offset-y="-8"
-                  size="small"
-                  class="ms-2"
-                ></v-badge>
-              </v-tab>
-            </v-tabs>
-            
+            <!-- 移除原來的標籤頁位置 -->
             <div class="table-container">
               <v-window v-model="tab">
               <!-- 尚未授權報告標籤內容 -->
@@ -1865,11 +1868,6 @@ const getRequestStatusInfo = (status) => {
     font-size: 1.5rem !important;
   }
 
-  .view-btn-new {
-    height: 36px !important;
-    font-size: 0.9rem !important;
-  }
-
   :deep(.v-data-table-header th) {
     font-size: 1rem !important;
     padding: 1.25rem !important;
@@ -1878,6 +1876,16 @@ const getRequestStatusInfo = (status) => {
   :deep(.v-data-table tbody td) {
     font-size: 0.95rem !important;
     padding: 1.25rem !important;
+  }
+
+  /* 響應式卡片標題列 */
+  .card-title-row {
+    gap: 1.5rem;
+  }
+
+  .header-tabs :deep(.v-tab) {
+    font-size: 0.9rem !important;
+    padding: 0 1rem !important;
   }
 }
 
@@ -1929,12 +1937,7 @@ const getRequestStatusInfo = (status) => {
   }
 
   .card-header {
-    padding: 2rem !important;
-  }
-
-  .view-btn-new {
-    height: 36px !important;
-    font-size: 0.85rem !important;
+    padding: 1.5rem !important;
   }
 
   :deep(.v-data-table-header th) {
@@ -1945,6 +1948,27 @@ const getRequestStatusInfo = (status) => {
   :deep(.v-data-table tbody td) {
     font-size: 0.9rem !important;
     padding: 1rem !important;
+  }
+
+  /* 響應式卡片標題列 */
+  .card-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-tabs {
+    align-self: stretch;
+  }
+
+  .header-tabs :deep(.v-tabs) {
+    width: 100%;
+  }
+
+  .header-tabs :deep(.v-tab) {
+    font-size: 0.85rem !important;
+    padding: 0 0.75rem !important;
+    flex: 1;
   }
 }
 
@@ -2011,6 +2035,27 @@ const getRequestStatusInfo = (status) => {
     padding: 0.75rem 0.5rem !important;
     font-size: 0.85rem !important;
   }
+
+  /* 響應式卡片標題列 */
+  .card-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .card-title-text {
+    font-size: 1.2rem !important;
+  }
+
+  .header-tabs :deep(.v-tab) {
+    font-size: 0.8rem !important;
+    padding: 0 0.5rem !important;
+    height: 40px !important;
+  }
+
+  .header-tabs :deep(.v-badge) {
+    margin-left: 0.25rem !important;
+  }
 }
 
 /* 動畫效果 */
@@ -2067,8 +2112,11 @@ const getRequestStatusInfo = (status) => {
 /* 卡片操作區域 */
 .card-action-section {
   padding: 0 1.5rem 1.5rem 1.5rem !important;
-  border-top: 1px solid rgba(0, 184, 217, 0.1) !important;
-  background: rgba(0, 184, 217, 0.02) !important;
+  border-top: none !important;
+  background: transparent !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 新的查看按鈕樣式 */
@@ -2078,8 +2126,15 @@ const getRequestStatusInfo = (status) => {
   text-transform: none !important;
   letter-spacing: 0 !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  height: 40px !important;
+  height: 48px !important;
   margin-top: 1rem !important;
+  font-size: 1.1rem !important;
+  background: transparent !important;
+  border: none !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .view-btn-new:hover {
@@ -2533,5 +2588,85 @@ const getRequestStatusInfo = (status) => {
   .user-logout-btn .v-icon {
     font-size: 16px !important;
   }
+}
+
+/* 卡片標題列樣式 */
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 2rem;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+/* 頭部標籤頁樣式 */
+.header-tabs {
+  flex-shrink: 0;
+  min-width: auto;
+}
+
+.header-tabs :deep(.v-tabs-slider) {
+  background: #00B8D9 !important;
+  height: 3px !important;
+}
+
+.header-tabs :deep(.v-tab) {
+  color: #8898AA !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  font-size: 1rem !important;
+  min-width: auto !important;
+  padding: 0 1.5rem !important;
+  height: 48px !important;
+}
+
+.header-tabs :deep(.v-tab--selected) {
+  color: #00B8D9 !important;
+}
+
+.header-tabs :deep(.v-badge) {
+  margin-left: 0.5rem !important;
+}
+
+/* 簡潔的查看按鈕樣式 */
+.view-btn-simple {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  transition: all 0.3s ease !important;
+  height: 40px !important;
+  margin-top: 1rem !important;
+  font-size: 1.3rem !important;
+  background: transparent !important;
+  border: none !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.view-btn-simple:hover {
+  background: rgba(0, 184, 217, 0.08) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 卡片操作區域調整 */
+.card-action-section {
+  padding: 0 1.5rem 1.5rem 1.5rem !important;
+  border-top: none !important;
+  background: transparent !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

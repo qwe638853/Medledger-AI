@@ -382,10 +382,9 @@ const formatJSONDisplay = (data) => {
             <!-- 頂部標題區 -->
             <div class="header-section">
               <div class="d-flex align-center mb-6">
-                <v-icon size="32" class="header-icon">mdi-hospital-building</v-icon>
+                <v-icon size="44" class="header-icon">mdi-hospital-building</v-icon>
                 <div class="ml-6">
                   <h1 class="header-title">健檢中心</h1>
-                  <p class="header-subtitle">歡迎，{{ currentUser }}</p>
                 </div>
               </div>
             </div>
@@ -405,10 +404,9 @@ const formatJSONDisplay = (data) => {
                   hide-details="auto"
                 >
                   <template v-slot:prepend>
-                    <v-icon size="28">mdi-account-outline</v-icon>
+                    <v-icon size="36">mdi-account-outline</v-icon>
                   </template>
                 </v-text-field>
-                <div class="input-hint">請輸入病人身分證字號，格式為一個大寫英文字母後跟九個數字</div>
               </v-col>
               <v-col cols="12" md="4" lg="3" xl="2" class="d-flex justify-end align-center">
                 <v-btn
@@ -416,7 +414,7 @@ const formatJSONDisplay = (data) => {
                   elevation="0"
                   @click="handleLogout"
                 >
-                  <v-icon start size="20">mdi-logout-variant</v-icon>
+                  <v-icon start size="24">mdi-logout-variant</v-icon>
                   登出
                 </v-btn>
               </v-col>
@@ -432,7 +430,7 @@ const formatJSONDisplay = (data) => {
               @drop="handleFileDrop"
             >
               <div class="upload-content">
-                <v-icon size="48" class="upload-icon">mdi-cloud-upload-outline</v-icon>
+                <v-icon size="64" class="upload-icon">mdi-cloud-upload-outline</v-icon>
                 <h3 class="upload-title">拖曳健檢報告至此處上傳</h3>
                 <p class="upload-text">
                   
@@ -441,7 +439,7 @@ const formatJSONDisplay = (data) => {
                     elevation="0"
                     @click="$refs.fileInput.click()"
                   >
-                    <v-icon start size="20">mdi-file-plus-outline</v-icon>
+                    <v-icon start size="24">mdi-file-plus-outline</v-icon>
                     選擇檔案
                   </v-btn>
                 </p>
@@ -466,7 +464,7 @@ const formatJSONDisplay = (data) => {
               >
                 <div class="d-flex align-center justify-space-between pa-4">
                   <div class="d-flex align-center">
-                    <v-icon size="24" class="mr-2">mdi-file-multiple-outline</v-icon>
+                    <v-icon size="28" class="mr-2">mdi-file-multiple-outline</v-icon>
                     <span class="selected-title">已選擇 {{ files.length }} 個檔案</span>
                   </div>
                   <v-btn
@@ -474,7 +472,7 @@ const formatJSONDisplay = (data) => {
                     elevation="0"
                     @click="clearFiles"
                   >
-                    <v-icon size="20">mdi-close</v-icon>
+                    <v-icon size="24">mdi-close</v-icon>
                     清除
                   </v-btn>
                 </div>
@@ -490,7 +488,7 @@ const formatJSONDisplay = (data) => {
                     <template v-slot:prepend>
                       <v-icon
                         :color="file.name.toLowerCase().endsWith('.json') ? '#6B7280' : '#374151'"
-                        size="20"
+                        size="24"
                       >
                         {{ getFileIcon(file) }}
                       </v-icon>
@@ -517,7 +515,7 @@ const formatJSONDisplay = (data) => {
                     :disabled="!files.length || !patientId"
                     @click="previewFiles"
                   >
-                    <v-icon start size="20">mdi-eye-outline</v-icon>
+                    <v-icon start size="24">mdi-eye-outline</v-icon>
                     預覽
                   </v-btn>
                 </v-card-actions>
@@ -527,7 +525,7 @@ const formatJSONDisplay = (data) => {
             <!-- 已上傳數據列表 -->
             <v-card class="uploaded-list" elevation="0">
               <div class="d-flex align-center mb-4">
-                <v-icon size="24" class="mr-2">mdi-text-box-check-outline</v-icon>
+                <v-icon size="28" class="mr-2">mdi-text-box-check-outline</v-icon>
                 <h3 class="uploaded-title">已上傳健檢報告</h3>
               </div>
 
@@ -535,7 +533,7 @@ const formatJSONDisplay = (data) => {
                 <v-progress-circular
                   indeterminate
                   color="#111827"
-                  size="32"
+                  size="36"
                 ></v-progress-circular>
                 <span class="ml-4 text-body-1">載入中...</span>
               </div>
@@ -548,7 +546,7 @@ const formatJSONDisplay = (data) => {
                     class="report-item"
                   >
                     <template v-slot:prepend>
-                      <v-icon size="20">mdi-file-check-outline</v-icon>
+                      <v-icon size="24">mdi-file-check-outline</v-icon>
                     </template>
                     <v-list-item-title class="report-patient">
                       病人：{{ item.userId || item.patient_hash || '未知' }}
@@ -560,7 +558,7 @@ const formatJSONDisplay = (data) => {
                 </v-list>
 
                 <div v-else class="empty-state">
-                  <v-icon size="48" class="empty-icon">mdi-text-box-outline</v-icon>
+                  <v-icon size="64" class="empty-icon">mdi-text-box-outline</v-icon>
                   <p class="empty-text">目前沒有已上傳的報告</p>
                   <p class="empty-hint">拖曳檔案或點擊上方按鈕開始上傳</p>
                 </div>
@@ -580,7 +578,7 @@ const formatJSONDisplay = (data) => {
     >
       <v-card class="preview-card">
         <v-card-title class="preview-header">
-          <v-icon start size="24">mdi-eye-outline</v-icon>
+          <v-icon start size="28">mdi-eye-outline</v-icon>
           預覽健檢報告
         </v-card-title>
         
@@ -598,7 +596,7 @@ const formatJSONDisplay = (data) => {
               <v-expansion-panel-title class="preview-panel-title">
                 <v-icon
                   class="mr-2"
-                  size="20"
+                  size="24"
                   :color="fileData.fileType === 'json' ? '#6B7280' : '#374151'"
                 >
                   {{ fileData.fileType === 'json' ? 'mdi-code-json' : 
@@ -648,7 +646,7 @@ const formatJSONDisplay = (data) => {
             :disabled="isUploading"
             @click="handleFileUpload"
           >
-            <v-icon start size="20">mdi-cloud-upload-outline</v-icon>
+            <v-icon start size="24">mdi-cloud-upload-outline</v-icon>
             確認上傳
           </v-btn>
         </v-card-actions>
@@ -695,6 +693,7 @@ const formatJSONDisplay = (data) => {
 /* 主卡片容器 */
 .main-card {
   border-radius: 28px !important;
+  margin-top: 30px;
   background: white !important;
   padding: 1rem 5rem !important;
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -704,18 +703,20 @@ const formatJSONDisplay = (data) => {
 /* 頂部標題區 */
 .header-icon {
   color: #111827;
+  margin: 20px 0 0 0;
 }
 
 .header-title {
-  font-size: 2.1rem;
+
+  font-size: 2.5rem !important;
   font-weight: 900;
   color: #111827;
-  margin: 0;
+  margin: 20px 0 0 0;
   letter-spacing: -0.5px;
 }
 
 .header-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.2rem; 
   color: #6B7280;
   margin: 0.25rem 0 0;
 }
@@ -741,7 +742,7 @@ const formatJSONDisplay = (data) => {
   border-radius: 24px !important;
   background: white !important;
   transition: all 0.2s ease !important;
-  min-height: 280px;
+  min-height: 300px;
 }
 
 .upload-zone:hover {
@@ -784,6 +785,7 @@ const formatJSONDisplay = (data) => {
 
 .upload-hint {
   font-size: 1.05rem;
+  font-weight: 600;
   color: #888;
   margin: 0;
 }
@@ -794,10 +796,11 @@ const formatJSONDisplay = (data) => {
   color: #111827 !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
-  padding: 0 24px !important;
-  height: 44px !important;
+  padding: 0 28px !important;
+  height: 52px !important;
   margin: 0 8px !important;
   transition: all 0.2s ease !important;
+  font-size: 1.1rem !important;
 }
 
 .select-btn:hover {
@@ -820,6 +823,8 @@ const formatJSONDisplay = (data) => {
 
 .clear-btn {
   color: #6B7280 !important;
+  height: 48px !important;
+  font-size: 1.1rem !important;
 }
 
 .file-list {
@@ -846,9 +851,10 @@ const formatJSONDisplay = (data) => {
   color: #111827 !important;
   border-radius: 16px !important;
   font-weight: 600 !important;
-  padding: 0 24px !important;
-  height: 44px !important;
+  padding: 0 28px !important;
+  height: 52px !important;
   transition: all 0.2s ease !important;
+  font-size: 1.1rem !important;
 }
 
 .preview-btn:hover {
@@ -907,12 +913,14 @@ const formatJSONDisplay = (data) => {
 
 .empty-text {
   font-size: 1.35rem;
+  font-weight: 600;
   color: #374151;
   margin-bottom: 0.5rem;
 }
 
 .empty-hint {
   font-size: 1.05rem;
+  font-weight: 600;
   color: #6B7280;
   margin: 0;
 }
@@ -922,11 +930,12 @@ const formatJSONDisplay = (data) => {
   background-color: #00B8D9 !important;
   color: #111827 !important;
   font-weight: 600 !important;
-  padding: 0 24px !important;
-  height: 56px !important;
+  padding: 0 28px !important;
+  height: 60px !important;
   border-radius: 16px !important;
   margin-top: -36px;
   transition: all 0.2s ease !important;
+  font-size: 1.1rem !important;
 }
 
 .logout-btn:hover {
@@ -1006,6 +1015,8 @@ const formatJSONDisplay = (data) => {
 .cancel-btn {
   color: #6B7280 !important;
   background-color: #00B8D9 !important;
+  height: 48px !important;
+  font-size: 1.1rem !important;
 }
 
 .confirm-btn {
@@ -1014,6 +1025,8 @@ const formatJSONDisplay = (data) => {
   border-radius: 16px !important;
   font-weight: 600 !important;
   margin-left: 0.5rem !important;
+  height: 48px !important;
+  font-size: 1.1rem !important;
 }
 
 .upload-progress {

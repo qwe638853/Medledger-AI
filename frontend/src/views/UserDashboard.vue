@@ -794,7 +794,7 @@ const getRemainingDays = (expiry) => {
 
                 <!-- 授權理由欄位 -->
                 <template v-slot:item.reason="{ item }">
-                  <div class="text-body-2">{{ item.reason || '無' }}</div>
+                  <div class="text-body-2">{{ item.reason || '保險需求' }}</div>
                 </template>
 
                 <!-- 申請日期欄位 -->
@@ -1238,6 +1238,7 @@ const getRemainingDays = (expiry) => {
 
 /* 按鈕樣式統一 */
 .modern-btn {
+  margin: 3px;
   border-radius: 12px !important;
   font-weight: 600 !important;
   text-transform: none !important;

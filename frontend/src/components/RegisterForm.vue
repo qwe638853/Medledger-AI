@@ -52,7 +52,7 @@
                 <!-- 步驟 1: 角色選擇 -->
                 <div v-if="currentStep === '1'" class="step-container">
                   <RoleSelector
-                    v-model="selectedRole"
+                    v-model="registerForm.selectedRole"
                     @next="goToStep2"
                   />
                 </div>
@@ -69,8 +69,19 @@
                         <div class="text-body-2 text-grey">
                           {{ isInsurerRole ? '請填寫貴公司的基本資訊' : '請填寫您的個人基本資訊' }}
                         </div>
+                        <!-- 調試用：顯示當前角色 
+                        <v-chip 
+                          v-if="registerForm.selectedRole" 
+                          class="ma-1" 
+                          :color="isInsurerRole ? 'primary' : 'secondary'"
+                          size="small"
+                        >
+                          當前角色：{{ roles.find(r => r.value === registerForm.selectedRole)?.text || registerForm.selectedRole }}
+                        </v-chip>
+                         -->
                         <v-divider class="mt-2"></v-divider>
                       </div>
+                     
                       <!-- 保險業者專屬欄位 -->
                       <template v-if="isInsurerRole">
                         <v-row>
@@ -812,18 +823,23 @@ const steps = [
 ];
 
 // 角色選擇相關
-const selectedRole = ref('');
-
 const handleRoleSelect = (roleValue) => {
-  selectedRole.value = roleValue;
   registerForm.value.selectedRole = roleValue;
 };
 
 const goToStep2 = () => {
-  if (selectedRole.value) {
+  if (registerForm.value.selectedRole) {
+    console.log('選擇的角色:', registerForm.value.selectedRole);
+    console.log('是否為保險業者:', isInsurerRole.value);
     nextStep();
   }
 };
+
+// 監聽角色選擇變化
+watch(() => registerForm.value.selectedRole, (newRole) => {
+  console.log('角色已變更為:', newRole);
+  console.log('isInsurerRole 計算屬性值:', isInsurerRole.value);
+}, { immediate: true });
 </script>
 
 <style scoped>

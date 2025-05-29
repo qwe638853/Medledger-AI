@@ -446,28 +446,28 @@ const formatDate = (date) => {
 
 // 獲取授權到期 Chip 的顏色
 const getExpiryChipColor = (expiry) => {
-  if (!expiry) return 'green-lighten-4';
+  if (!expiry) return 'success';
   
   const expiryDate = new Date(expiry);
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
   
-  if (daysUntilExpiry < 0) return 'red-lighten-4';
-  if (daysUntilExpiry <= 7) return 'orange-lighten-4';
-  return 'green-lighten-4';
+  if (daysUntilExpiry < 0) return 'error';
+  if (daysUntilExpiry <= 7) return 'warning';
+  return 'success';
 };
 
 // 獲取授權到期 Chip 的文字顏色
 const getExpiryTextColor = (expiry) => {
-  if (!expiry) return 'green-darken-2';
+  if (!expiry) return 'white';
   
   const expiryDate = new Date(expiry);
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
   
-  if (daysUntilExpiry < 0) return 'red-darken-2';
-  if (daysUntilExpiry <= 7) return 'orange-darken-2';
-  return 'green-darken-2';
+  if (daysUntilExpiry < 0) return 'white';
+  if (daysUntilExpiry <= 7) return 'white';
+  return 'white';
 };
 
 // 格式化授權到期日期
@@ -882,8 +882,8 @@ const getRequestStatusInfo = (status) => {
                     <v-chip
                           size="small"
                           :color="getExpiryChipColor(item.expiry)"
-                          variant="tonal"
-                          class="font-weight-medium"
+                          variant="flat"
+                          class="font-weight-bold text-white"
                         >
                           {{ formatExpiryDate(item.expiry) }}
                     </v-chip>
@@ -1019,8 +1019,8 @@ const getRequestStatusInfo = (status) => {
                 <v-chip
                   size="small"
                   :color="getExpiryChipColor(item.expiry)"
-                    variant="tonal"
-                    class="font-weight-medium"
+                    variant="flat"
+                    class="font-weight-bold text-white"
                 >
                   {{ formatExpiryDate(item.expiry) }}
                 </v-chip>

@@ -503,6 +503,30 @@ const getRemainingDays = (expiry) => {
   if (days === 0) return '今日到期';
   return `剩餘 ${days} 天`;
 };
+
+// 動態生成表格頭部，已授權清單不顯示授權理由
+const tableHeaders = computed(() => {
+  if (showPendingOnly.value) {
+    // 待處理清單，包含授權理由
+    return [
+      { title: '報告編號', key: 'reportId', align: 'start', width: '180px' },
+      { title: '請求者', key: 'requesterName', align: 'start', width: '220px' },
+      { title: '授權理由', key: 'reason', align: 'start', width: '250px' },
+      { title: '申請日期', key: 'requestTime', align: 'center', width: '160px' },
+      { title: '到期日期', key: 'expiry', align: 'center', width: '160px' },
+      { title: '操作', key: 'actions', align: 'center', width: '240px', sortable: false }
+    ];
+  } else {
+    // 已授權清單，不包含授權理由
+    return [
+      { title: '報告編號', key: 'reportId', align: 'start', width: '180px' },
+      { title: '請求者', key: 'requesterName', align: 'start', width: '220px' },
+      { title: '申請日期', key: 'requestTime', align: 'center', width: '160px' },
+      { title: '到期日期', key: 'expiry', align: 'center', width: '160px' },
+      { title: '操作', key: 'actions', align: 'center', width: '240px', sortable: false }
+    ];
+  }
+});
 </script>
 
 <template>
@@ -756,14 +780,7 @@ const getRemainingDays = (expiry) => {
 
             <div class="table-container">
               <v-data-table
-                :headers="[
-                  { title: '報告編號', key: 'reportId', align: 'start', width: '180px' },
-                  { title: '請求者', key: 'requesterName', align: 'start', width: '220px' },
-                  { title: '授權理由', key: 'reason', align: 'start', width: '250px' },
-                  { title: '申請日期', key: 'requestTime', align: 'center', width: '160px' },
-                  { title: '到期日期', key: 'expiry', align: 'center', width: '160px' },
-                  { title: '操作', key: 'actions', align: 'center', width: '240px', sortable: false }
-                ]"
+                :headers="tableHeaders"
                 :items="filteredAccessRequests"
                 :loading="showPendingOnly ? loadingRequests : loadingTickets"
                 :loading-text="showPendingOnly ? '正在載入授權請求...' : '正在載入已授權報告...'"
@@ -793,8 +810,8 @@ const getRemainingDays = (expiry) => {
                 </template>
 
                 <!-- 授權理由欄位 -->
-                <template v-slot:item.reason="{ item }">
-                  <div class="text-body-2">{{ item.reason || '保險需求' }}</div>
+                <template v-slot:item.reason="{ item }" v-if="showPendingOnly">
+                  <div class="text-body-2">{{ item.reason || '無' }}</div>
                 </template>
 
                 <!-- 申請日期欄位 -->

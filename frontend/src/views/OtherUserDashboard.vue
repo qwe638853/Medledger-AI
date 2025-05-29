@@ -446,28 +446,28 @@ const formatDate = (date) => {
 
 // 獲取授權到期 Chip 的顏色
 const getExpiryChipColor = (expiry) => {
-  if (!expiry) return 'green-lighten-4';
+  if (!expiry) return 'success';
   
   const expiryDate = new Date(expiry);
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
   
-  if (daysUntilExpiry < 0) return 'red-lighten-4';
-  if (daysUntilExpiry <= 7) return 'orange-lighten-4';
-  return 'green-lighten-4';
+  if (daysUntilExpiry < 0) return 'error';
+  if (daysUntilExpiry <= 7) return 'warning';
+  return 'success';
 };
 
 // 獲取授權到期 Chip 的文字顏色
 const getExpiryTextColor = (expiry) => {
-  if (!expiry) return 'green-darken-2';
+  if (!expiry) return 'white';
   
   const expiryDate = new Date(expiry);
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
   
-  if (daysUntilExpiry < 0) return 'red-darken-2';
-  if (daysUntilExpiry <= 7) return 'orange-darken-2';
-  return 'green-darken-2';
+  if (daysUntilExpiry < 0) return 'white';
+  if (daysUntilExpiry <= 7) return 'white';
+  return 'white';
 };
 
 // 格式化授權到期日期
@@ -506,43 +506,43 @@ const getRequestStatusInfo = (status) => {
       <v-row class="mb-8">
         <!-- 用戶資訊卡片 -->
         <v-col cols="12" sm="6" md="3">
-          <v-card class="info-card" elevation="2">
-            <v-card-text class="pa-8">
-              <div class="d-flex align-center mb-4">
-                <div class="rounded-circle bg-primary-lighten-5 p-3">
-                  <v-icon size="28" color="primary">mdi-briefcase-account</v-icon>
-              </div>
-              <v-btn 
-                  color="grey-darken-1"
-                @click="handleLogout" 
-                  variant="text"
+          <v-card class="info-card user-info-card" elevation="0">
+            <v-card-text class="pa-0">
+              <div class="user-card-wrapper">
+                <!-- 背景裝飾 -->
+                <div class="user-card-bg-decoration"></div>
+                
+                <!-- 用戶資訊主體 -->
+                <div class="user-card-main">
+                  <div class="user-avatar-section">
+                    <div class="user-avatar-container">
+                      <v-icon class="user-avatar-icon">mdi-briefcase-account</v-icon>
+                    </div>
+                    <div class="user-status-indicator"></div>
+                  </div>
+                  
+                  <div class="user-info-content">
+                    <div class="user-name">{{ currentUser }}</div>
+                    <div class="user-role">
+                      <v-icon size="14" class="me-1">mdi-shield-account</v-icon>
+                      保險業者
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 登出按鈕 -->
+                <v-btn
+                  class="user-logout-btn"
+                  @click="handleLogout"
                   icon
-                size="small"
-                  class="ml-auto"
-                >
-                  <v-icon size="20">mdi-logout</v-icon>
-                </v-btn>
-              </div>
-              <div class="mt-4">
-                <div class="text-subtitle-1 text-grey-darken-1">保險業者</div>
-                <div class="text-h6 font-weight-bold">{{ currentUser }}</div>
-                <v-chip
                   size="small"
-                  color="success-lighten-5"
-                  class="font-weight-medium px-2 mt-2"
-                  variant="flat"
+                  variant="text"
                 >
-                  <v-icon start size="16" color="success">mdi-shield-check</v-icon>
-                  <span class="text-success">已驗證業者</span>
-                </v-chip>
-              </div>
-              <v-divider class="my-3"></v-divider>
-              <div class="d-flex align-center justify-space-between text-caption text-grey">
-                <span>
-                  <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
-                  {{ new Date().toLocaleDateString('zh-TW') }}
-                </span>
-                <span>ID: {{ currentUser }}</span>
+                  <v-icon>mdi-logout</v-icon>
+                  <v-tooltip activator="parent" location="bottom">
+                    登出
+                  </v-tooltip>
+                </v-btn>
               </div>
             </v-card-text>
           </v-card>
@@ -550,33 +550,32 @@ const getRequestStatusInfo = (status) => {
 
         <!-- 已授權報告統計卡片 -->
         <v-col cols="12" sm="6" md="3">
-          <v-card class="info-card" elevation="2">
-            <v-card-text class="pa-8">
-              <div class="d-flex align-center mb-4">
-                <div class="rounded-circle bg-success-lighten-5 p-3">
-                  <v-icon size="28" color="success">mdi-file-document</v-icon>
+          <v-card class="info-card stat-card" elevation="0">
+            <v-card-text class="pa-0">
+              <div class="card-content">
+                <div class="card-header-section">
+                  <div class="icon-container">
+                    <v-icon>mdi-file-document</v-icon>
+                  </div>
+                  
+                  <div class="card-info">
+                    <div class="stat-number">{{ dashboardStats.totalAuthorized }}</div>
+                    <div class="stat-label">已授權報告</div>
+                  </div>
                 </div>
-              </div>
-              <div class="mt-4">
-                <div class="text-subtitle-1 text-grey-darken-1">已授權報告</div>
-                <div class="d-flex align-center justify-space-between mt-2">
-                  <div class="text-h4 font-weight-bold">{{ dashboardStats.totalAuthorized }}</div>
+                
+                <div class="card-action-section">
                   <v-btn
-                    color="success"
-                    variant="tonal"
+                    class="view-btn-new"
                     @click="switchToAuthorizedView"
-                    class="view-btn"
+                    variant="tonal"
+                    color="primary"
+                    size="small"
+                    block
                   >
-                    <v-icon>mdi-eye</v-icon>
+                    <v-icon start size="16">mdi-eye</v-icon>
+                    查看詳情
                   </v-btn>
-                </div>
-                <div class="stat-progress mt-4">
-                  <v-progress-linear
-                    model-value="70"
-                    color="success"
-                    height="4"
-                    rounded
-                  ></v-progress-linear>
                 </div>
               </div>
             </v-card-text>
@@ -585,33 +584,32 @@ const getRequestStatusInfo = (status) => {
 
         <!-- 待處理請求卡片 -->
         <v-col cols="12" sm="6" md="3">
-          <v-card class="info-card" elevation="2">
-            <v-card-text class="pa-8">
-              <div class="d-flex align-center mb-4">
-                <div class="rounded-circle bg-warning-lighten-5 p-3">
-                  <v-icon size="28" color="warning">mdi-clock-outline</v-icon>
+          <v-card class="info-card stat-card" elevation="0">
+            <v-card-text class="pa-0">
+              <div class="card-content">
+                <div class="card-header-section">
+                  <div class="icon-container">
+                    <v-icon>mdi-clock-alert</v-icon>
+                  </div>
+                  
+                  <div class="card-info">
+                    <div class="stat-number">{{ dashboardStats.pendingRequests }}</div>
+                    <div class="stat-label">待處理請求</div>
+                  </div>
                 </div>
-              </div>
-              <div class="mt-4">
-                <div class="text-subtitle-1 text-grey-darken-1">待處理請求</div>
-                <div class="d-flex align-center justify-space-between mt-2">
-                  <div class="text-h4 font-weight-bold">{{ dashboardStats.pendingRequests }}</div>
+                
+                <div class="card-action-section">
                   <v-btn
-                    color="warning"
-                    variant="tonal"
+                    class="view-btn-new"
                     @click="switchToPendingView"
-                    class="view-btn"
-                  >
-                    <v-icon>mdi-eye</v-icon>
-                  </v-btn>
-                </div>
-                <div class="stat-progress mt-4">
-                  <v-progress-linear
-                    :model-value="(dashboardStats.pendingRequests / 10) * 100"
+                    variant="tonal"
                     color="warning"
-                    height="4"
-                    rounded
-                  ></v-progress-linear>
+                    size="small"
+                    block
+                  >
+                    <v-icon start size="16">mdi-eye</v-icon>
+                    查看詳情
+                  </v-btn>
                 </div>
               </div>
             </v-card-text>
@@ -620,33 +618,32 @@ const getRequestStatusInfo = (status) => {
 
         <!-- 歷史紀錄卡片 -->
         <v-col cols="12" sm="6" md="3">
-          <v-card class="info-card" elevation="2">
-            <v-card-text class="pa-8">
-              <div class="d-flex align-center mb-4">
-                <div class="rounded-circle bg-info-lighten-5 p-3">
-                  <v-icon size="28" color="info">mdi-history</v-icon>
+          <v-card class="info-card stat-card" elevation="0">
+            <v-card-text class="pa-0">
+              <div class="card-content">
+                <div class="card-header-section">
+                  <div class="icon-container">
+                    <v-icon>mdi-history</v-icon>
+                  </div>
+                  
+                  <div class="card-info">
+                    <div class="stat-number">{{ historyRequests.length }}</div>
+                    <div class="stat-label">歷史紀錄</div>
+                  </div>
                 </div>
-              </div>
-              <div class="mt-4">
-                <div class="text-subtitle-1 text-grey-darken-1">歷史紀錄</div>
-                <div class="d-flex align-center justify-space-between mt-2">
-                  <div class="text-h4 font-weight-bold">{{ historyRequests.length }}</div>
+                
+                <div class="card-action-section">
                   <v-btn
-                    color="info"
-                    variant="tonal"
+                    class="view-btn-new"
                     @click="switchToHistoryView"
-                    class="view-btn"
-                  >
-                    <v-icon>mdi-eye</v-icon>
-                  </v-btn>
-                </div>
-                <div class="stat-progress mt-4">
-                  <v-progress-linear
-                    :model-value="(historyRequests.length / 10) * 100"
+                    variant="tonal"
                     color="info"
-                    height="4"
-                    rounded
-                  ></v-progress-linear>
+                    size="small"
+                    block
+                  >
+                    <v-icon start size="16">mdi-eye</v-icon>
+                    查看詳情
+                  </v-btn>
                 </div>
               </div>
             </v-card-text>
@@ -657,16 +654,21 @@ const getRequestStatusInfo = (status) => {
       <!-- 搜尋區塊 -->
       <v-row class="mb-8">
         <v-col cols="12">
-          <v-card class="search-card pa-6 elevation-2 rounded-xl">
-            <v-card-text class="pa-6">
-              <v-row align="center">
-                <v-col cols="12" md="4">
-                  <div class="d-flex align-center">
-                    <v-icon size="24" color="primary" class="me-2">mdi-magnify</v-icon>
-                    <span class="text-h6 font-weight-bold">病患健康報告查詢</span>
-                  </div>
-                </v-col>
-                <v-col cols="12" md="5">
+          <v-card class="main-card search-card" elevation="0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon">
+                  <v-icon>mdi-magnify</v-icon>
+                </div>
+                <div>
+                  <div class="card-title-text">病患健康報告查詢</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="search-content">
+              <v-row align="center" class="pa-6">
+                <v-col cols="12" md="8">
                   <v-text-field
                     v-model="patientId"
                     label="請輸入病患身分證字號"
@@ -678,7 +680,7 @@ const getRequestStatusInfo = (status) => {
                     class="search-input"
                   ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="d-flex gap-3">
+                <v-col cols="12" md="4">
                   <v-btn
                     color="primary"
                     :loading="searchLoading"
@@ -686,13 +688,14 @@ const getRequestStatusInfo = (status) => {
                     @click="searchPatientReports"
                     prepend-icon="mdi-magnify"
                     elevation="0"
-                    class="flex-grow-1 search-btn"
+                    class="search-btn"
+                    block
                   >
-                    搜尋
+                    搜尋報告
                   </v-btn>
                 </v-col>
               </v-row>
-            </v-card-text>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -700,70 +703,52 @@ const getRequestStatusInfo = (status) => {
       <!-- 表格區域 -->
       <v-row v-if="showSearchResults && viewMode === 'search'" justify="center">
         <v-col cols="12">
-          <v-card class="result-card mb-6 elevation-2 rounded-xl">
-            <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-              <div class="d-flex align-center">
-                <v-icon size="24" color="primary" class="me-3">mdi-file-document-outline</v-icon>
-                <span class="text-h6 font-weight-bold">病患「{{ patientId }}」的健康報告</span>
+          <v-card class="main-card result-card" elevation="0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon">
+                  <v-icon>mdi-file-document-outline</v-icon>
+                </div>
+                <div>
+                  <div class="card-title-text">病患「{{ patientId }}」的健康報告</div>
+                </div>
               </div>
-              <v-spacer></v-spacer>
-              <div class="d-flex gap-2">
-                <v-btn
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  prepend-icon="mdi-filter-variant"
-                >
-                  篩選
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  prepend-icon="mdi-sort-variant"
-                >
-                  排序
-                </v-btn>
-              </div>
-            </v-card-title>
+            </div>
 
             <!-- 標籤頁 -->
             <v-tabs
               v-model="tab"
-              color="grey-darken-3"
+              color="primary"
               align-tabs="start"
-              class="px-4 pt-2"
-              slider-color="yellow-accent-3"
+              class="px-6 pt-4"
             >
               <v-tab value="unauthorized" class="font-weight-medium">
-                <v-icon start class="me-1" color="orange-darken-2" size="small">mdi-lock-open-alert</v-icon>
+                <v-icon start class="me-2" size="18">mdi-lock-open-alert</v-icon>
                 尚未授權報告
                 <v-badge
                   :content="unauthorizedReports.length.toString()"
-                  :color="unauthorizedReports.length > 0 ? 'orange-darken-1' : 'grey'"
-                  offset-x="3"
-                  offset-y="-3"
+                  :color="unauthorizedReports.length > 0 ? 'warning' : 'grey'"
+                  offset-x="8"
+                  offset-y="-8"
                   size="small"
-                  class="mb-4 ms-2"
+                  class="ms-2"
                 ></v-badge>
               </v-tab>
               <v-tab value="authorized" class="font-weight-medium">
-                <v-icon start class="me-1" color="green-darken-1" size="small">mdi-lock-check</v-icon>
+                <v-icon start class="me-2" size="18">mdi-lock-check</v-icon>
                 已授權報告
                 <v-badge
                   :content="authorizedReports.length.toString()"
-                  :color="authorizedReports.length > 0 ? 'green-darken-1' : 'grey'"
-                  offset-x="3"
-                  offset-y="-3"
+                  :color="authorizedReports.length > 0 ? 'success' : 'grey'"
+                  offset-x="8"
+                  offset-y="-8"
                   size="small"
-                  class="mb-4 ms-2"
+                  class="ms-2"
                 ></v-badge>
               </v-tab>
             </v-tabs>
             
-            <v-divider></v-divider>
-            
-            <v-card-text class="pa-6">
+            <div class="table-container">
               <v-window v-model="tab">
               <!-- 尚未授權報告標籤內容 -->
                 <v-window-item value="unauthorized">
@@ -784,7 +769,7 @@ const getRequestStatusInfo = (status) => {
                   >
                     <template v-slot:item.id="{ item }">
                       <div class="d-flex align-center">
-                        <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                        <v-icon size="18" class="me-2">mdi-file-document</v-icon>
                         <span class="font-weight-medium">{{ item.id }}</span>
                     </div>
                   </template>
@@ -795,7 +780,7 @@ const getRequestStatusInfo = (status) => {
 
                   <template v-slot:item.date="{ item }">
                       <div class="d-flex align-center justify-center">
-                        <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
+                        <v-icon size="16" class="me-1">mdi-calendar</v-icon>
                         {{ formatDate(item.date) }}
                       </div>
                   </template>
@@ -834,14 +819,14 @@ const getRequestStatusInfo = (status) => {
                   </template>
 
                   <template v-slot:no-data>
-                      <div class="text-center pa-5">
-                        <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                      <div class="text-center pa-8">
+                        <v-icon size="64" color="grey-lighten-2" class="mb-4">
                           mdi-file-document-outline
                         </v-icon>
-                        <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                        <div class="text-subtitle-1 font-weight-medium mb-2">
                           無未授權報告
                         </div>
-                        <div class="text-body-2 text-grey mt-2">
+                        <div class="text-body-2">
                           該病患沒有未授權的健康報告
                         </div>
                     </div>
@@ -868,26 +853,26 @@ const getRequestStatusInfo = (status) => {
                   >
                     <template v-slot:item.id="{ item }">
                       <div class="d-flex align-center">
-                        <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                        <v-icon size="18" class="me-2">mdi-file-document</v-icon>
                         <span class="font-weight-medium">{{ item.id }}</span>
                     </div>
             </template>
 
                     <template v-slot:item.requester="{ item }">
                       <div class="d-flex align-center">
-                        <v-avatar size="28" color="primary" class="me-2">
+                        <v-avatar size="32" class="me-3">
                           <v-icon color="white" size="16">mdi-account</v-icon>
                         </v-avatar>
                         <div class="d-flex flex-column">
                           <span class="font-weight-medium">{{ item.requester_name }}</span>
-                          <span class="text-caption text-grey">{{ item.company_name }}</span>
+                          <span class="text-caption">{{ item.company_name }}</span>
                         </div>
                       </div>
             </template>
 
                     <template v-slot:item.granted_at="{ item }">
                       <div class="d-flex align-center justify-center">
-                        <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
+                        <v-icon size="16" class="me-1">mdi-calendar</v-icon>
                         {{ formatDate(item.granted_at) }}
                       </div>
                     </template>
@@ -897,8 +882,8 @@ const getRequestStatusInfo = (status) => {
                     <v-chip
                           size="small"
                           :color="getExpiryChipColor(item.expiry)"
-                          variant="tonal"
-                          class="font-weight-medium"
+                          variant="flat"
+                          class="font-weight-bold text-white"
                         >
                           {{ formatExpiryDate(item.expiry) }}
                     </v-chip>
@@ -928,14 +913,14 @@ const getRequestStatusInfo = (status) => {
                   </template>
 
                   <template v-slot:no-data>
-                      <div class="text-center pa-5">
-                        <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                      <div class="text-center pa-8">
+                        <v-icon size="64" color="grey-lighten-2" class="mb-4">
                           mdi-file-document-outline
                         </v-icon>
-                        <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                        <div class="text-subtitle-1 font-weight-medium mb-2">
                           尚無已授權報告
                         </div>
-                        <div class="text-body-2 text-grey mt-2">
+                        <div class="text-body-2">
                           目前您沒有任何已授權的健康報告
                         </div>
                     </div>
@@ -943,7 +928,7 @@ const getRequestStatusInfo = (status) => {
           </v-data-table>
               </v-window-item>
             </v-window>
-            </v-card-text>
+            </div>
         </v-card>
         </v-col>
       </v-row>
@@ -952,46 +937,30 @@ const getRequestStatusInfo = (status) => {
       <v-row v-if="viewMode === 'authorized'" justify="center">
         <v-col cols="12">
           <!-- 返回按鈕 -->
-              <v-btn
-                color="grey-darken-1"
+          <v-btn
             variant="outlined"
-                size="small"
-                @click="switchToSearchView"
+            size="small"
+            @click="switchToSearchView"
             class="mb-6"
             elevation="0"
-              >
+          >
             <v-icon start size="18">mdi-arrow-left</v-icon>
-                返回搜尋
-              </v-btn>
+            返回搜尋
+          </v-btn>
 
-          <v-card class="mb-6 elevation-2 rounded-xl">
-            <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-              <div class="d-flex align-center">
-                <v-icon size="24" color="primary" class="me-3">mdi-folder-account</v-icon>
-                <span class="text-h6 font-weight-bold">所有已授權健康報告</span>
+          <v-card class="main-card" elevation="0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon">
+                  <v-icon>mdi-folder-account</v-icon>
+                </div>
+                <div>
+                  <div class="card-title-text">所有已授權健康報告</div>
+                </div>
               </div>
-              <v-spacer></v-spacer>
-              <div class="d-flex gap-2">
-                <v-btn
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  prepend-icon="mdi-filter-variant"
-                >
-                  篩選
-                </v-btn>
-                <v-btn
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  prepend-icon="mdi-sort-variant"
-                >
-                  排序
-                </v-btn>
-              </div>
-            </v-card-title>
+            </div>
             
-            <v-card-text class="pa-6">
+            <div class="table-container">
             <v-data-table
               :headers="[
                   { 
@@ -1032,7 +1001,7 @@ const getRequestStatusInfo = (status) => {
                 <!-- 報告編號欄位 -->
                 <template v-slot:item.id="{ item }">
                   <div class="d-flex align-center">
-                    <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                    <v-icon size="18" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.id }}</span>
                   </div>
               </template>
@@ -1040,7 +1009,7 @@ const getRequestStatusInfo = (status) => {
                 <!-- 授權對象欄位 -->
                 <template v-slot:item.requester_name="{ item }">
                   <div class="d-flex align-center">
-                    <v-icon size="18" color="grey" class="me-2">mdi-account</v-icon>
+                    <v-icon size="18" class="me-2">mdi-account</v-icon>
                     <span class="font-weight-medium">{{ item.requester_name }}</span>
                   </div>
               </template>
@@ -1050,8 +1019,8 @@ const getRequestStatusInfo = (status) => {
                 <v-chip
                   size="small"
                   :color="getExpiryChipColor(item.expiry)"
-                    variant="tonal"
-                    class="font-weight-medium"
+                    variant="flat"
+                    class="font-weight-bold text-white"
                 >
                   {{ formatExpiryDate(item.expiry) }}
                 </v-chip>
@@ -1082,20 +1051,20 @@ const getRequestStatusInfo = (status) => {
               
                 <!-- 無資料顯示 -->
               <template v-slot:no-data>
-                <div class="text-center pa-5">
-                    <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                <div class="text-center pa-8">
+                    <v-icon size="64" color="grey-lighten-2" class="mb-4">
                       mdi-file-document-outline
                     </v-icon>
-                    <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                    <div class="text-subtitle-1 font-weight-medium mb-2">
                       尚無已授權報告
                     </div>
-                    <div class="text-body-2 text-grey mt-2">
+                    <div class="text-body-2">
                       目前您沒有任何已授權的健康報告
                     </div>
                 </div>
               </template>
             </v-data-table>
-            </v-card-text>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -1103,22 +1072,23 @@ const getRequestStatusInfo = (status) => {
       <!-- 未搜尋或搜尋前的提示 -->
       <v-row v-if="!showSearchResults && viewMode === 'search'" justify="center">
         <v-col cols="12">
-          <v-card class="text-center py-6 px-5" elevation="1" color="grey-lighten-5">
-            <v-icon size="50" color="blue-lighten-3" class="mb-3">mdi-file-document-search</v-icon>
-            <div class="text-h6 font-weight-medium text-blue-grey-darken-1 mb-1">請輸入病患身分證字號查詢健康報告</div>
-            <div class="text-body-2 text-grey px-6 mb-0">
-              您可以輸入病患身分證字號查詢特定病患，或點擊「授權報告」查看所有已授權報告
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+          <v-card class="main-card text-center" elevation="0">
+            <div class="pa-12">
+              <v-icon size="80" color="grey-lighten-2" class="mb-6">mdi-file-document-search</v-icon>
+              <div class="text-h6 font-weight-medium mb-3">請輸入病患身分證字號查詢健康報告</div>
+              <div class="text-body-1 text-grey">
+                您可以輸入病患身分證字號查詢特定病患，或點擊上方統計卡片查看相關報告
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- 待授權請求列表區塊 -->
       <v-row v-if="viewMode === 'pending'" justify="center">
         <v-col cols="12">
           <!-- 返回按鈕 -->
           <v-btn
-            color="grey-darken-1"
             variant="outlined"
             size="small"
             @click="switchToSearchView"
@@ -1129,13 +1099,18 @@ const getRequestStatusInfo = (status) => {
             返回搜尋
           </v-btn>
 
-          <v-card class="mb-6 elevation-2 rounded-xl">
-            <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-              <div class="d-flex align-center">
-                <v-icon size="24" color="warning" class="me-3">mdi-clock-alert</v-icon>
-                <span class="text-h6 font-weight-bold">待處理授權請求</span>
+          <v-card class="main-card" elevation="0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon">
+                  <v-icon>mdi-clock-alert</v-icon>
+                </div>
+                <div>
+                  <div class="card-title-text">待處理授權請求</div>
+                </div>
                 <v-chip
-                  class="ms-3"
+                  v-if="pendingRequests.length > 0"
+                  class="ms-4"
                   color="warning"
                   size="small"
                   variant="tonal"
@@ -1143,9 +1118,9 @@ const getRequestStatusInfo = (status) => {
                   {{ pendingRequests.length }} 筆請求
                 </v-chip>
               </div>
-          </v-card-title>
+            </div>
           
-            <v-card-text class="pa-6">
+            <div class="table-container">
               <v-data-table
                 :headers="[
                   { 
@@ -1179,43 +1154,43 @@ const getRequestStatusInfo = (status) => {
                 <!-- 報告編號欄位 -->
                 <template v-slot:item.reportId="{ item }">
                   <div class="d-flex align-center">
-                    <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                    <v-icon size="18" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.reportId }}</span>
-              </div>
+                  </div>
                 </template>
 
                 <!-- 病患雜湊欄位 -->
                 <template v-slot:item.patientHash="{ item }">
-                <div class="d-flex align-center">
-                    <v-icon size="18" color="grey" class="me-2">mdi-identifier</v-icon>
+                  <div class="d-flex align-center">
+                    <v-icon size="18" class="me-2">mdi-identifier</v-icon>
                     <span class="font-weight-medium">{{ item.patientHash }}</span>
-                </div>
+                  </div>
                 </template>
 
                 <!-- 申請日期欄位 -->
                 <template v-slot:item.requestedAt="{ item }">
                   <div class="d-flex align-center justify-center">
-                    <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
+                    <v-icon size="16" class="me-1">mdi-calendar</v-icon>
                     {{ item.requestedAt }}
                   </div>
                 </template>
 
                 <!-- 無資料顯示 -->
                 <template v-slot:no-data>
-                  <div class="text-center pa-5">
-                    <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                  <div class="text-center pa-8">
+                    <v-icon size="64" color="grey-lighten-2" class="mb-4">
                       mdi-file-document-outline
                     </v-icon>
-                    <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                    <div class="text-subtitle-1 font-weight-medium mb-2">
                       無待處理請求
                     </div>
-                    <div class="text-body-2 text-grey mt-2">
+                    <div class="text-body-2">
                       您目前沒有待處理的授權請求
                     </div>
                   </div>
                 </template>
               </v-data-table>
-            </v-card-text>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -1225,7 +1200,6 @@ const getRequestStatusInfo = (status) => {
         <v-col cols="12">
           <!-- 返回按鈕 -->
           <v-btn
-            color="grey-darken-1"
             variant="outlined"
             size="small"
             @click="switchToSearchView"
@@ -1236,15 +1210,19 @@ const getRequestStatusInfo = (status) => {
             返回搜尋
           </v-btn>
 
-          <v-card class="mb-6 elevation-2 rounded-xl">
-            <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-                <div class="d-flex align-center">
-                <v-icon size="24" color="primary" class="me-3">mdi-history</v-icon>
-                <span class="text-h6 font-weight-bold">授權請求歷史紀錄</span>
+          <v-card class="main-card" elevation="0">
+            <div class="card-header">
+              <div class="card-title">
+                <div class="card-title-icon">
+                  <v-icon>mdi-history</v-icon>
                 </div>
-            </v-card-title>
+                <div>
+                  <div class="card-title-text">授權請求歷史紀錄</div>
+                </div>
+              </div>
+            </div>
 
-            <v-card-text class="pa-6">
+            <div class="table-container">
               <v-data-table
                 :headers="[
                   { 
@@ -1283,24 +1261,24 @@ const getRequestStatusInfo = (status) => {
               >
                 <!-- 報告編號欄位 -->
                 <template v-slot:item.reportId="{ item }">
-                <div class="d-flex align-center">
-                    <v-icon size="18" color="primary" class="me-2">mdi-file-document</v-icon>
+                  <div class="d-flex align-center">
+                    <v-icon size="18" class="me-2">mdi-file-document</v-icon>
                     <span class="font-weight-medium">{{ item.reportId }}</span>
-                </div>
+                  </div>
                 </template>
 
                 <!-- 病患雜湊欄位 -->
                 <template v-slot:item.patientHash="{ item }">
                   <div class="d-flex align-center">
-                    <v-icon size="18" color="grey" class="me-2">mdi-identifier</v-icon>
+                    <v-icon size="18" class="me-2">mdi-identifier</v-icon>
                     <span class="font-weight-medium">{{ item.patientHash }}</span>
-              </div>
+                  </div>
                 </template>
 
                 <!-- 申請日期欄位 -->
                 <template v-slot:item.requestedAt="{ item }">
                   <div class="d-flex align-center justify-center">
-                    <v-icon size="16" color="grey" class="me-1">mdi-calendar</v-icon>
+                    <v-icon size="16" class="me-1">mdi-calendar</v-icon>
                     {{ item.requestedAt }}
                   </div>
                 </template>
@@ -1319,20 +1297,20 @@ const getRequestStatusInfo = (status) => {
 
                 <!-- 無資料顯示 -->
                 <template v-slot:no-data>
-                  <div class="text-center pa-5">
-                    <v-icon size="40" color="grey-lighten-1" class="mb-3">
+                  <div class="text-center pa-8">
+                    <v-icon size="64" color="grey-lighten-2" class="mb-4">
                       mdi-file-document-outline
                     </v-icon>
-                    <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">
+                    <div class="text-subtitle-1 font-weight-medium mb-2">
                       無歷史紀錄
                     </div>
-                    <div class="text-body-2 text-grey mt-2">
+                    <div class="text-body-2">
                       您目前沒有已處理的授權請求紀錄
                     </div>
                   </div>
                 </template>
               </v-data-table>
-            </v-card-text>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -1357,10 +1335,16 @@ const getRequestStatusInfo = (status) => {
       <!-- 授權請求對話框 -->
       <v-dialog v-model="authRequestDialog" max-width="500">
         <v-card class="rounded-lg">
-          <v-card-title class="d-flex align-center py-4 px-6 bg-grey-lighten-4">
-            <v-icon size="24" color="primary" class="me-3">mdi-key-chain</v-icon>
-            <span class="text-h6 font-weight-bold">請求授權</span>
-          </v-card-title>
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-title-icon">
+                <v-icon>mdi-key-chain</v-icon>
+              </div>
+              <div>
+                <div class="card-title-text">請求授權</div>
+              </div>
+            </div>
+          </div>
 
           <v-card-text class="pa-6">
             <v-form @submit.prevent="sendAuthRequest">
@@ -1397,7 +1381,6 @@ const getRequestStatusInfo = (status) => {
           <v-card-actions class="pa-6 pt-0">
             <v-spacer></v-spacer>
             <v-btn
-              color="grey-darken-1"
               variant="outlined"
               @click="authRequestDialog = false"
               :disabled="requestLoading"
@@ -1422,250 +1405,1133 @@ const getRequestStatusInfo = (status) => {
 <style scoped>
 /* 全局樣式 */
 .dashboard-bg {
-  background-color: #F8FAFC;
+  background: #F8FAFC;
   min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  padding: 2rem 0;
 }
 
 .dashboard-container {
   max-width: 1400px !important;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem !important;
   width: 100%;
 }
 
-/* 資訊卡片統一樣式 */
+/* 統計卡片區域樣式 */
 .info-card {
   height: 100%;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
+  min-height: 160px;
   border-radius: 24px !important;
   background: white !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(0, 184, 217, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 184, 217, 0.08) !important;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
 }
 
 .info-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 184, 217, 0.15) !important;
+  border-color: rgba(0, 184, 217, 0.2) !important;
 }
 
 .info-card .v-card-text {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  padding: 0 !important;
 }
 
-/* 圓形圖標背景統一樣式 */
-.rounded-circle {
-  width: 48px;
-  height: 48px;
+/* 卡片內容布局 */
+.card-content {
+  height: 100%;
+  min-height: 180px;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.card-content.clickable {
+  cursor: default !important;
+}
+
+.card-content.clickable:hover {
+  background: transparent !important;
+}
+
+/* 圖標容器 */
+.icon-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.3s ease;
+  background: rgba(0, 184, 217, 0.1) !important;
+  border: 2px solid rgba(0, 184, 217, 0.2) !important;
+  flex-shrink: 0;
 }
 
-.rounded-circle:hover {
-  transform: scale(1.05);
+.icon-container .v-icon {
+  font-size: 36px !important;
+  color: #00B8D9 !important;
 }
 
-/* 進度條統一樣式 */
-.stat-progress {
-  margin-top: auto;
-  padding-top: 1rem;
+/* 卡片資訊區域 */
+.card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
 }
 
-:deep(.v-progress-linear) {
-  border-radius: 8px;
-  opacity: 0.8;
-}
-
-/* 卡片內文字統一樣式 */
-.text-h4 {
-  font-size: 2.25rem !important;
-  line-height: 2.75rem !important;
+/* 用戶卡片特殊樣式 */
+.user-card .card-title {
+  font-size: 1.5rem !important;
   font-weight: 700 !important;
+  color: #22292F !important;
+  line-height: 1.2;
 }
 
-.text-h6 {
-  font-size: 1.25rem !important;
-  line-height: 1.75rem !important;
-  font-weight: 600 !important;
-}
-
-.text-subtitle-1 {
-  font-size: 1rem !important;
-  line-height: 1.5rem !important;
-  opacity: 0.85;
-}
-
-.text-body-2 {
-  font-size: 0.95rem !important;
-  line-height: 1.5rem !important;
-}
-
-/* 表格樣式 */
-:deep(.v-data-table) {
-  border-radius: 24px !important;
-  overflow: hidden !important;
-}
-
-:deep(.v-data-table-header) {
-  background-color: #F8FAFC !important;
-  }
-  
-  :deep(.v-data-table-header th) {
-  font-size: 1rem !important;
-  color: #64748B !important;
-  font-weight: 600 !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  padding: 14px 16px !important;
-}
-
-:deep(.v-data-table-row) {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
-  transition: background-color 0.2s ease;
-}
-
-:deep(.v-data-table-row:hover) {
-  background-color: #F8FAFC !important;
-}
-
-:deep(.v-data-table td) {
-  padding: 14px 16px !important;
-  color: #334155 !important;
-  font-size: 1rem !important;
-}
-
-/* 操作按鈕樣式 */
-.view-report-btn {
-  transition: all 0.3s ease !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 8px !important;
-}
-
-.view-report-btn:hover {
-  transform: translateY(-2px) !important;
-  background-color: rgba(var(--v-theme-primary), 0.1) !important;
-}
-
-.view-report-btn:active {
-  transform: scale(0.95) !important;
-}
-
-/* 返回按鈕樣式 */
-.back-btn {
-  transition: all 0.3s ease !important;
-}
-
-.back-btn:hover {
-  transform: translateX(-2px) !important;
-}
-
-/* 狀態標籤樣式 */
-.status-chip {
+.user-card .card-subtitle {
+  font-size: 1.1rem !important;
   font-weight: 500 !important;
+  color: #8898AA !important;
 }
 
-/* RWD 適配 */
-@media (max-width: 960px) {
-  .dashboard-container {
-    padding: 1rem;
-  }
-  
-  .info-card {
-    min-height: 200px;
-  }
-  
-  .info-card .v-card-text {
-    padding: 1.5rem !important;
-  }
-  
-  .rounded-circle {
-    width: 40px;
-    height: 40px;
-  }
+/* 統計卡片樣式 */
+.stat-card .stat-number {
+  font-size: 3rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  color: #22292F !important;
+  margin-bottom: 0.25rem;
 }
 
-@media (max-width: 600px) {
-  .info-card {
-    min-height: 180px;
-  }
-  
-  .info-card .v-card-text {
-    padding: 1rem !important;
-  }
-
-  :deep(.v-data-table-row) {
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 16px !important;
-    margin-bottom: 8px !important;
-    background: white !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-  }
-
-  :deep(.v-data-table td) {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 8px 0 !important;
-    border: none !important;
-  }
+.stat-card .stat-label {
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  color: #8898AA !important;
+  line-height: 1.2;
 }
 
-/* 動畫效果 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+/* 登出按鈕 */
+.logout-btn {
+  position: absolute !important;
+  top: 1.25rem !important;
+  right: 1.25rem !important;
+  width: 10px !important;
+  height: 32px !important;
+  border-radius: 12px !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  transition: all 0.3s ease !important;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
+.logout-btn:hover {
+  background: #ef4444 !important;
+  color: white !important;
+  transform: scale(1.05) !important;
 }
 
-/* 搜尋區塊樣式 */
-.search-card {
-  background: white;
+.logout-btn .v-icon {
+  font-size: 20px !important;
 }
 
+/* 主要內容卡片樣式 */
+.main-card {
+  border-radius: 24px !important;
+  background: white !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+  margin-bottom: 2rem !important;
+}
+
+.card-header {
+  background: white !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 2.5rem !important;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 0 !important;
+}
+
+.card-title-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 184, 217, 0.1) !important;
+  border: 1px solid rgba(0, 184, 217, 0.2) !important;
+}
+
+.card-title-icon .v-icon {
+  font-size: 28px !important;
+  color: #00B8D9 !important;
+}
+
+.card-title-text {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  color: #22292F !important;
+  margin: 0 !important;
+}
+
+/* 搜尋內容區域 */
+.search-content {
+  background: white !important;
+  padding: 0 !important;
+}
+
+/* 搜尋輸入框樣式 */
 .search-input {
-  border-radius: 12px;
+  border-radius: 16px !important;
 }
 
 :deep(.search-input .v-field) {
-  border-radius: 12px !important;
-  background-color: white !important;
-  border: 1px solid #e5e7eb !important;
+  border-radius: 16px !important;
+  background-color: #f8fafc !important;
+  border: 2px solid #e2e8f0 !important;
   transition: all 0.3s ease !important;
 }
 
 :deep(.search-input .v-field:hover) {
-  border-color: rgba(var(--v-theme-primary), 0.5) !important;
+  border-color: rgba(0, 184, 217, 0.3) !important;
+  background-color: white !important;
 }
 
 :deep(.search-input .v-field:focus-within) {
-  border-color: rgb(var(--v-theme-primary)) !important;
-  box-shadow: 0 2px 12px rgba(var(--v-theme-primary), 0.15) !important;
+  border-color: #00B8D9 !important;
+  background-color: white !important;
+  box-shadow: 0 4px 16px rgba(0, 184, 217, 0.15) !important;
 }
 
+/* 搜尋按鈕樣式 */
 .search-btn {
-  border-radius: 12px !important;
-  height: 44px;
+  border-radius: 16px !important;
+  height: 56px !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  background: #00B8D9 !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
 }
 
 .search-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15) !important;
+  background: #0099B8 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 184, 217, 0.3) !important;
+}
+
+:deep(.v-table){
+  font-size: 20px !important;
+}
+/* 表格樣式 */
+:deep(.v-data-table) {
+  border-radius: 0 !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+  background: white;
+  border: none !important;
+}
+
+:deep(.v-data-table-header) {
+  background: #f8fafc !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:deep(.v-data-table-header th) {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #22292F !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  padding: 1.5rem !important;
+  line-height: 1.4 !important;
+  white-space: nowrap;
+  background: transparent !important;
+  vertical-align: middle;
+  border-bottom: none !important;
+  border-right: none !important;
+  text-align: center !important;
+}
+
+:deep(.v-data-table tbody td) {
+  font-size: 1rem !important;
+  color: #22292F !important;
+  padding: 1.5rem !important;
+  line-height: 1.6 !important;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-right: none !important;
+  background: transparent !important;
+}
+
+:deep(.v-data-table-row) {
+  height: auto !important;
+  min-height: 80px !important;
+  transition: all 0.3s ease;
+  border: none !important;
+}
+
+:deep(.v-data-table-row:hover) {
+  background: #f8fafc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 操作按鈕樣式 */
+:deep(.view-report-btn) {
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  transition: all 0.3s ease !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+:deep(.view-report-btn:hover) {
+  background: #00B8D9 !important;
+  color: white !important;
+  border-color: transparent !important;
+  transform: scale(1.05) !important;
+}
+
+:deep(.view-report-btn .v-icon) {
+  font-size: 22px !important;
+  color: #8898AA !important;
+}
+
+:deep(.view-report-btn:hover .v-icon) {
+  color: white !important;
+}
+
+/* 狀態標籤樣式 */
+:deep(.v-chip) {
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+  padding: 0.6rem 1.2rem !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+}
+
+/* 返回按鈕樣式 */
+:deep(.v-btn[variant="outlined"]) {
+  border-radius: 12px !important;
+  border: 2px solid #e2e8f0 !important;
+  color: #8898AA !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+:deep(.v-btn[variant="outlined"]:hover) {
+  border-color: #00B8D9 !important;
+  color: #00B8D9 !important;
+  background: rgba(0, 184, 217, 0.05) !important;
+  transform: translateX(-2px) !important;
+}
+
+/* 無資料狀態 */
+:deep(.v-data-table__empty-wrapper) {
+  padding: 4rem 2rem !important;
+  text-align: center;
+}
+
+:deep(.v-data-table__empty-wrapper .v-icon) {
+  font-size: 64px !important;
+  color: #cbd5e1 !important;
+  margin-bottom: 1rem !important;
+}
+
+:deep(.v-data-table__empty-wrapper .text-subtitle-1) {
+  color: #22292F !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 1.2rem !important;
+}
+
+:deep(.v-data-table__empty-wrapper .text-body-2) {
+  color: #8898AA !important;
+  font-size: 1rem !important;
+}
+
+/* 表格內圖標顏色 */
+:deep(.v-data-table .d-flex.align-center .v-icon) {
+  color: #00B8D9 !important;
+  margin-right: 0.5rem !important;
+}
+
+:deep(.v-data-table .v-avatar) {
+  background: rgba(0, 184, 217, 0.1) !important;
+  border: 1px solid rgba(0, 184, 217, 0.2) !important;
+}
+
+:deep(.v-data-table .v-avatar .v-icon) {
+  color: #00B8D9 !important;
+}
+
+/* 標籤頁樣式 */
+:deep(.v-tabs) {
+  background: white !important;
+}
+
+:deep(.v-tab) {
+  color: #8898AA !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  font-size: 1rem !important;
+}
+
+:deep(.v-tab--selected) {
+  color: #00B8D9 !important;
+}
+
+:deep(.v-tabs-slider) {
+  background: #00B8D9 !important;
+  height: 3px !important;
+}
+
+/* 對話框樣式 */
+:deep(.v-dialog .v-card) {
+  border-radius: 24px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15) !important;
+}
+
+:deep(.v-dialog .v-card-title) {
+  background: #f8fafc !important;
+  color: #22292F !important;
+  font-weight: 700 !important;
+}
+
+/* Snackbar 樣式 */
+:deep(.v-snackbar) {
+  border-radius: 16px !important;
+  font-weight: 600 !important;
+}
+
+/* 表格容器樣式 */
+.table-container {
+  background: white !important;
+  padding: 0 !important;
+}
+
+/* 響應式設計 */
+@media (max-width: 1200px) {
+  .dashboard-container {
+    padding: 1.5rem !important;
+  }
+
+  .card-content {
+    min-height: 160px;
+  }
+
+  .card-header-section {
+    padding: 1.75rem !important;
+  }
+
+  .card-action-section {
+    padding: 0 1.25rem 1.25rem 1.25rem !important;
+  }
+
+  .icon-container {
+    width: 64px;
+    height: 64px;
+  }
+
+  .icon-container .v-icon {
+    font-size: 32px !important;
+  }
+
+  .stat-card .stat-number {
+    font-size: 2.5rem !important;
+  }
+
+  .user-card .card-title {
+    font-size: 1.3rem !important;
+  }
+
+  .card-title-text {
+    font-size: 1.5rem !important;
+  }
+
+  .view-btn-new {
+    height: 36px !important;
+    font-size: 0.9rem !important;
+  }
+
+  :deep(.v-data-table-header th) {
+    font-size: 1rem !important;
+    padding: 1.25rem !important;
+  }
+
+  :deep(.v-data-table tbody td) {
+    font-size: 0.95rem !important;
+    padding: 1.25rem !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .dashboard-container {
+    padding: 1rem !important;
+  }
+
+  .info-card {
+    min-height: 160px;
+  }
+
+  .card-content {
+    min-height: 160px;
+  }
+
+  .card-header-section {
+    padding: 1.5rem !important;
+    gap: 1.25rem;
+  }
+
+  .card-action-section {
+    padding: 0 1rem 1rem 1rem !important;
+  }
+
+  .icon-container {
+    width: 56px;
+    height: 56px;
+  }
+
+  .icon-container .v-icon {
+    font-size: 28px !important;
+  }
+
+  .stat-card .stat-number {
+    font-size: 2.25rem !important;
+  }
+
+  .stat-card .stat-label {
+    font-size: 1.1rem !important;
+  }
+
+  .user-card .card-title {
+    font-size: 1.2rem !important;
+  }
+
+  .user-card .card-subtitle {
+    font-size: 1rem !important;
+  }
+
+  .card-header {
+    padding: 2rem !important;
+  }
+
+  .view-btn-new {
+    height: 36px !important;
+    font-size: 0.85rem !important;
+  }
+
+  :deep(.v-data-table-header th) {
+    font-size: 0.95rem !important;
+    padding: 1rem !important;
+  }
+
+  :deep(.v-data-table tbody td) {
+    font-size: 0.9rem !important;
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 0.75rem !important;
+  }
+
+  .info-card {
+    min-height: 140px;
+  }
+
+  .card-content {
+    min-height: 140px;
+  }
+
+  .card-header-section {
+    padding: 1.25rem !important;
+    gap: 1rem;
+  }
+
+  .card-action-section {
+    padding: 0 0.75rem 0.75rem 0.75rem !important;
+  }
+
+  .icon-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  .icon-container .v-icon {
+    font-size: 24px !important;
+  }
+
+  .stat-card .stat-number {
+    font-size: 2rem !important;
+  }
+
+  .stat-card .stat-label {
+    font-size: 1rem !important;
+  }
+
+  .user-card .card-title {
+    font-size: 1.1rem !important;
+  }
+
+  .user-card .card-subtitle {
+    font-size: 0.95rem !important;
+  }
+
+  .card-header {
+    padding: 1.5rem !important;
+  }
+
+  .view-btn-new {
+    height: 32px !important;
+    font-size: 0.8rem !important;
+    margin-top: 0.75rem !important;
+  }
+
+  :deep(.v-data-table td),
+  :deep(.v-data-table-header th) {
+    padding: 0.75rem 0.5rem !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+/* 動畫效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.main-card {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* 統計卡片查看按鈕 */
+.view-btn {
+  position: absolute !important;
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  opacity: 0.8 !important;
+}
+
+.view-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.view-btn .v-icon {
+  font-size: 18px !important;
+}
+
+/* 卡片頭部區域 */
+.card-header-section {
+  flex: 1;
+  padding: 2rem !important;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* 卡片操作區域 */
+.card-action-section {
+  padding: 0 1.5rem 1.5rem 1.5rem !important;
+  border-top: 1px solid rgba(0, 184, 217, 0.1) !important;
+  background: rgba(0, 184, 217, 0.02) !important;
+}
+
+/* 新的查看按鈕樣式 */
+.view-btn-new {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  height: 40px !important;
+  margin-top: 1rem !important;
+}
+
+.view-btn-new:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.view-btn-new .v-icon {
+  margin-right: 0.5rem !important;
+}
+
+/* 移除舊的查看按鈕樣式 */
+.view-btn {
+  display: none !important;
+}
+
+/* 用戶卡片獨立樣式 */
+.user-card-custom {
+  height: 100%;
+  min-height: 160px;
+  border-radius: 24px !important;
+  background: white !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(0, 184, 217, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 184, 217, 0.08) !important;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-card-custom:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 184, 217, 0.15) !important;
+  border-color: rgba(0, 184, 217, 0.2) !important;
+}
+
+.user-card-custom .v-card-text {
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* 用戶卡片內容布局 */
+.user-card-content {
+  height: 100%;
+  min-height: 160px;
+  padding: 2rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+/* 用戶資訊區域 - 水平布局 */
+.user-info-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* 用戶圖標容器 */
+.user-icon-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 184, 217, 0.1) !important;
+  border: 2px solid rgba(0, 184, 217, 0.2) !important;
+  flex-shrink: 0;
+}
+
+.user-icon-container .v-icon {
+  font-size: 32px !important;
+  color: #00B8D9 !important;
+}
+
+/* 用戶文字資訊 */
+.user-text-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.user-card-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #22292F !important;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.user-card-subtitle {
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  color: #8898AA !important;
+  margin: 0;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .user-card-content {
+    padding: 1.5rem !important;
+    min-height: 140px;
+  }
+  
+  .user-info-section {
+    gap: 1rem;
+  }
+  
+  .user-icon-container {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+  
+  .user-icon-container .v-icon {
+    font-size: 28px !important;
+  }
+  
+  .user-card-title {
+    font-size: 1.3rem !important;
+  }
+  
+  .user-card-subtitle {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-card-content {
+    padding: 1.25rem !important;
+    min-height: 120px;
+  }
+  
+  .user-info-section {
+    gap: 0.75rem;
+  }
+  
+  .user-icon-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+  
+  .user-icon-container .v-icon {
+    font-size: 24px !important;
+  }
+  
+  .user-card-title {
+    font-size: 1.2rem !important;
+  }
+  
+  .user-card-subtitle {
+    font-size: 0.95rem !important;
+  }
+}
+
+/* 用戶資訊卡片統一樣式 */
+.user-info-card {
+  height: 100%;
+  min-height: 180px;
+  border-radius: 24px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: none !important;
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15) !important;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-info-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.25) !important;
+}
+
+.user-info-card .v-card-text {
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* 用戶卡片包裝器 */
+.user-card-wrapper {
+  height: 100%;
+  min-height: 180px;
+  padding: 2rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+/* 背景裝飾 */
+.user-card-bg-decoration {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.user-card-bg-decoration::before {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: -40px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* 用戶卡片主體 */
+.user-card-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+/* 用戶頭像區域 */
+.user-avatar-section {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.user-avatar-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 3px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.user-avatar-container:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.user-avatar-icon {
+  font-size: 36px !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 狀態指示器 */
+.user-status-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background: #4ade80;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+/* 用戶資訊內容 */
+.user-info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-name {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.user-role {
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.user-role .v-icon {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* 登出按鈕 */
+.user-logout-btn {
+  position: absolute !important;
+  top: 1.5rem !important;
+  right: 1.5rem !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  z-index: 3;
+}
+
+.user-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.8) !important;
+  color: white !important;
+  transform: scale(1.05) rotate(5deg) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3) !important;
+}
+
+.user-logout-btn .v-icon {
+  font-size: 20px !important;
+  transition: all 0.3s ease;
+}
+
+.user-logout-btn:hover .v-icon {
+  transform: rotate(-5deg);
+}
+
+/* 用戶資訊卡片響應式設計 */
+@media (max-width: 1200px) {
+  .user-card-wrapper {
+    min-height: 160px;
+    padding: 1.75rem !important;
+  }
+  
+  .user-avatar-container {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 32px !important;
+  }
+  
+  .user-name {
+    font-size: 1.3rem !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .user-info-card {
+    min-height: 160px;
+  }
+  
+  .user-card-wrapper {
+    min-height: 160px;
+    padding: 1.5rem !important;
+    gap: 1.25rem;
+  }
+  
+  .user-card-main {
+    gap: 1.25rem;
+  }
+  
+  .user-avatar-container {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 28px !important;
+  }
+  
+  .user-name {
+    font-size: 1.2rem !important;
+  }
+  
+  .user-role {
+    font-size: 0.95rem !important;
+  }
+  
+  .user-logout-btn {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .user-logout-btn .v-icon {
+    font-size: 18px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-info-card {
+    min-height: 140px;
+  }
+  
+  .user-card-wrapper {
+    min-height: 140px;
+    padding: 1.25rem !important;
+    gap: 1rem;
+  }
+  
+  .user-card-main {
+    gap: 1rem;
+  }
+  
+  .user-avatar-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+  
+  .user-avatar-icon {
+    font-size: 24px !important;
+  }
+  
+  .user-name {
+    font-size: 1.1rem !important;
+  }
+  
+  .user-role {
+    font-size: 0.9rem !important;
+  }
+  
+  .user-logout-btn {
+    top: 1rem !important;
+    right: 1rem !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .user-logout-btn .v-icon {
+    font-size: 16px !important;
+  }
 }
 </style>

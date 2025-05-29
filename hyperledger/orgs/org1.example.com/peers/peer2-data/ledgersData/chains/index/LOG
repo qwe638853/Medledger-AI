@@ -111,3 +111,41 @@
 16:03:27.985135 db@janitor F·5 G·1
 16:03:27.985143 db@janitor removing table-24
 16:03:27.985173 db@open done T·16.198351ms
+=============== May 28, 2025 (UTC) ===============
+13:58:34.608865 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:58:34.609576 version@stat F·[1 1] S·4KiB[137B 4KiB] Sc·[0.25 0.00]
+13:58:34.609603 db@open opening
+13:58:34.609640 journal@recovery F·1
+13:58:34.611843 journal@recovery recovering @29
+13:58:34.615299 memdb@flush created L0@31 N·19 S·704B "cha..\x01\x1a\x00,v181":"cha..\x01\x1b\x00,v186"
+13:58:34.615488 version@stat F·[2 1] S·5KiB[841B 4KiB] Sc·[0.50 0.00]
+13:58:34.624013 db@janitor F·5 G·0
+13:58:34.624036 db@open done T·14.42741ms
+=============== May 28, 2025 (UTC) ===============
+18:38:53.605419 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+18:38:53.605593 version@stat F·[2 1] S·5KiB[841B 4KiB] Sc·[0.50 0.00]
+18:38:53.605612 db@open opening
+18:38:53.605662 journal@recovery F·1
+18:38:53.605748 journal@recovery recovering @32
+18:38:53.614746 memdb@flush created L0@34 N·1 S·137B "cha..nfo,v196":"cha..nfo,v196"
+18:38:53.615483 version@stat F·[3 1] S·5KiB[978B 4KiB] Sc·[0.75 0.00]
+18:38:53.650871 db@janitor F·6 G·0
+18:38:53.650915 db@open done T·45.29552ms
+=============== May 28, 2025 (UTC) ===============
+18:52:08.063254 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+18:52:08.063394 version@stat F·[3 1] S·5KiB[978B 4KiB] Sc·[0.75 0.00]
+18:52:08.063428 db@open opening
+18:52:08.063472 journal@recovery F·1
+18:52:08.063535 journal@recovery recovering @35
+18:52:08.066184 memdb@flush created L0@37 N·1 S·137B "cha..nfo,v198":"cha..nfo,v198"
+18:52:08.066488 version@stat F·[4 1] S·5KiB[1KiB 4KiB] Sc·[1.00 0.00]
+18:52:08.085396 db@janitor F·7 G·0
+18:52:08.085415 db@open done T·21.978125ms
+18:52:08.085811 table@compaction L0·4 -> L1·1 S·5KiB Q·199
+18:52:08.091591 table@build created L1@40 N·119 S·4KiB "_\x00f,v1":"cha..\x01\x06\x00,v44"
+18:52:08.091715 version@stat F·[0 1] S·4KiB[0B 4KiB] Sc·[0.00 0.00]
+18:52:08.095771 table@compaction committed F-4 S-707B Ke·0 D·10 T·9.915317ms
+18:52:08.095959 table@remove removed @34
+18:52:08.096000 table@remove removed @31
+18:52:08.096031 table@remove removed @28
+18:52:08.096379 table@remove removed @27

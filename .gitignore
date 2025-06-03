@@ -13,6 +13,7 @@ build/
 pip-wheel-metadata/
 *.log
 
+
 # 虛擬環境
 .venv/
 venv/
@@ -44,3 +45,6 @@ build/
 .DS_Store
 Thumbs.db
 hyperledger/orgs/org1.example.com/orderer/orderer1-data/
+
+
+.env

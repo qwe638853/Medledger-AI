@@ -1,15 +1,15 @@
 # Healthcare Records Management System on Hyperledger Fabric
 
-A decentralized healthcare records management system built on Hyperledger Fabric blockchain technology, providing secure, transparent, and privacy-preserving medical data management.
+A decentralized healthcare records management system built on Hyperledger Fabric blockchain technology, providing secure, transparent, and privacy-preserving medical data management with AI-powered health analysis.
 
 ## 🏗️ Architecture Overview
 
-This project consists of three main components:
+This project consists of four main components:
 
 - **Hyperledger Fabric Network**: Blockchain infrastructure with peers, orderers, and CouchDB
 - **Smart Contracts (Chaincode)**: Go-based chaincode for health record management
+- **Backend Services**: Python gRPC server with AI-powered health analysis using LangChain and Ollama
 - **Frontend Application**: Vue.js + Vuetify web interface
-- **Backend Services**: Node.js/Express API services (if applicable)
 
 ## 🚀 Features
 
@@ -19,6 +19,10 @@ This project consists of three main components:
 - **Multi-role Support**: Support for patients, clinics, and healthcare providers
 - **Audit Trail**: Immutable transaction history for compliance and transparency
 - **Access Request Management**: Workflow for requesting and approving access to medical records
+- **AI Health Analysis**: Intelligent health report analysis for both users and insurers
+- **Multi-language Support**: Traditional Chinese language support with medical terminology translation
+- **Risk Assessment**: AI-powered disease risk evaluation and personalized recommendations
+- **Insurance Integration**: Automated policy recommendations based on health metrics
 
 ## 📋 Prerequisites
 
@@ -27,6 +31,8 @@ Before running this project, ensure you have:
 - Docker & Docker Compose
 - Node.js (v16+ recommended)  
 - Go (v1.19+ for chaincode development)
+- Python 3.8+ with pip
+- Ollama with Llama3 model (for AI analysis)
 - Hyperledger Fabric binaries and Docker images
 
 ## 🛠️ Installation & Setup
@@ -69,7 +75,50 @@ Deploy the health records chaincode:
 # Refer to your chaincode deployment scripts in hyperledger/sdk_server or similar
 ```
 
-### 4. Start Frontend Application
+### 4. Setup AI Backend Services
+
+#### Install Python Dependencies
+```bash
+cd backend/health_check_project
+pip install -r requirements.txt  # Create requirements.txt with necessary packages
+```
+
+#### Install Required Python Packages
+```bash
+pip install grpcio grpcio-tools
+pip install langchain langchain-chroma langchain-huggingface langchain-ollama
+pip install chromadb
+pip install protobuf
+```
+
+#### Setup Ollama (for AI Analysis)
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull Llama3 model
+ollama pull llama3:8b
+
+# Start Ollama service
+ollama serve
+```
+
+#### Setup ChromaDB Vector Database
+```bash
+cd backend/health_check_project
+python create_collection.py
+python add_data.py
+```
+
+#### Start Backend gRPC Server
+```bash
+cd backend/health_check_project
+python test.py
+```
+
+The backend server will start on `localhost:50051`
+
+### 5. Start Frontend Application
 
 ```bash
 cd frontend
@@ -79,14 +128,6 @@ npm run dev
 
 The frontend will be available at `http://localhost:5173` (or the port specified by Vite).
 
-### 5. Start Backend Services (if applicable)
-
-```bash
-cd backend
-npm install
-npm start
-```
-
 ## 🏥 Usage
 
 ### For Patients
@@ -94,17 +135,39 @@ npm start
 - Authorize access to specific records
 - Manage access requests from healthcare providers
 - Monitor who has accessed your data
+- **Get AI-powered health analysis and personalized recommendations**
 
 ### For Healthcare Providers  
 - Upload new medical reports
 - Request access to patient records
 - View authorized patient data
 - Maintain audit trails
+- **Access professional health analysis with risk assessments**
 
 ### For Clinics
 - Upload patient health reports
 - Manage patient data securely
 - Comply with healthcare regulations
+
+### For Insurance Companies
+- **Automated risk assessment based on health metrics**
+- **AI-powered policy recommendations**
+- **Comprehensive health report analysis for underwriting**
+
+## 🤖 AI Analysis Features
+
+### Health Report Analysis
+- **Comprehensive Health Summary**: Detailed analysis of all health metrics
+- **Risk Assessment**: AI-powered evaluation of potential health risks
+- **Personalized Recommendations**: Customized advice for diet, exercise, and medical monitoring
+- **Insurance Policy Suggestions**: Automated recommendations for suitable insurance products
+
+### Technical Implementation
+- **LangChain Framework**: Advanced prompt engineering and retrieval-augmented generation (RAG)
+- **Vector Database**: ChromaDB for efficient similarity search and context retrieval
+- **Multi-Query Retrieval**: Enhanced context gathering through category-based queries
+- **HyDE (Hypothetical Document Embeddings)**: Improved retrieval accuracy
+- **Medical Terminology Translation**: Automatic English-to-Chinese medical term conversion
 
 ## 🔧 Configuration
 
@@ -115,6 +178,12 @@ npm start
 ### Smart Contract Configuration
 - Health record structure can be modified in `hyperledger/chaincode-go/health_contract.go`
 - Access control policies are defined in the chaincode
+
+### Backend Configuration
+- **gRPC Service Configuration**: Modify `backend/health_check_project/test.py`
+- **AI Model Settings**: Configure Ollama model parameters and ChromaDB paths
+- **Medical Translations**: Update translation dictionaries for different languages
+- **Analysis Prompts**: Customize LangChain prompts for different analysis scenarios
 
 ### Frontend Configuration
 - Update API endpoints in frontend configuration files
@@ -133,6 +202,14 @@ The system runs the following Docker containers:
 | orderer1-org1 | Ordering service | 7050 |
 | couchdb1/couchdb2 | State databases | 5984 |
 
+## 📡 Backend Services
+
+| Service | Purpose | Port |
+|---------|---------|------|
+| gRPC Health Server | AI-powered health analysis | 50051 |
+| Ollama Server | LLM inference engine | 11434 |
+| ChromaDB | Vector database for RAG | - |
+
 ## 📁 Project Structure
 
 ```
@@ -143,11 +220,20 @@ The system runs the following Docker containers:
 │   ├── chaincode-go/         # Smart contracts
 │   ├── orgs/                 # Organization certificates
 │   └── sdk_server/           # SDK and deployment scripts
+├── backend/                  # Python backend services
+│   └── health_check_project/ # AI health analysis service
+│       ├── test.py           # Main gRPC server
+│       ├── client.py         # Test client
+│       ├── data_pb2.py       # Generated protobuf classes
+│       ├── data_pb2_grpc.py  # Generated gRPC classes
+│       ├── add_data.py       # ChromaDB data management
+│       ├── proto/            # Protocol buffer definitions
+│       │   └── data.proto    # gRPC service definitions
+│       └── chroma_db/        # Vector database storage
 ├── frontend/                 # Vue.js frontend application
 │   ├── src/                  # Source code
 │   ├── package.json          # Dependencies
 │   └── vite.config.js        # Vite configuration
-├── backend/                  # Backend services (if applicable)
 └── README.md                 # This file
 ```
 
@@ -158,6 +244,25 @@ The system runs the following Docker containers:
 - **Access Control**: Role-based permissions (patient, clinic, provider)
 - **Audit Trail**: Immutable transaction logging
 - **TLS Encryption**: Secure communication between components
+- **AI Privacy**: Local LLM processing without external data transmission
+
+## 🧠 AI & Machine Learning Components
+
+### LangChain Integration
+- **Retrieval-Augmented Generation (RAG)**: Enhanced context-aware responses
+- **Multi-Query Retrieval**: Improved context gathering through specialized queries
+- **HyDE Implementation**: Hypothetical document embeddings for better retrieval
+- **Custom Prompt Templates**: Specialized prompts for medical analysis
+
+### Vector Database (ChromaDB)
+- **Medical Knowledge Storage**: Efficient storage and retrieval of medical reference data
+- **Similarity Search**: Context-aware document retrieval
+- **Persistent Storage**: Long-term knowledge base maintenance
+
+### Local LLM (Ollama + Llama3)
+- **Privacy-Preserving**: All AI processing done locally
+- **Medical Domain Adaptation**: Specialized prompts for healthcare analysis
+- **Multi-language Support**: Chinese-English medical terminology handling
 
 ## 🤝 Contributing
 
@@ -179,12 +284,31 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 2. **Certificate errors**: Check if certificates are properly generated in `hyperledger/orgs/`
 3. **Chaincode deployment fails**: Verify Go version and dependencies in `chaincode-go/`
 4. **Frontend connection errors**: Check if backend services are running and accessible
+5. **gRPC connection issues**: Ensure the Python gRPC server is running on port 50051
+6. **Ollama model not found**: Make sure Llama3 model is downloaded with `ollama pull llama3:8b`
+7. **ChromaDB errors**: Verify database path and permissions in `add_data.py`
+8. **AI analysis errors**: Check Ollama service status and model availability
+
+### Backend Specific Troubleshooting
+
+```bash
+# Test gRPC server connectivity
+cd backend/health_check_project
+python client.py
+
+# Check Ollama status
+ollama list
+
+# Verify ChromaDB collection
+python -c "import chromadb; client = chromadb.PersistentClient(path='./chroma_db'); print(client.list_collections())"
+```
 
 ### Support
 
 For support and questions:
 - Check the troubleshooting section above
 - Review Hyperledger Fabric documentation
+- Check LangChain and Ollama documentation for AI components
 - Create an issue in this repository
 
 ## 🙏 Acknowledgments
@@ -192,3 +316,6 @@ For support and questions:
 - [Hyperledger Fabric](https://hyperledger-fabric.readthedocs.io/) for the blockchain platform
 - [Vue.js](https://vuejs.org/) for the frontend framework
 - [Vuetify](https://vuetifyjs.com/) for the UI components
+- [LangChain](https://langchain.com/) for the AI framework
+- [Ollama](https://ollama.ai/) for local LLM inference
+- [ChromaDB](https://www.trychroma.com/) for vector database capabilities

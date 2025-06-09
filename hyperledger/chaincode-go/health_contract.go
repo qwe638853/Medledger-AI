@@ -51,6 +51,13 @@ type AccessRequest struct {
 	Status       string `json:"status"`
 }
 
+// 只包含 metadata
+type ReportMeta struct {
+	ReportID  string `json:"reportId"`
+	ClinicID  string `json:"clinicId"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
 type HealthCheckContract struct {
 	contractapi.Contract
 }
@@ -126,6 +133,7 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 
 	return ctx.GetStub().PutState(repKey, bytes)
 }
+
 func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.TransactionContextInterface, requestID string) error {
     userID, role, err := getCaller(ctx)
     if err != nil || role != "patient" {
@@ -187,18 +195,23 @@ func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.Transact
 
     return nil
 }
-
-
-// 查看自己的報告 
-func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextInterface) ([]HealthReport, error) {
+// ==========================
+//   病患專用：查詢報告 meta
+// ==========================
+/**
+ * @notice 查詢自己的所有健檢報告，只回傳 metadata，不含內容
+ * @dev 只允許 patient 身份，回傳該 patient 的所有報告 meta 資訊
+ * @param ctx Fabric合約上下文
+ * @return []ReportMeta 報告meta陣列, error 查詢失敗或權限錯誤
+ */
+func (h *HealthCheckContract) ListMyReportMeta(ctx contractapi.TransactionContextInterface) ([]ReportMeta, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get caller identity: %v", err)
 	}
 	if role != "patient" {
-		return nil, fmt.Errorf("only patient can list their reports")
+		return nil, fmt.Errorf("only patient can list their report meta")
 	}
-
 	patientHash := hashID(userID)
 
 	query := fmt.Sprintf(`{
@@ -214,25 +227,164 @@ func (h *HealthCheckContract) ListMyReports(ctx contractapi.TransactionContextIn
 	}
 	defer iter.Close()
 
-	var results []HealthReport
-
+	var results []ReportMeta
 	for iter.HasNext() {
 		kv, err := iter.Next()
 		if err != nil {
 			continue
 		}
-
-		var rep HealthReport
-		if err := json.Unmarshal(kv.Value, &rep); err != nil {
+		var report HealthReport
+		if err := json.Unmarshal(kv.Value, &report); err != nil {
 			continue
 		}
-
-		results = append(results, rep)
+		results = append(results, ReportMeta{
+			ReportID:  report.ReportID,
+			ClinicID:  report.ClinicID,
+			CreatedAt: report.CreatedAt,
+		})
 	}
-
 	return results, nil
 }
-// 患者查看自己的授權紀錄
+
+/**
+ * @notice 病患讀取自己的報告詳細內容（需先取得 meta 再查詢內容）
+ * @dev 只允許 patient 身份，只能讀自己擁有的報告
+ * @param ctx Fabric合約上下文
+ * @param reportID 報告ID
+ * @return string 報告內容 JSON, error 查詢失敗或無權限
+ */
+func (h *HealthCheckContract) ReadMyReport(ctx contractapi.TransactionContextInterface, reportID string) (string, error) {
+	userID, role, err := getCaller(ctx)
+	if err != nil || role != "patient" {
+		return "", fmt.Errorf("only patient can read own report")
+	}
+	patientHash := hashID(userID)
+	// 查詢報告內容
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	data, err := ctx.GetStub().GetState(repKey)
+	if err != nil || data == nil {
+		return "", fmt.Errorf("report not found")
+	}
+	var rep HealthReport
+	if err := json.Unmarshal(data, &rep); err != nil {
+		return "", fmt.Errorf("failed to parse report")
+	}
+	if rep.PatientHash != patientHash {
+		return "", fmt.Errorf("not authorized to read this report")
+	}
+	return rep.ResultJSON, nil
+}
+
+// ==========================
+//   保險業者專用：查詢 meta
+// ==========================
+/**
+ * @notice 查詢特定病患的所有健檢報告 meta，只回傳 meta，不含內容
+ * @dev 只允許 insurer 身份，需傳入病患ID
+ * @param ctx Fabric合約上下文
+ * @param patientID 病患身份證或ID
+ * @return []ReportMeta 報告meta陣列, error 查詢失敗或權限錯誤
+ */
+func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.TransactionContextInterface, patientID string) ([]ReportMeta, error) {
+	_, role, err := getCaller(ctx)
+	if err != nil || role != "insurer" {
+		return nil, fmt.Errorf("only insurer can query report meta")
+	}
+	patientHash := hashID(patientID)
+
+	query := fmt.Sprintf(`{
+		"selector": {
+			"docType": "%s",
+			"patientHash": "%s"
+		}
+	}`, docHealth, patientHash)
+
+	iter, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return nil, fmt.Errorf("query execution failed: %v", err)
+	}
+	defer iter.Close()
+
+	var results []ReportMeta
+	for iter.HasNext() {
+		kv, err := iter.Next()
+		if err != nil {
+			continue
+		}
+		var report HealthReport
+		if err := json.Unmarshal(kv.Value, &report); err != nil {
+			continue
+		}
+		results = append(results, ReportMeta{
+			ReportID:  report.ReportID,
+			ClinicID:  report.ClinicID,
+			CreatedAt: report.CreatedAt,
+		})
+	}
+	return results, nil
+}
+
+/**
+ * @notice 保險業者讀取已授權的健檢報告內容
+ * @dev 只允許 insurer 身份，且必須獲得授權票據，且票據未過期
+ * @param ctx Fabric合約上下文
+ * @param patientHash 病患hash
+ * @param reportID 報告ID
+ * @return string 報告內容 JSON, error 查詢失敗或無權限
+ */
+func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, patientHash, reportID string) (string, error) {
+	userID, role, err := getCaller(ctx)
+	if err != nil || role != "insurer" {
+		return "", fmt.Errorf("only insurer can read report")
+	}
+	targetHash := hashID(userID)
+
+	// 查詢授權票
+	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
+	if err != nil {
+		return "", fmt.Errorf("error accessing authorization ticket")
+	}
+	defer iter.Close()
+
+	found := false
+	expired := false
+	var tk AuthTicket
+	now := nowSec()
+	for iter.HasNext() {
+		kv, _ := iter.Next()
+		if err := json.Unmarshal(kv.Value, &tk); err != nil {
+			continue
+		}
+		if tk.ReportID == reportID {
+			if now <= tk.Expiry {
+				found = true
+				break
+			} else {
+				expired = true
+			}
+		}
+	}
+	if !found {
+		if expired {
+			return "", fmt.Errorf("access expired for report %s", reportID)
+		}
+		return "", fmt.Errorf("access denied for report %s", reportID)
+	}
+
+	// 查詢報告內容
+	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+	data, err := ctx.GetStub().GetState(repKey)
+	if err != nil || data == nil {
+		return "", fmt.Errorf("report not found")
+	}
+	var rep HealthReport
+	if err := json.Unmarshal(data, &rep); err != nil {
+		return "", fmt.Errorf("failed to parse report")
+	}
+	return rep.ResultJSON, nil
+}
+
+
 func (h *HealthCheckContract) ListMyAuthorizedTickets(ctx contractapi.TransactionContextInterface) ([]AuthTicket, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
@@ -341,119 +493,7 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 	return results, nil
 }
 
-// 不含健檢數據的其他資訊
-type ReportMeta struct {
-	ReportID  string `json:"reportId"`
-	ClinicID  string `json:"clinicId"`
-	CreatedAt int64  `json:"createdAt"`
-}
 
-//查詢報告(不含健檢數據)
-func (h *HealthCheckContract) ListReportMetaByPatientID(ctx contractapi.TransactionContextInterface, patientID string) ([]ReportMeta, error) {
-	_  , role, err := getCaller(ctx)
-	if err != nil || role != "insurer" {
-		return nil, fmt.Errorf("only insurer can query report meta")
-	}
-
-	patientHash := hashID(patientID)
-
-	query := fmt.Sprintf(`{
-		"selector": {
-			"docType": "%s",
-			"patientHash": "%s"
-		}
-	}`, docHealth, patientHash)
-
-	iter, err := ctx.GetStub().GetQueryResult(query)
-	if err != nil {
-		return nil, fmt.Errorf("query execution failed: %v", err)
-	}
-	defer iter.Close()
-
-	var results []ReportMeta
-	for iter.HasNext() {
-		kv, err := iter.Next()
-		if err != nil {
-			continue
-		}
-		var report HealthReport
-		if err := json.Unmarshal(kv.Value, &report); err != nil {
-			continue
-		}
-
-		results = append(results, ReportMeta{
-			ReportID:  report.ReportID,
-			ClinicID:  report.ClinicID,
-			CreatedAt: report.CreatedAt,
-		})
-	}
-	return results, nil
-}
-
-// 保險業者讀取授權報告
-func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionContextInterface, patientHash, reportID string) (string, error) {
-	userID, role, err := getCaller(ctx)
-	fmt.Printf("[DEBUG] ReadAuthorizedReport: userID=%s, role=%s, patientHash=%s, reportID=%s\n", userID, role, patientHash, reportID)
-	if err != nil || role != "insurer" {
-		return "", fmt.Errorf("only insurer can read report")
-	}
-
-	targetHash := hashID(userID)
-	fmt.Printf("[DEBUG] targetHash: %s\n", targetHash)
-
-	// 查詢授權票
-	iter, err := ctx.GetStub().GetStateByPartialCompositeKey(keyAuthNS, []string{patientHash, targetHash, reportID})
-	if err != nil {
-		fmt.Printf("[DEBUG] failed to get state by partial key: %v\n", err)
-		return "", fmt.Errorf("error accessing authorization ticket")
-	}
-	defer iter.Close()
-
-	found := false
-	expired := false
-	var tk AuthTicket
-	now := nowSec()
-	for iter.HasNext() {
-		kv, _ := iter.Next()
-		fmt.Printf("[DEBUG] kv.Key=%s, kv.Value=%s\n", kv.Key, string(kv.Value))
-		if err := json.Unmarshal(kv.Value, &tk); err != nil {
-			fmt.Printf("[DEBUG] failed to unmarshal AuthTicket: %v\n", err)
-			continue
-		}
-		fmt.Printf("[DEBUG] tk.ReportID=%s, tk.Expiry=%d, now=%d\n", tk.ReportID, tk.Expiry, now)
-		if tk.ReportID == reportID {
-			if now <= tk.Expiry {
-				found = true
-				break
-			} else {
-				expired = true
-			}
-		}
-	}
-
-	if !found {
-		if expired {
-			fmt.Printf("[DEBUG] Access expired for report %s\n", reportID)
-			return "", fmt.Errorf("access expired for report %s", reportID)
-		}
-		fmt.Printf("[DEBUG] Access denied for report %s\n", reportID)
-		return "", fmt.Errorf("access denied for report %s", reportID)
-	}
-
-	// 查詢報告內容
-	repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
-	data, err := ctx.GetStub().GetState(repKey)
-	if err != nil || data == nil {
-		return "", fmt.Errorf("report not found")
-	}
-
-	var rep HealthReport
-	if err := json.Unmarshal(data, &rep); err != nil {
-		return "", fmt.Errorf("failed to parse report")
-	}
-
-	return rep.ResultJSON, nil
-}
 
 // 請求授權
 func (h *HealthCheckContract) RequestAccess(ctx contractapi.TransactionContextInterface, reportID, patientHash, reason, expiryStr string) error {

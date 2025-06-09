@@ -16,7 +16,7 @@ services:     # 定義服務的層級
       - 7054:7054
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.2"
+
         
   ca-tls:     # 服務名稱
     container_name: ca-tls
@@ -32,7 +32,6 @@ services:     # 定義服務的層級
       - ./tls/ca:/tmp/hyperledger/fabric-ca
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.3"
     ports:
       - 7052:7052
 
@@ -72,10 +71,10 @@ services:     # 定義服務的層級
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/org1/peer1
     volumes:
       - /var/run:/host/var/run
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/peers/peer1.org1.example.com:/tmp/hyperledger/org1/peer1
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
-      - ${HYPERLEDGER_HOME}/chaincode-go:/tmp/hyperledger/org1/chaincode
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/peers/peer1-data:/var/hyperledger/production
+      - ./orgs/org1.example.com/peers/peer1.org1.example.com:/tmp/hyperledger/org1/peer1
+      - ./orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
+      - ./chaincode-go:/tmp/hyperledger/org1/chaincode
+      - ./orgs/org1.example.com/peers/peer1-data:/var/hyperledger/production
     ports:
       - 7051:7051
       - 9444:9444 
@@ -83,7 +82,7 @@ services:     # 定義服務的層級
 
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.4"
+
 
 
   peer2-org1:
@@ -123,17 +122,17 @@ services:     # 定義服務的層級
     working_dir: /opt/gopath/src/github.com/hyperledger/fabric/org1/peer2
     volumes:
       - /var/run:/host/var/run
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/peers/peer2.org1.example.com:/tmp/hyperledger/org1/peer2
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
-      - ${HYPERLEDGER_HOME}/chaincode-go:/tmp/hyperledger/org1/chaincode
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/peers/peer2-data:/var/hyperledger/production
+      - ./orgs/org1.example.com/peers/peer2.org1.example.com:/tmp/hyperledger/org1/peer2
+      - ./orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
+      - ./chaincode-go:/tmp/hyperledger/org1/chaincode
+      - ./orgs/org1.example.com/peers/peer2-data:/var/hyperledger/production
     ports:
       - 7053:7053
       - 9445:9445
       - 7056:7056
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.5"
+
 
   orderer1-org1:
     container_name: orderer1-org1
@@ -165,17 +164,17 @@ services:     # 定義服務的層級
       - ORDERER_GENERAL_LOGLEVEL=debug
       
     volumes:
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/orderer/orderer1.org1.example.com:/tmp/hyperledger/org1/orderer/
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
-      - ${HYPERLEDGER_HOME}/chaincode-go:/tmp/hyperledger/org1/chaincode
-      - ${HYPERLEDGER_HOME}/orgs/org1.example.com/orderer/orderer1-data:/var/hyperledger/production
+      - ./orgs/org1.example.com/orderer/orderer1.org1.example.com:/tmp/hyperledger/org1/orderer/
+      - ./orgs/org1.example.com/users/org1-admin:/tmp/hyperledger/org1/admin-client
+      - ./chaincode-go:/tmp/hyperledger/org1/chaincode
+      - ./orgs/org1.example.com/orderer/orderer1-data:/var/hyperledger/production
 
     ports:
       - "7050:7050"
       - "9443:9443" 
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.6"
+
   couchdb1:
     container_name: couchdb1
     image: couchdb:3.2
@@ -186,7 +185,7 @@ services:     # 定義服務的層級
       - 5984:5984
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.7"
+
 
   couchdb2:
     container_name: couchdb2
@@ -196,7 +195,7 @@ services:     # 定義服務的層級
       - COUCHDB_PASSWORD=adminpw
     networks:
       fabric-net:
-        ipv4_address: "172.20.0.8"
+
 
 
 networks:     # 定義網路

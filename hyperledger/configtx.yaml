@@ -35,7 +35,7 @@ Organizations:
         ID: Org1MSP
 
         # MSPDir is the filesystem path which contains the MSP configuration.
-        MSPDir: /home/WOW/hyperledger/orgs/org1.example.com/msp
+        MSPDir: ./orgs/org1.example.com/msp
 
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -329,8 +329,8 @@ Orderer: &OrdererDefaults
         Consenters:
             - Host: orderer1.org1.example.com
               Port: 7050
-              ClientTLSCert: /home/WOW/hyperledger/orgs/org1.example.com/orderer/orderer1.org1.example.com/tls/server.crt
-              ServerTLSCert: /home/WOW/hyperledger/orgs/org1.example.com/orderer/orderer1.org1.example.com/tls/server.crt
+              ClientTLSCert: ./orgs/org1.example.com/orderer/orderer1.org1.example.com/tls/server.crt
+              ServerTLSCert: ./orgs/org1.example.com/orderer/orderer1.org1.example.com/tls/server.crt
 
 
         # Options to be specified for all the etcd/raft nodes. The values here

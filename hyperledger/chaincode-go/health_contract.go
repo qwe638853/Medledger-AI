@@ -195,6 +195,58 @@ func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.Transact
 
     return nil
 }
+
+// RejectAccessRequest 病患拒絕授權請求
+func (h *HealthCheckContract) RejectAccessRequest(ctx contractapi.TransactionContextInterface, requestID string) error {
+    userID, role, err := getCaller(ctx)
+    if err != nil || role != "patient" {
+        return fmt.Errorf("only patient can reject access request")
+    }
+
+    // 1. 取得請求並驗證
+    reqKey, _ := ctx.GetStub().CreateCompositeKey(keyAccessRequestNS, []string{requestID})
+    reqBytes, err := ctx.GetStub().GetState(reqKey)
+    if err != nil || reqBytes == nil {
+        return fmt.Errorf("request not found")
+    }
+    
+    var req AccessRequest
+    if err := json.Unmarshal(reqBytes, &req); err != nil {
+        return fmt.Errorf("failed to unmarshal request: %v", err)
+    }
+    
+    patientHash := hashID(userID)
+    if req.PatientHash != patientHash {
+        return fmt.Errorf("not authorized to reject this request")
+    }
+    
+    if req.Status != "PENDING" {
+        return fmt.Errorf("request already handled")
+    }
+
+    // 2. 更新狀態為拒絕
+    req.Status = "REJECTED"
+    newReqBytes, _ := json.Marshal(req)
+    if err := ctx.GetStub().PutState(reqKey, newReqBytes); err != nil {
+        return fmt.Errorf("failed to update request status")
+    }
+
+    // 3. 發送拒絕事件
+    eventPayload, _ := json.Marshal(map[string]interface{}{
+        "requestId":    req.RequestID,
+        "reportId":     req.ReportID,
+        "patientHash":  req.PatientHash,
+        "requesterHash": req.RequesterHash,
+        "status":       "REJECTED",
+        "rejectedAt":   nowSec(),
+    })
+    if err := ctx.GetStub().SetEvent("AccessRejected", eventPayload); err != nil {
+        return fmt.Errorf("failed to set event")
+    }
+
+    return nil
+}
+
 // ==========================
 //   病患專用：查詢報告 meta
 // ==========================

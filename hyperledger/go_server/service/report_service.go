@@ -289,13 +289,12 @@ func HandleRejectAccessRequest(
 
 	// 呼叫鏈碼
 	_, err = contract.SubmitTransaction(
-		"UpdateAccessRequestStatus",
+		"RejectAccessRequest",
 		req.RequestId,
-		"REJECTED",
 	)
 	if err != nil {
 		fc.PrintGatewayError(err)
-		return nil, status.Error(codes.Internal, "更新授權狀態失敗")
+		return nil, status.Error(codes.Internal, "拒絕授權請求失敗")
 	}
 
 	return &pb.RejectAccessRequestResponse{

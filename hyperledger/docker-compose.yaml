@@ -16,6 +16,7 @@ services:     # 定義服務的層級
       - 7054:7054
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.2
 
         
   ca-tls:     # 服務名稱
@@ -32,13 +33,14 @@ services:     # 定義服務的層級
       - ./tls/ca:/tmp/hyperledger/fabric-ca
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.3
     ports:
       - 7052:7052
 
 
   peer1-org1:
     container_name: peer1-org1
-    image: hyperledger/fabric-peer
+    image: hyperledger/fabric-peer:2.5.1
     hostname: peer1.org1.example.com
     environment:
       - CORE_PEER_ID=peer1.org1.example.com
@@ -82,12 +84,13 @@ services:     # 定義服務的層級
 
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.4
 
 
 
   peer2-org1:
     container_name: peer2-org1
-    image: hyperledger/fabric-peer
+    image: hyperledger/fabric-peer:2.5.1
     hostname: peer2.org1.example.com
     environment:
       - CORE_PEER_ID=peer2.org1.example.com
@@ -132,11 +135,12 @@ services:     # 定義服務的層級
       - 7056:7056
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.5
 
 
   orderer1-org1:
     container_name: orderer1-org1
-    image: hyperledger/fabric-orderer
+    image: hyperledger/fabric-orderer:2.5.1
     hostname: orderer1.org1.example.com
     environment:
       - ORDERER_HOME=/tmp/hyperledger/orderer
@@ -174,6 +178,8 @@ services:     # 定義服務的層級
       - "9443:9443" 
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.6
+        
 
   couchdb1:
     container_name: couchdb1
@@ -185,6 +191,7 @@ services:     # 定義服務的層級
       - 5984:5984
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.7
 
 
   couchdb2:
@@ -195,6 +202,7 @@ services:     # 定義服務的層級
       - COUCHDB_PASSWORD=adminpw
     networks:
       fabric-net:
+        ipv4_address: 172.18.0.8
 
 
 

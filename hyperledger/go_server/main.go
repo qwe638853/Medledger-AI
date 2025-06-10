@@ -50,6 +50,7 @@ func (s *server) RegisterInsurer(ctx context.Context, req *pb.RegisterInsurerReq
 
 // 新增 ListMyReportMeta API 方法
 func (s *server) ListMyReportMeta(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportMetaResponse, error) {
+	log.Printf("[Debug] ListMyReportMeta")
 	return sc.HandleListMyReportMeta(ctx, in, s.Wallet, s.Builder)
 }
 

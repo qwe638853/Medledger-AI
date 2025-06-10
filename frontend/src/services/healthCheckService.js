@@ -9,8 +9,9 @@ import axios from 'axios';
 export const fetchUserHealthData = async () => {
   try {
     // 串接後端 HandleListMyReportMeta API
-    const response = await apiClient.get('/v1/reports/meta');
+    const response = await apiClient.get('/v1/reports/my/meta');
     
+    console.log("response", response); 
     // 根據 HandleListMyReportMeta 的回傳結構處理數據
     if (response.data && response.data.reports) {
       return response.data.reports; // 回傳報告元數據陣列
@@ -30,17 +31,25 @@ export const fetchUserHealthData = async () => {
  */
 export const fetchReportDetail = async (reportId) => {
   try {
-    // 串接後端 HandleReadMyReport API
+    console.log('正在獲取報告詳情:', reportId);
+    
+    // 串接後端 HandleReadMyReport API - 使用正確的端點
     const response = await apiClient.get(`/v1/reports/${reportId}`);
     
+    console.log('報告詳情 API 回應:', response.data);
+    
+    // 檢查後端回應格式 - 根據 HandleReadMyReport 的實際回應結構
     if (response.data && response.data.success) {
       return {
+        success: true,
         reportId: reportId,
-        resultJson: response.data.result_json
+        resultJson: response.data.result_json // 注意：後端回應的字段名是 result_json
       };
+    } else {
+      throw new Error(response.data?.message || '獲取報告詳情失敗：後端回應格式異常');
     }
-    throw new Error('獲取報告詳情失敗');
   } catch (error) {
+    console.error('獲取報告詳情失敗:', error);
     const errorMsg = handleApiError(error, '獲取報告詳情');
     notifyError(errorMsg);
     throw error;

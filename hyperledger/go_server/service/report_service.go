@@ -664,11 +664,12 @@ func HandleListMyAuthorizedTickets(
 func HandleListMyReportMeta(
 	ctx context.Context, _ *emptypb.Empty,
 	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.ListMyReportMetaResponse, error) {
-
+	
 	userID, err := ut.ExtractUserIDFromContext(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
 	}
+	log.Printf("[Debug] HandleListMyReportMeta %s", userID)
 
 	entry, ok := wallet.Get(userID)
 	if !ok {

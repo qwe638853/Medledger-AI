@@ -436,9 +436,11 @@ const fetchReportData = async () => {
   
   try {
     let response;
-    console.log("Role",userRole.value);
-    // 只有保險公司角色需要調用 API
+    console.log("當前角色:", userRole.value);
+    console.log("報告ID:", reportId);
+    
     if (userRole.value === 'insurer') {
+      // 保險公司調用授權報告 API
       response = await healthCheckService.fetchReportContent(reportId, patientId);
       if (!response) {
         throw new Error('無法獲取報告數據');
@@ -450,16 +452,64 @@ const fetchReportData = async () => {
         date: new Date().toISOString(),
         rawData: JSON.parse(response.resultJson) || {}
       };
-      console.log("response",report.value);
+      console.log("保險公司獲取的報告數據:", report.value);
     } else {
-      // 一般用戶直接使用 store 中的數據
-      report.value = userStore.currentReport;
-      console.log("response",report.value);
+      // 一般用戶調用自己的報告 API
+      console.log('一般用戶正在調用 HandleReadMyReport API...');
+      
+      // 先檢查 store 中是否有基本數據
+      const storeReport = userStore.currentReport;
+      console.log('Store 中的報告數據:', storeReport);
+      
+      if (storeReport && storeReport.rawData && Object.keys(storeReport.rawData).length > 0) {
+        // 如果 store 中已有完整數據，直接使用
+        report.value = storeReport;
+        console.log('使用 Store 中的完整數據:', report.value);
+      } else {
+        // 否則調用 API 獲取完整報告內容
+        try {
+          response = await healthCheckService.fetchReportDetail(reportId);
+          
+          if (response && response.success && response.resultJson) {
+            const parsedData = JSON.parse(response.resultJson);
+            
+            report.value = {
+              id: reportId,
+              patient_id: patientId || userStore.user?.id,
+              date: storeReport?.date || new Date().toISOString(),
+              clinic_id: storeReport?.clinic_id || '未知診所',
+              content: storeReport?.content || '健康檢查報告',
+              rawData: parsedData
+            };
+            
+            console.log('一般用戶獲取的完整報告數據:', report.value);
+            
+            // 更新 store 中的數據
+            userStore.setCurrentReport(report.value);
+          } else {
+            throw new Error('API 回應格式異常或無數據');
+          }
+        } catch (apiError) {
+          console.error('調用 HandleReadMyReport 失敗:', apiError);
+          
+          // 如果 API 調用失敗，嘗試使用 store 中的基本數據
+          if (storeReport) {
+            report.value = storeReport;
+            console.log('API 失敗，使用 Store 中的基本數據:', report.value);
+            errorMsg.value = '無法獲取最新報告數據，顯示基本資訊';
+          } else {
+            throw new Error('無法獲取報告數據：' + apiError.message);
+          }
+        }
+      }
     }
     
     // 如果有數據，進行風險評估
-    if (report.value?.rawData) {
+    if (report.value?.rawData && Object.keys(report.value.rawData).length > 0) {
+      console.log('開始進行風險評估:', report.value.rawData);
       evaluateRisk(report.value.rawData);
+    } else {
+      console.warn('沒有足夠的數據進行風險評估');
     }
   } catch (error) {
     console.error('獲取報告詳情失敗:', error);

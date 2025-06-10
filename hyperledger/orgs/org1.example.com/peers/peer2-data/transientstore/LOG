@@ -1,61 +1,16 @@
-=============== Jun 9, 2025 (UTC) ===============
-09:23:31.951826 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-09:23:31.955362 db@open opening
-09:23:31.955532 version@stat F·[] S·0B[] Sc·[]
-09:23:31.956182 db@janitor F·2 G·0
-09:23:31.956212 db@open done T·820.305µs
-=============== Jun 9, 2025 (UTC) ===============
-12:27:42.888783 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-12:27:42.890516 version@stat F·[] S·0B[] Sc·[]
-12:27:42.890587 db@open opening
-12:27:42.890642 journal@recovery F·1
-12:27:42.890966 journal@recovery recovering @1
-12:27:42.892507 version@stat F·[] S·0B[] Sc·[]
-12:27:42.898518 db@janitor F·2 G·0
-12:27:42.898555 db@open done T·7.957099ms
 =============== Jun 10, 2025 (UTC) ===============
-02:26:52.904977 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-02:26:52.906268 version@stat F·[] S·0B[] Sc·[]
-02:26:52.906303 db@open opening
-02:26:52.906383 journal@recovery F·1
-02:26:52.906738 journal@recovery recovering @2
-02:26:52.907838 version@stat F·[] S·0B[] Sc·[]
-02:26:52.918517 db@janitor F·2 G·0
-02:26:52.918544 db@open done T·12.203602ms
+16:38:38.860768 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+16:38:38.869439 db@open opening
+16:38:38.869622 version@stat F·[] S·0B[] Sc·[]
+16:38:38.877216 db@janitor F·2 G·0
+16:38:38.877259 db@open done T·7.787508ms
 =============== Jun 10, 2025 (UTC) ===============
-03:40:19.412720 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-03:40:19.413476 version@stat F·[] S·0B[] Sc·[]
-03:40:19.413641 db@open opening
-03:40:19.413775 journal@recovery F·1
-03:40:19.415447 journal@recovery recovering @4
-03:40:19.417427 memdb@flush created L0@6 N·6 S·732B "cha..5d4,d5":"cha..\x00\x01\x01,v3"
-03:40:19.422096 version@stat F·[1] S·732B[732B] Sc·[0.25]
-03:40:19.474693 db@janitor F·3 G·0
-03:40:19.474730 db@open done T·61.006641ms
-=============== Jun 10, 2025 (UTC) ===============
-05:26:42.602025 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-05:26:42.602291 version@stat F·[1] S·732B[732B] Sc·[0.25]
-05:26:42.602332 db@open opening
-05:26:42.602364 journal@recovery F·1
-05:26:42.602709 journal@recovery recovering @7
-05:26:42.604723 version@stat F·[1] S·732B[732B] Sc·[0.25]
-05:26:42.613247 db@janitor F·3 G·0
-05:26:42.613436 db@open done T·11.047483ms
-=============== Jun 10, 2025 (UTC) ===============
-06:09:45.448922 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-06:09:45.449145 version@stat F·[1] S·732B[732B] Sc·[0.25]
-06:09:45.449171 db@open opening
-06:09:45.449223 journal@recovery F·1
-06:09:45.449775 journal@recovery recovering @9
-06:09:45.451981 version@stat F·[1] S·732B[732B] Sc·[0.25]
-06:09:45.464107 db@janitor F·3 G·0
-06:09:45.464137 db@open done T·14.957619ms
-=============== Jun 10, 2025 (UTC) ===============
-06:18:32.116420 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
-06:18:32.116726 version@stat F·[1] S·732B[732B] Sc·[0.25]
-06:18:32.116869 db@open opening
-06:18:32.116912 journal@recovery F·1
-06:18:32.117279 journal@recovery recovering @11
-06:18:32.119002 version@stat F·[1] S·732B[732B] Sc·[0.25]
-06:18:32.130908 db@janitor F·3 G·0
-06:18:32.131070 db@open done T·14.187157ms
+17:28:26.859778 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+17:28:26.859983 version@stat F·[] S·0B[] Sc·[]
+17:28:26.860002 db@open opening
+17:28:26.860039 journal@recovery F·1
+17:28:26.860554 journal@recovery recovering @1
+17:28:26.864273 memdb@flush created L0@2 N·3 S·706B "cha..add,v2":"cha..\x00\x01\x01,v3"
+17:28:26.866824 version@stat F·[1] S·706B[706B] Sc·[0.25]
+17:28:26.883561 db@janitor F·3 G·0
+17:28:26.883911 db@open done T·23.901396ms

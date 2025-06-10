@@ -247,9 +247,7 @@ func (h *HealthCheckContract) RejectAccessRequest(ctx contractapi.TransactionCon
     return nil
 }
 
-// ==========================
-//   病患專用：查詢報告 meta
-// ==========================
+
 /**
  * @notice 查詢自己的所有健檢報告，只回傳 metadata，不含內容
  * @dev 只允許 patient 身份，回傳該 patient 的所有報告 meta 資訊
@@ -327,9 +325,7 @@ func (h *HealthCheckContract) ReadMyReport(ctx contractapi.TransactionContextInt
 	return rep.ResultJSON, nil
 }
 
-// ==========================
-//   保險業者專用：查詢 meta
-// ==========================
+
 /**
  * @notice 查詢特定病患的所有健檢報告 meta，只回傳 meta，不含內容
  * @dev 只允許 insurer 身份，需傳入病患ID

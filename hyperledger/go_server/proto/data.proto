@@ -43,7 +43,7 @@ service HealthService {
   //用戶讀取自己的報告 meta (只有metadata，不包含內容)
   rpc ListMyReportMeta(google.protobuf.Empty) returns (ListMyReportMetaResponse) {
     option (google.api.http) = {
-      get: "/v1/reports/meta"
+      get: "/v1/reports/my/meta"
     };
   }
 

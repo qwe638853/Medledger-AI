@@ -518,7 +518,7 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/meta"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/my/meta"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -844,7 +844,7 @@ func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/meta"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/my/meta"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1035,7 +1035,7 @@ var (
 	pattern_HealthService_Login_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "login"}, ""))
 	pattern_HealthService_RegisterUser_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "user"}, ""))
 	pattern_HealthService_RegisterInsurer_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "insurer"}, ""))
-	pattern_HealthService_ListMyReportMeta_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "reports", "meta"}, ""))
+	pattern_HealthService_ListMyReportMeta_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v1", "reports", "my", "meta"}, ""))
 	pattern_HealthService_ReadMyReport_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "reports", "report_id"}, ""))
 	pattern_HealthService_ListMyAuthorizedTickets_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "tickets"}, ""))
 	pattern_HealthService_RequestAccess_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "request"}, ""))

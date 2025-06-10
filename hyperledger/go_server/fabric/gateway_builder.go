@@ -21,10 +21,10 @@ func (b GWBuilder) NewContract(id *identity.X509Identity, signer identity.Sign) 
 		id,
 		client.WithSign(signer),
 		client.WithClientConnection(b.Peer.Conn()),
-		client.WithEvaluateTimeout(5*time.Second),
-		client.WithEndorseTimeout(15*time.Second),
-		client.WithSubmitTimeout(5*time.Second),
-		client.WithCommitStatusTimeout(1*time.Minute),
+		client.WithEvaluateTimeout(10*time.Second),
+		client.WithEndorseTimeout(30*time.Second),
+		client.WithSubmitTimeout(30*time.Second),
+		client.WithCommitStatusTimeout(2*time.Minute),
 	)
 	if err != nil {
 		return nil, nil, err

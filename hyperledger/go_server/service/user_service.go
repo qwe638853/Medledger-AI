@@ -34,6 +34,7 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 			return &pb.RegisterResponse{Success: false, Message: "電話號碼只能是數字"}, nil
 		}
 	}
+	log.Printf("嘗試尋找用戶ID: '%s'", req.UserId)
 
 	// ✅ SQLite 查重
 	exists, err := database.IsUserExists(req.UserId)
@@ -43,6 +44,7 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	if exists {
 		return &pb.RegisterResponse{Success: false, Message: "帳號已存在"}, nil
 	}
+	
 
 	// ✅ 呼叫 Fabric CA 註冊帳號（使用 api.RegistrationRequest）
 	log.Printf("[DEBUG] 開始 Fabric CA 註冊，用戶ID: %s", req.UserId)

@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
+
 	"fmt"
 	"log"
-	"math/rand"
+
 	"os"
 	"path/filepath"
-	"time"
 
 	db "go_server/database"
 	fc "go_server/fabric"
@@ -22,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
-	userId := "clinic1"
+	userId := "clinic000001"
 	password := "clinicpass"
 	name := "健檢中心1"
 	date := "2025-05-13"

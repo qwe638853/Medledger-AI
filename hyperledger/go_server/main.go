@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -110,6 +111,7 @@ func main() {
 	w := wl.New()
 
 	// ③ 建 PeerConnector (只做一次)
+	log.Println("🔗 正在連接到 Peer 節點...")
 	peer, err := fc.NewPeer(
 		"localhost:7051",
 		"../orgs/org1.example.com/peers/peer1.org1.example.com/tls/ca.crt",
@@ -117,8 +119,9 @@ func main() {
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("❌ Peer 連線失敗: %v", err)
 	}
+	log.Println("✅ Peer 連線成功建立")
 
 	// ④ 建 Gateway Builder
 	builder := fc.GWBuilder{
@@ -127,8 +130,47 @@ func main() {
 		CCName:  "health",
 	}
 
+	// 測試Gateway連線
+	log.Println("🧪 測試 Gateway 連線...")
+	if err := testGatewayConnection(builder, w); err != nil {
+		log.Printf("⚠️ Gateway 連線測試失敗: %v", err)
+	} else {
+		log.Println("✅ Gateway 連線測試成功")
+	}
+
 	go startGrpcServer(w, builder) // 開 gRPC server
 	startHttpGatewayServer()       // 開 gRPC-Gateway server (HTTP server)
+}
+
+// 添加Gateway連線測試函數
+func testGatewayConnection(builder fc.GWBuilder, wallet *wl.Wallet) error {
+	// 嘗試使用現有的用戶身份測試連線
+	entries, err := wallet.List()
+	if err != nil {
+		return fmt.Errorf("無法列出錢包條目: %w", err)
+	}
+	if len(entries) == 0 {
+		log.Println("⚠️ 錢包中沒有用戶身份，跳過Gateway測試")
+		return nil
+	}
+
+	// 使用第一個用戶身份測試
+	userID := entries[0]
+	entry, _ := wallet.Get(userID)
+	
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return fmt.Errorf("無法建立Gateway: %w", err)
+	}
+	defer gw.Close()
+
+	// 嘗試評估一個簡單的chaincode函數
+	_, err = contract.EvaluateTransaction("ListMyReportMeta")
+	if err != nil {
+		return fmt.Errorf("chaincode 調用失敗: %w", err)
+	}
+
+	return nil
 }
 
 func startGrpcServer(wallet *wl.Wallet, builder fc.GWBuilder) {

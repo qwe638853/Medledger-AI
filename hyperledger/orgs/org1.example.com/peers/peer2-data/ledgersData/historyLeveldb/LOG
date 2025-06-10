@@ -43,3 +43,30 @@
 05:26:42.716515 version@stat F·[3] S·548B[548B] Sc·[0.75]
 05:26:42.727177 db@janitor F·5 G·0
 05:26:42.727200 db@open done T·14.474533ms
+=============== Jun 10, 2025 (UTC) ===============
+06:09:45.528551 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+06:09:45.528696 version@stat F·[3] S·548B[548B] Sc·[0.75]
+06:09:45.528727 db@open opening
+06:09:45.528768 journal@recovery F·1
+06:09:45.528845 journal@recovery recovering @11
+06:09:45.529762 memdb@flush created L0@13 N·4 S·206B "cha..\x01\x03\x00,v13":"cha..1\x00s,v14"
+06:09:45.530158 version@stat F·[4] S·754B[754B] Sc·[1.00]
+06:09:45.536772 db@janitor F·6 G·0
+06:09:45.536828 db@open done T·8.091234ms
+06:09:45.536980 table@compaction L0·3 -> L1·0 S·635B Q·17
+06:09:45.538896 table@build created L1@16 N·8 S·357B "cha..\x01\x02\x00,v10":"cha..1\x00s,v16"
+06:09:45.538949 version@stat F·[1 1] S·476B[119B 357B] Sc·[0.25 0.00]
+06:09:45.540402 table@compaction committed F-2 S-278B Ke·0 D·4 T·3.317875ms
+06:09:45.540567 table@remove removed @8
+06:09:45.540614 table@remove removed @5
+=============== Jun 10, 2025 (UTC) ===============
+06:18:32.217328 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+06:18:32.217662 version@stat F·[1 1] S·476B[119B 357B] Sc·[0.25 0.00]
+06:18:32.217761 db@open opening
+06:18:32.217852 journal@recovery F·1
+06:18:32.217967 journal@recovery recovering @14
+06:18:32.219606 memdb@flush created L0@17 N·2 S·175B "cha..\x01\x05\x00,v18":"cha..1\x00s,v19"
+06:18:32.219963 version@stat F·[2 1] S·651B[294B 357B] Sc·[0.50 0.00]
+06:18:32.235468 db@janitor F·6 G·1
+06:18:32.235483 db@janitor removing table-13
+06:18:32.235515 db@open done T·17.690291ms

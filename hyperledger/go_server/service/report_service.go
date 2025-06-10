@@ -52,16 +52,24 @@ func HandleUploadReport(
 	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
 
 	// 呼叫鏈碼
-	_, err = contract.SubmitTransaction(
+	log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport")
+	log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, DataSize: %d bytes", 
+		req.ReportId, hashedUserID, len(req.TestResultsJson))
+	
+	result, err := contract.SubmitTransaction(
 		"UploadReport",
 		req.ReportId,
 		hashedUserID,
 		req.TestResultsJson,
 	)
+	
 	if err != nil {
+		log.Printf("[Error] SubmitTransaction 失敗: %v", err)
 		fc.PrintGatewayError(err) // 看錯誤細節
 		return nil, status.Error(codes.Internal, "鏈上交易失敗")
 	}
+	
+	log.Printf("[Debug] SubmitTransaction 成功完成, 結果: %s", string(result))
 
 	return &pb.UploadReportResponse{
 		Success: true, Message: "上傳成功",

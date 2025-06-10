@@ -14,3 +14,39 @@
 12:27:42.955984 version@stat F·[1] S·119B[119B] Sc·[0.25]
 12:27:42.968278 db@janitor F·3 G·0
 12:27:42.968305 db@open done T·19.617825ms
+=============== Jun 10, 2025 (UTC) ===============
+02:26:52.967635 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+02:26:52.968676 version@stat F·[1] S·119B[119B] Sc·[0.25]
+02:26:52.968710 db@open opening
+02:26:52.968761 journal@recovery F·1
+02:26:52.968847 journal@recovery recovering @3
+02:26:52.970632 memdb@flush created L0@5 N·7 S·337B "cha..a\x00\x00,v8":"cha..3\x00\x00,v7"
+02:26:52.971743 version@stat F·[2] S·456B[456B] Sc·[0.50]
+02:26:52.985694 db@janitor F·4 G·0
+02:26:52.985730 db@open done T·17.010903ms
+=============== Jun 10, 2025 (UTC) ===============
+03:40:19.411717 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+03:40:19.412414 version@stat F·[2] S·456B[456B] Sc·[0.50]
+03:40:19.413018 db@open opening
+03:40:19.413319 journal@recovery F·1
+03:40:19.414213 journal@recovery recovering @6
+03:40:19.417364 memdb@flush created L0@8 N·13 S·535B "cha..\x01\x01\x00,v16":"cha..\x01\x02\x00,v21"
+03:40:19.418342 version@stat F·[3] S·991B[991B] Sc·[0.75]
+03:40:19.466045 db@janitor F·5 G·0
+03:40:19.466082 db@open done T·52.882225ms
+=============== Jun 10, 2025 (UTC) ===============
+05:26:42.649461 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:26:42.650184 version@stat F·[3] S·991B[991B] Sc·[0.75]
+05:26:42.650209 db@open opening
+05:26:42.650252 journal@recovery F·1
+05:26:42.650357 journal@recovery recovering @9
+05:26:42.654474 memdb@flush created L0@11 N·1 S·137B "cha..nfo,v25":"cha..nfo,v25"
+05:26:42.655137 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+05:26:42.671087 db@janitor F·6 G·0
+05:26:42.671202 db@open done T·20.98415ms
+05:26:42.671281 table@compaction L0·3 -> L1·0 S·1009B Q·26
+05:26:42.674034 table@build created L1@14 N·14 S·651B "cha..a\x00\x00,v8":"cha..3\x00\x00,v7"
+05:26:42.674088 version@stat F·[1 1] S·770B[119B 651B] Sc·[0.25 0.00]
+05:26:42.679348 table@compaction committed F-2 S-358B Ke·0 D·7 T·7.866284ms
+05:26:42.679451 table@remove removed @8
+05:26:42.679520 table@remove removed @5

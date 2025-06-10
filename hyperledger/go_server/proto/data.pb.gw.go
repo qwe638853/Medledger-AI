@@ -132,22 +132,59 @@ func local_request_HealthService_RegisterInsurer_0(ctx context.Context, marshale
 	return msg, metadata, err
 }
 
-func request_HealthService_ListMyReports_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_HealthService_ListMyReportMeta_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq emptypb.Empty
 		metadata runtime.ServerMetadata
 	)
 	io.Copy(io.Discard, req.Body)
-	msg, err := client.ListMyReports(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListMyReportMeta(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
-func local_request_HealthService_ListMyReports_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_HealthService_ListMyReportMeta_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq emptypb.Empty
 		metadata runtime.ServerMetadata
 	)
-	msg, err := server.ListMyReports(ctx, &protoReq)
+	msg, err := server.ListMyReportMeta(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_HealthService_ReadMyReport_0(ctx context.Context, marshaler runtime.Marshaler, client HealthServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReadMyReportRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["report_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "report_id")
+	}
+	protoReq.ReportId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "report_id", err)
+	}
+	msg, err := client.ReadMyReport(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_HealthService_ReadMyReport_0(ctx context.Context, marshaler runtime.Marshaler, server HealthServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReadMyReportRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	val, ok := pathParams["report_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "report_id")
+	}
+	protoReq.ReportId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "report_id", err)
+	}
+	msg, err := server.ReadMyReport(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -475,25 +512,45 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_HealthService_RegisterInsurer_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_HealthService_ListMyReports_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_HealthService_ListMyReportMeta_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListMyReports", runtime.WithHTTPPathPattern("/v1/reports"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/meta"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_HealthService_ListMyReports_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_HealthService_ListMyReportMeta_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_HealthService_ListMyReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HealthService_ListMyReportMeta_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ReadMyReport_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/health.HealthService/ReadMyReport", runtime.WithHTTPPathPattern("/v1/reports/{report_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_HealthService_ReadMyReport_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ReadMyReport_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_HealthService_ListMyAuthorizedTickets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -783,22 +840,39 @@ func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		}
 		forward_HealthService_RegisterInsurer_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodGet, pattern_HealthService_ListMyReports_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_HealthService_ListMyReportMeta_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListMyReports", runtime.WithHTTPPathPattern("/v1/reports"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ListMyReportMeta", runtime.WithHTTPPathPattern("/v1/reports/meta"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_HealthService_ListMyReports_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_HealthService_ListMyReportMeta_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_HealthService_ListMyReports_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_HealthService_ListMyReportMeta_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodGet, pattern_HealthService_ReadMyReport_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/health.HealthService/ReadMyReport", runtime.WithHTTPPathPattern("/v1/reports/{report_id}"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_HealthService_ReadMyReport_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_HealthService_ReadMyReport_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodGet, pattern_HealthService_ListMyAuthorizedTickets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -961,7 +1035,8 @@ var (
 	pattern_HealthService_Login_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "login"}, ""))
 	pattern_HealthService_RegisterUser_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "user"}, ""))
 	pattern_HealthService_RegisterInsurer_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "register", "insurer"}, ""))
-	pattern_HealthService_ListMyReports_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "reports"}, ""))
+	pattern_HealthService_ListMyReportMeta_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "reports", "meta"}, ""))
+	pattern_HealthService_ReadMyReport_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "reports", "report_id"}, ""))
 	pattern_HealthService_ListMyAuthorizedTickets_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "tickets"}, ""))
 	pattern_HealthService_RequestAccess_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "request"}, ""))
 	pattern_HealthService_ListAccessRequests_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "access", "requests"}, ""))
@@ -978,7 +1053,8 @@ var (
 	forward_HealthService_Login_0                     = runtime.ForwardResponseMessage
 	forward_HealthService_RegisterUser_0              = runtime.ForwardResponseMessage
 	forward_HealthService_RegisterInsurer_0           = runtime.ForwardResponseMessage
-	forward_HealthService_ListMyReports_0             = runtime.ForwardResponseMessage
+	forward_HealthService_ListMyReportMeta_0          = runtime.ForwardResponseMessage
+	forward_HealthService_ReadMyReport_0              = runtime.ForwardResponseMessage
 	forward_HealthService_ListMyAuthorizedTickets_0   = runtime.ForwardResponseMessage
 	forward_HealthService_RequestAccess_0             = runtime.ForwardResponseMessage
 	forward_HealthService_ListAccessRequests_0        = runtime.ForwardResponseMessage

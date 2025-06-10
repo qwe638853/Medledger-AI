@@ -68,70 +68,6 @@ func HandleUploadReport(
 	}, nil
 }
 
-// HandleListMyReports 呼叫鏈碼查詢病人自己的報告
-func HandleListMyReports(
-	ctx context.Context, _ *emptypb.Empty,
-	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.ListMyReportsResponse, error) {
-
-	userID, err := ut.ExtractUserIDFromContext(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
-	}
-
-	entry, ok := wallet.Get(userID)
-	if !ok {
-		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
-	}
-
-	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
-	if err != nil {
-		return nil, err
-	}
-	defer gw.Close()
-
-	sum := sha256.Sum256([]byte(userID))
-	hashedUserID := hex.EncodeToString(sum[:])
-	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
-
-	// 5. EvaluateTransaction 傳入 hashedUserID 給鏈碼使用
-	result, err := contract.EvaluateTransaction("ListMyReports", hashedUserID)
-	if err != nil {
-		fc.PrintGatewayError(err)
-		return nil, status.Error(codes.Internal, "查詢失敗")
-	}
-	// 建立中介結構以對應 camelCase JSON 欄位
-	type rawReport struct {
-		ReportID    string `json:"reportId"`
-		ClinicID    string `json:"clinicId"`
-		PatientHash string `json:"patientHash"`
-		ResultJson  string `json:"resultJson"`
-		CreatedAt   int64  `json:"createdAt"`
-	}
-
-	var rawList []rawReport
-	if err := json.Unmarshal(result, &rawList); err != nil {
-		return nil, status.Errorf(codes.Internal, "回傳格式錯誤: %v", err)
-	}
-
-	// 映射成 protobuf 格式
-	var reports []*pb.Report
-	for i, r := range rawList {
-		log.Printf("[Report #%d] ReportID: %s, PatientHash: %s, TestResults: %s",
-			i, r.ReportID, r.PatientHash, r.ResultJson)
-
-		reports = append(reports, &pb.Report{
-			ReportId:    r.ReportID,
-			ClinicId:    r.ClinicID,
-			PatientHash: r.PatientHash,
-			ResultJson:  r.ResultJson,
-			CreatedAt:   r.CreatedAt,
-		})
-	}
-
-	return &pb.ListMyReportsResponse{
-		Reports: reports,
-	}, nil
-}
 
 // HandleRequestAccess 處理保險業者請求授權
 func HandleRequestAccess(
@@ -308,7 +244,6 @@ func HandleApproveAccessRequest(
 	_, err = contract.SubmitTransaction(
 		"ApproveAndAuthorizeAccess", 
 		req.RequestId,
-		"APPROVED",
 	)
 	if err != nil {
 		fc.PrintGatewayError(err)
@@ -715,5 +650,95 @@ func HandleListMyAuthorizedTickets(
 	return &pb.ListAuthorizedTicketsResponse{
 		Success: true,
 		Tickets: tickets,
+	}, nil
+}
+
+// HandleListMyReportMeta 處理病患查詢自己的報告 meta
+func HandleListMyReportMeta(
+	ctx context.Context, _ *emptypb.Empty,
+	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.ListMyReportMetaResponse, error) {
+
+	userID, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
+	}
+
+	entry, ok := wallet.Get(userID)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, err
+	}
+	defer gw.Close()
+
+	// 呼叫鏈碼方法
+	result, err := contract.EvaluateTransaction("ListMyReportMeta")
+	if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "查詢失敗")
+	}
+
+	// 解析返回的 JSON
+	type rawReportMeta struct {
+		ReportID  string `json:"reportId"`
+		ClinicID  string `json:"clinicId"`
+		CreatedAt int64  `json:"createdAt"`
+	}
+
+	var rawList []rawReportMeta
+	if err := json.Unmarshal(result, &rawList); err != nil {
+		return nil, status.Errorf(codes.Internal, "回傳格式錯誤: %v", err)
+	}
+
+	// 轉換為 protobuf 格式
+	var reports []*pb.ReportMeta
+	for _, r := range rawList {
+		reports = append(reports, &pb.ReportMeta{
+			ReportId:  r.ReportID,
+			ClinicId:  r.ClinicID,
+			CreatedAt: r.CreatedAt,
+		})
+	}
+
+	return &pb.ListMyReportMetaResponse{
+		Reports: reports,
+	}, nil
+}
+
+// HandleReadMyReport 處理病患讀取自己的完整報告內容
+func HandleReadMyReport(
+	ctx context.Context,
+	req *pb.ReadMyReportRequest,
+	wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.ReadMyReportResponse, error) {
+
+	userID, err := ut.ExtractUserIDFromContext(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
+	}
+
+	entry, ok := wallet.Get(userID)
+	if !ok {
+		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+	}
+
+	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+	if err != nil {
+		return nil, err
+	}
+	defer gw.Close()
+
+	// 呼叫鏈碼方法
+	result, err := contract.EvaluateTransaction("ReadMyReport", req.ReportId)
+	if err != nil {
+		fc.PrintGatewayError(err)
+		return nil, status.Error(codes.Internal, "讀取報告失敗")
+	}
+
+	return &pb.ReadMyReportResponse{
+		Success:    true,
+		ResultJson: string(result),
 	}, nil
 }	

@@ -24,7 +24,8 @@ const (
 	HealthService_Login_FullMethodName                     = "/health.HealthService/Login"
 	HealthService_RegisterUser_FullMethodName              = "/health.HealthService/RegisterUser"
 	HealthService_RegisterInsurer_FullMethodName           = "/health.HealthService/RegisterInsurer"
-	HealthService_ListMyReports_FullMethodName             = "/health.HealthService/ListMyReports"
+	HealthService_ListMyReportMeta_FullMethodName          = "/health.HealthService/ListMyReportMeta"
+	HealthService_ReadMyReport_FullMethodName              = "/health.HealthService/ReadMyReport"
 	HealthService_ListMyAuthorizedTickets_FullMethodName   = "/health.HealthService/ListMyAuthorizedTickets"
 	HealthService_RequestAccess_FullMethodName             = "/health.HealthService/RequestAccess"
 	HealthService_ListAccessRequests_FullMethodName        = "/health.HealthService/ListAccessRequests"
@@ -48,8 +49,10 @@ type HealthServiceClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	// 保險業者註冊
 	RegisterInsurer(ctx context.Context, in *RegisterInsurerRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	// 用戶讀取自己的報告
-	ListMyReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMyReportsResponse, error)
+	// 用戶讀取自己的報告 meta (只有metadata，不包含內容)
+	ListMyReportMeta(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMyReportMetaResponse, error)
+	// 用戶讀取自己的完整報告內容
+	ReadMyReport(ctx context.Context, in *ReadMyReportRequest, opts ...grpc.CallOption) (*ReadMyReportResponse, error)
 	// 用戶讀取授權紀錄
 	ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListAuthorizedTicketsResponse, error)
 	// 請求授權
@@ -116,10 +119,20 @@ func (c *healthServiceClient) RegisterInsurer(ctx context.Context, in *RegisterI
 	return out, nil
 }
 
-func (c *healthServiceClient) ListMyReports(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMyReportsResponse, error) {
+func (c *healthServiceClient) ListMyReportMeta(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ListMyReportMetaResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListMyReportsResponse)
-	err := c.cc.Invoke(ctx, HealthService_ListMyReports_FullMethodName, in, out, cOpts...)
+	out := new(ListMyReportMetaResponse)
+	err := c.cc.Invoke(ctx, HealthService_ListMyReportMeta_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *healthServiceClient) ReadMyReport(ctx context.Context, in *ReadMyReportRequest, opts ...grpc.CallOption) (*ReadMyReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadMyReportResponse)
+	err := c.cc.Invoke(ctx, HealthService_ReadMyReport_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -228,8 +241,10 @@ type HealthServiceServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterResponse, error)
 	// 保險業者註冊
 	RegisterInsurer(context.Context, *RegisterInsurerRequest) (*RegisterResponse, error)
-	// 用戶讀取自己的報告
-	ListMyReports(context.Context, *emptypb.Empty) (*ListMyReportsResponse, error)
+	// 用戶讀取自己的報告 meta (只有metadata，不包含內容)
+	ListMyReportMeta(context.Context, *emptypb.Empty) (*ListMyReportMetaResponse, error)
+	// 用戶讀取自己的完整報告內容
+	ReadMyReport(context.Context, *ReadMyReportRequest) (*ReadMyReportResponse, error)
 	// 用戶讀取授權紀錄
 	ListMyAuthorizedTickets(context.Context, *emptypb.Empty) (*ListAuthorizedTicketsResponse, error)
 	// 請求授權
@@ -268,8 +283,11 @@ func (UnimplementedHealthServiceServer) RegisterUser(context.Context, *RegisterU
 func (UnimplementedHealthServiceServer) RegisterInsurer(context.Context, *RegisterInsurerRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterInsurer not implemented")
 }
-func (UnimplementedHealthServiceServer) ListMyReports(context.Context, *emptypb.Empty) (*ListMyReportsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListMyReports not implemented")
+func (UnimplementedHealthServiceServer) ListMyReportMeta(context.Context, *emptypb.Empty) (*ListMyReportMetaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMyReportMeta not implemented")
+}
+func (UnimplementedHealthServiceServer) ReadMyReport(context.Context, *ReadMyReportRequest) (*ReadMyReportResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadMyReport not implemented")
 }
 func (UnimplementedHealthServiceServer) ListMyAuthorizedTickets(context.Context, *emptypb.Empty) (*ListAuthorizedTicketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMyAuthorizedTickets not implemented")
@@ -391,20 +409,38 @@ func _HealthService_RegisterInsurer_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _HealthService_ListMyReports_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _HealthService_ListMyReportMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HealthServiceServer).ListMyReports(ctx, in)
+		return srv.(HealthServiceServer).ListMyReportMeta(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HealthService_ListMyReports_FullMethodName,
+		FullMethod: HealthService_ListMyReportMeta_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HealthServiceServer).ListMyReports(ctx, req.(*emptypb.Empty))
+		return srv.(HealthServiceServer).ListMyReportMeta(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HealthService_ReadMyReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadMyReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HealthServiceServer).ReadMyReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HealthService_ReadMyReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HealthServiceServer).ReadMyReport(ctx, req.(*ReadMyReportRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -595,8 +631,12 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _HealthService_RegisterInsurer_Handler,
 		},
 		{
-			MethodName: "ListMyReports",
-			Handler:    _HealthService_ListMyReports_Handler,
+			MethodName: "ListMyReportMeta",
+			Handler:    _HealthService_ListMyReportMeta_Handler,
+		},
+		{
+			MethodName: "ReadMyReport",
+			Handler:    _HealthService_ReadMyReport_Handler,
 		},
 		{
 			MethodName: "ListMyAuthorizedTickets",

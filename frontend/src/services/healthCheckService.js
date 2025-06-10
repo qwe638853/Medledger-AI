@@ -3,21 +3,45 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
 /**
- * 獲取用戶已上傳的健康檢查數據
- * @returns {Promise} - 包含用戶健康檢查數據的Promise
+ * 獲取用戶已上傳的健康檢查數據元數據
+ * @returns {Promise} - 包含用戶健康檢查數據元數據的Promise
  */
 export const fetchUserHealthData = async () => {
   try {
-    // 正確串接後端 HandleListMyReports API
-    const response = await apiClient.get('/v1/reports');
+    // 串接後端 HandleListMyReportMeta API
+    const response = await apiClient.get('/v1/reports/meta');
     
-    // 根據 HandleListMyReports 的回傳結構處理數據
+    // 根據 HandleListMyReportMeta 的回傳結構處理數據
     if (response.data && response.data.reports) {
-      return response.data.reports; // 回傳報告陣列
+      return response.data.reports; // 回傳報告元數據陣列
     }
     return [];
   } catch (error) {
     const errorMsg = handleApiError(error, '獲取健康數據');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 獲取特定報告的完整內容
+ * @param {string} reportId - 報告ID
+ * @returns {Promise} - 包含報告完整內容的Promise
+ */
+export const fetchReportDetail = async (reportId) => {
+  try {
+    // 串接後端 HandleReadMyReport API
+    const response = await apiClient.get(`/v1/reports/${reportId}`);
+    
+    if (response.data && response.data.success) {
+      return {
+        reportId: reportId,
+        resultJson: response.data.result_json
+      };
+    }
+    throw new Error('獲取報告詳情失敗');
+  } catch (error) {
+    const errorMsg = handleApiError(error, '獲取報告詳情');
     notifyError(errorMsg);
     throw error;
   }
@@ -172,7 +196,7 @@ export const uploadHealthReport = async (file, userId, progressCallback) => {
       // 準備上傳到區塊鏈的請求數據
       const uploadData = {
         report_id: reportId,
-        patient_hash: userId, // 使用用戶ID作為患者哈希
+        user_id: userId, // 使用用戶ID，後端會計算哈希
         test_results_json: testResultsJson
       };
       
@@ -433,7 +457,7 @@ export const requestReportAccess = async (reportId, patientId, reason, expiry) =
       report_id: reportId,
       patient_id: patientId,
       reason: reason,
-      expiry: new Date(expiry).getTime() / 1000  // 轉換為 Unix 時間戳
+      expiry: Math.floor(new Date(expiry).getTime() / 1000)  // 轉換為 Unix 時間戳
     });
     
     if (response.data && response.data.success) {
@@ -607,7 +631,7 @@ export const fetchGrantedTickets = async () => {
   }
 };
 
-// 獲取報告詳細內容
+// 獲取報告詳細內容（保險業者查看已授權報告）
 export const fetchReportContent = async (reportId, patientId) => {
   // [前端測試用] 若為測試假資料，直接回傳
   if (reportId === 'RPT123456' && patientId === 'A123456789') {
@@ -628,12 +652,21 @@ export const fetchReportContent = async (reportId, patientId) => {
     };
   }
   try {
+    // 使用修正後的API路徑，user_id 參數會在後端轉換為 patient_hash
     const response = await apiClient.get(`/v1/reports/authorized/${patientId}/${reportId}`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
-    return response.data;
+    
+    if (response.data && response.data.success) {
+      return {
+        id: reportId,
+        patient_id: patientId,
+        resultJson: response.data.result_json
+      };
+    }
+    throw new Error('獲取報告內容失敗');
   } catch (error) {
     console.error('獲取報告內容失敗:', error);
     throw error;
@@ -668,6 +701,7 @@ export const listMyAccessRequests = async () => {
 // 導出健康檢查服務對象
 export default {
   fetchUserHealthData,
+  fetchReportDetail,
   fetchAuthorizeTargets,
   authorizeHealthData,
   analyzeLLMSummary,

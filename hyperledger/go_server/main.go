@@ -45,8 +45,16 @@ func (s *server) RegisterInsurer(ctx context.Context, req *pb.RegisterInsurerReq
 	return sc.HandleRegisterInsurer(ctx, req, s.Wallet)
 }
 
-func (s *server) ListMyReports(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportsResponse, error) {
-	return sc.HandleListMyReports(ctx, in, s.Wallet, s.Builder)
+
+
+// 新增 ListMyReportMeta API 方法
+func (s *server) ListMyReportMeta(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportMetaResponse, error) {
+	return sc.HandleListMyReportMeta(ctx, in, s.Wallet, s.Builder)
+}
+
+// 新增 ReadMyReport API 方法
+func (s *server) ReadMyReport(ctx context.Context, req *pb.ReadMyReportRequest) (*pb.ReadMyReportResponse, error) {
+	return sc.HandleReadMyReport(ctx, req, s.Wallet, s.Builder)
 }
 
 // 新增 RequestAccess API 方法

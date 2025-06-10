@@ -40,10 +40,17 @@ service HealthService {
     };
   }
 
-  //用戶讀取自己的報告
-  rpc ListMyReports(google.protobuf.Empty) returns (ListMyReportsResponse) {
+  //用戶讀取自己的報告 meta (只有metadata，不包含內容)
+  rpc ListMyReportMeta(google.protobuf.Empty) returns (ListMyReportMetaResponse) {
     option (google.api.http) = {
-      get: "/v1/reports"
+      get: "/v1/reports/meta"
+    };
+  }
+
+  //用戶讀取自己的完整報告內容
+  rpc ReadMyReport(ReadMyReportRequest) returns (ReadMyReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/{report_id}"
     };
   }
 
@@ -117,8 +124,6 @@ service HealthService {
 
 }
 
-
-
 message UploadReportRequest {
   string report_id = 1;
   string user_id = 2;
@@ -132,13 +137,17 @@ message UploadReportResponse {
 }
 
 
-message ReadReportRequest {
+message ReadMyReportRequest {
   string report_id = 1;
 }
 
-message ReadReportResponse {
+message ReadMyReportResponse {
   bool success = 1;
-  string report_content = 2;
+  string result_json = 2;
+}
+
+message ListMyReportMetaResponse {
+  repeated ReportMeta reports = 1;
 }
 
 

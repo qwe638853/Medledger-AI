@@ -45,6 +45,11 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	}
 
 	// ✅ 呼叫 Fabric CA 註冊帳號（使用 api.RegistrationRequest）
+	log.Printf("[DEBUG] 開始 Fabric CA 註冊，用戶ID: %s", req.UserId)
+	log.Printf("[DEBUG] Fabric CA URL: http://localhost:7054")
+	log.Printf("[DEBUG] 管理員證書路徑: ../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem")
+	log.Printf("[DEBUG] 管理員私鑰路徑: ../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key")
+	
 	err = fc.RegisterUser(
 		"http://localhost:7054",
 		"../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem",
@@ -61,15 +66,20 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	)
 	if err != nil {
 		log.Printf("❌ Fabric CA 註冊失敗: %v", err)
+		log.Printf("[DEBUG] 註冊失敗詳細信息 - 用戶: %s, 錯誤類型: %T", req.UserId, err)
 		return &pb.RegisterResponse{Success: false, Message: "Fabric 註冊失敗"}, nil
 	}
+	log.Printf("[DEBUG] ✅ Fabric CA 註冊成功，用戶ID: %s", req.UserId)
 
 	// ✅ 產生私鑰與 CSR
+	log.Printf("[DEBUG] 開始產生私鑰與 CSR，用戶ID: %s", req.UserId)
 	privKey, csrPEM, err := fc.GenerateCSR(req.UserId)
 	if err != nil {
 		log.Printf("❌ 產生私鑰或 CSR 失敗: %v", err)
+		log.Printf("[DEBUG] CSR 產生失敗詳細信息 - 用戶: %s, 錯誤: %v", req.UserId, err)
 		return &pb.RegisterResponse{Success: false, Message: "無法產生憑證"}, nil
 	}
+	log.Printf("[DEBUG] ✅ 私鑰與 CSR 產生成功，用戶ID: %s", req.UserId)
 
 	// ✅ 建立使用者資料夾並儲存檔案
 	baseDir := filepath.Join("msp-data", "users", req.UserId)

@@ -108,54 +108,27 @@ const healthRanges = {
 onMounted(async () => {
   loading.value = true;
   try {
-    // 從後端獲取健康數據 - 注意這裡的 API 對應到 HandleListMyReports
+    // 從後端獲取健康數據元數據 - 使用新的 HandleListMyReportMeta API
     const healthResponse = await healthCheckService.fetchUserHealthData();
-    console.log('從後端獲取的健康數據:', healthResponse);
+    console.log('從後端獲取的健康數據元數據:', healthResponse);
     
-    // 處理來自後端的報告數據
+    // 處理來自後端的報告元數據
     healthData.value = healthResponse.map(report => {
-      // 嘗試解析 resultJson 字段 (如果是 JSON 字符串)
-      let parsedResults = {};
-      
-      try {
-        if (report.resultJson) {
-          if (typeof report.resultJson === 'string') {
-            parsedResults = JSON.parse(report.resultJson);
-          } else if (typeof report.resultJson === 'object') {
-            parsedResults = report.resultJson;
-          }
-        } else if (report.testResults) {
-          if (typeof report.testResults === 'string') {
-            parsedResults = JSON.parse(report.testResults);
-          } else if (typeof report.testResults === 'object') {
-            parsedResults = report.testResults;
-          }
-        } else if (report.test_results_json) {
-          if (typeof report.test_results_json === 'string') {
-            parsedResults = JSON.parse(report.test_results_json);
-          } else if (typeof report.test_results_json === 'object') {
-            parsedResults = report.test_results_json;
-          }
-        }
-      } catch (e) {
-        console.error('解析測試結果失敗:', e);
-      }
-      
-      // 生成預覽內容
-      const previewContent = Object.keys(parsedResults).length > 0 
-        ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
-        : (report.content || '無資料').substring(0, 50);
+      // 格式化時間戳
+      const formattedDate = report.createdAt ? new Date(report.createdAt * 1000).toLocaleDateString() : '未知日期';
       
       return {
         id: report.reportId || report.report_id || report.id || '未知',
-        content: previewContent,
-        date: report.createdAt ? parseInt(report.createdAt) : null,
-        rawData: parsedResults,
-        originalReport: report // 保存原始報告數據
+        content: `健康檢查報告 - ${report.clinicId || '未知診所'}`, // 只顯示基本信息
+        date: report.createdAt || null,
+        clinic_id: report.clinicId || '未知診所',
+        originalReport: report, // 保存原始報告數據
+        // 標記為需要詳細載入
+        needsDetailLoad: true
       };
     });
     
-    console.log('處理後的健康數據:', healthData.value);
+    console.log('處理後的健康數據元數據:', healthData.value);
     
     // 載入授權請求和已授權票據
     await Promise.all([
@@ -226,6 +199,46 @@ const loadGrantedTickets = async () => {
     authorizedTickets.value = [];
   } finally {
     loadingTickets.value = false;
+  }
+};
+
+// 載入特定報告的詳細內容
+const loadReportDetail = async (reportId) => {
+  try {
+    console.log('載入報告詳情:', reportId);
+    const reportDetail = await healthCheckService.fetchReportDetail(reportId);
+    
+    // 找到對應的報告並更新其詳細信息
+    const reportIndex = healthData.value.findIndex(report => report.id === reportId);
+    if (reportIndex !== -1) {
+      // 解析報告內容
+      let parsedResults = {};
+      try {
+        if (reportDetail.resultJson) {
+          parsedResults = JSON.parse(reportDetail.resultJson);
+        }
+      } catch (e) {
+        console.error('解析報告詳情失敗:', e);
+      }
+      
+      // 更新報告數據
+      healthData.value[reportIndex] = {
+        ...healthData.value[reportIndex],
+        rawData: parsedResults,
+        content: Object.keys(parsedResults).length > 0 
+          ? Object.keys(parsedResults).slice(0, 2).map(k => `${k}: ${parsedResults[k]}`).join(', ') + '...'
+          : '無詳細資料',
+        needsDetailLoad: false
+      };
+      
+      console.log('報告詳情載入完成:', healthData.value[reportIndex]);
+    }
+    
+    return reportDetail;
+  } catch (error) {
+    console.error('載入報告詳情失敗:', error);
+    notifyError(`載入報告詳情失敗：${error.message}`);
+    throw error;
   }
 };
 
@@ -332,7 +345,7 @@ function parseReportContent(content) {
 const router = useRouter();
 
 // 處理查看詳細資料
-function viewReportDetail(item) {
+async function viewReportDetail(item) {
   console.log('查看報告詳情:', item);
   const report_id = item.report_id || item.id;
   
@@ -341,7 +354,23 @@ function viewReportDetail(item) {
     return;
   }
   
-  const reportData = healthData.value.find(report => report.id === report_id);
+  let reportData = healthData.value.find(report => report.id === report_id);
+  
+  // 如果報告需要加載詳情，先加載
+  if (reportData && reportData.needsDetailLoad) {
+    try {
+      loading.value = true;
+      await loadReportDetail(report_id);
+      // 重新獲取更新後的報告數據
+      reportData = healthData.value.find(report => report.id === report_id);
+    } catch (error) {
+      console.error('加載報告詳情失敗:', error);
+      notifyError('無法加載報告詳情，將使用基本信息');
+    } finally {
+      loading.value = false;
+    }
+  }
+  
   const userStore = useUserStore();
   userStore.setCurrentReport(reportData);
   

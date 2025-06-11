@@ -351,6 +351,17 @@ func HandleListAuthorizedReports(
 	// 轉換為 protobuf 格式
 	var reports []*pb.AuthorizedReport
 	for _, r := range rawList {
+		// 從資料庫獲取病患資訊（將 PatientHash 轉換為真實姓名）
+		log.Printf("[Debug] 嘗試使用鏈碼返回的 PatientHash 查詢資料庫: %s", r["patientHash"])
+		user, err := database.GetUserByHash(r["patientHash"].(string))
+		var patientName string
+		if err != nil {
+			log.Printf("[Warning] 無法獲取病患資訊: %v", err)
+			patientName = "未知病患" // 如果查詢失敗，顯示預設值
+		} else {
+			patientName = user.Name
+		}
+
 		// 將時間戳轉換為日期字串，並處理 nil 的情況
 		var createdAt, expiry int64
 		
@@ -371,10 +382,11 @@ func HandleListAuthorizedReports(
 		expiryDate := time.Unix(expiry, 0).Format("2006-01-02")
 		
 		report := &pb.AuthorizedReport{
-			ReportId:  r["reportId"].(string),
-			PatientId: r["patientHash"].(string),
-			Date:      date,
-			Expiry:    expiryDate,
+			ReportId:    r["reportId"].(string),
+			PatientId:   r["patientHash"].(string),
+			PatientName: patientName, // 添加病患真實姓名
+			Date:        date,
+			Expiry:      expiryDate,
 		}
 		reports = append(reports, report)
 	}
@@ -562,16 +574,27 @@ func HandleListMyAccessRequests(
 	// 轉換為 protobuf 格式
 	var requests []*pb.AccessRequest
 	for _, r := range raws {
-		// 從資料庫獲取病患資訊（如果需要的話）
+		// 從資料庫獲取用戶資訊（將 PatientHash 轉換為真實姓名）
+		log.Printf("[Debug] 嘗試使用鏈碼返回的 PatientHash 查詢資料庫: %s", r.PatientHash)
+		user, err := database.GetUserByHash(r.PatientHash)
+		var patientName string
+		if err != nil {
+			log.Printf("[Warning] 無法獲取用戶資訊: %v", err)
+			patientName = "未知用戶" // 如果查詢失敗，顯示預設值
+		} else {
+			patientName = user.Name
+		}
+
 		requests = append(requests, &pb.AccessRequest{
 			RequestId:     r.RequestID,
-			ReportId:     r.ReportID,
-			PatientHash:  r.PatientHash,
+			ReportId:      r.ReportID,
+			PatientHash:   r.PatientHash,
 			RequesterHash: r.RequesterHash,
-			Reason:       r.Reason,
-			RequestedAt:  r.RequestedAt,
-			Expiry:       r.Expiry,
-			Status:       r.Status,
+			PatientName:   patientName, // 添加用戶真實姓名
+			Reason:        r.Reason,
+			RequestedAt:   r.RequestedAt,
+			Expiry:        r.Expiry,
+			Status:        r.Status,
 		})
 	}
 

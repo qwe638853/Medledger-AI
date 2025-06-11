@@ -442,15 +442,33 @@ const fetchReportData = async () => {
     if (userRole.value === 'insurer') {
       // 保險公司調用授權報告 API
       response = await healthCheckService.fetchReportContent(reportId, patientId);
+      console.log('保險業者 API 回應:', response);
+      
       if (!response) {
         throw new Error('無法獲取報告數據');
+      }
+      
+      // 安全地解析 JSON
+      let parsedData = {};
+      if (response.resultJson) {
+        try {
+          parsedData = JSON.parse(response.resultJson);
+          console.log('保險業者解析後的數據:', parsedData);
+        } catch (parseError) {
+          console.error('JSON 解析失敗:', parseError);
+          console.error('原始 resultJson:', response.resultJson);
+          throw new Error('報告數據格式錯誤');
+        }
+      } else {
+        console.warn('resultJson 為空或 undefined:', response.resultJson);
+        throw new Error('未獲取到報告內容');
       }
       
       report.value = {
         id: reportId,
         patient_id: patientId,
         date: new Date().toISOString(),
-        rawData: JSON.parse(response.resultJson) || {}
+        rawData: parsedData
       };
       console.log("保險公司獲取的報告數據:", report.value);
     } else {
@@ -470,8 +488,15 @@ const fetchReportData = async () => {
         try {
           response = await healthCheckService.fetchReportDetail(reportId);
           
+          console.log('API 回應詳情:', response); // 添加更詳細的調試信息
+          console.log('response.success:', response?.success);
+          console.log('response.resultJson:', response?.resultJson);
+          console.log('response.resultJson type:', typeof response?.resultJson);
+          
           if (response && response.success && response.resultJson) {
+            console.log('開始解析 resultJson:', response.resultJson);
             const parsedData = JSON.parse(response.resultJson);
+            console.log('解析後的數據:', parsedData);
             
             report.value = {
               id: reportId,
@@ -487,6 +512,10 @@ const fetchReportData = async () => {
             // 更新 store 中的數據
             userStore.setCurrentReport(report.value);
           } else {
+            console.error('API 回應驗證失敗:');
+            console.error('response:', response);
+            console.error('response.success:', response?.success);
+            console.error('response.resultJson:', response?.resultJson);
             throw new Error('API 回應格式異常或無數據');
           }
         } catch (apiError) {

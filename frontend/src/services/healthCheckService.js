@@ -43,7 +43,7 @@ export const fetchReportDetail = async (reportId) => {
       return {
         success: true,
         reportId: reportId,
-        resultJson: response.data.result_json // 注意：後端回應的字段名是 result_json
+        resultJson: response.data.resultJson // 修正：後端回應的字段名是 resultJson
       };
     } else {
       throw new Error(response.data?.message || '獲取報告詳情失敗：後端回應格式異常');
@@ -407,6 +407,7 @@ export const fetchAuthorizedReports = async () => {
         return {
           id: report.reportId,
           patient_id: report.patientId,
+          patientName: report.patientName || '未知病患', // 添加真實姓名字段
           date: date,
           expiry: formattedExpiry
         };
@@ -502,18 +503,30 @@ export const fetchAccessRequests = async () => {
     }
     
     if (response.data && response.data.requests) {
+      console.log('後端返回的原始請求數據:', response.data.requests);
+      
       // 適應實際後端回應格式，正確映射欄位
-      return response.data.requests.map(request => ({
-        id: request.requestId , // 使用requesterId作為id
-        reportId: request.reportId , // 使用reportId作為reportId
-        requesterId: request.requesterHash , // 使用requesterId作為requesterId
-        requesterName: request.requesterName, // 提供fallback
-        companyName: request.companyName, // 提供fallback
-        reason: request.reason || '',
-        requestTime: request.requestedAt || request.request_time || 0, // 使用requestedAt作為requestTime
-        status: request.status || 'UNKNOWN',
-        expiry: request.expiry || 0
-      }));
+      const mappedRequests = response.data.requests.map(request => {
+        console.log('單個請求的詳細數據:', request);
+        console.log('requesterName:', request.requesterName);
+        console.log('companyName:', request.companyName);
+        console.log('requesterHash:', request.requesterHash);
+        
+        return {
+          id: request.requestId, // 使用requesterId作為id
+          reportId: request.reportId, // 使用reportId作為reportId
+          requesterId: request.requesterHash, // 使用requesterId作為requesterId
+          requesterName: request.requesterName || request.requesterHash || '未知請求者', // 如果沒有姓名，顯示 fallback
+          companyName: request.companyName || '未知公司', // 提供fallback
+          reason: request.reason || '',
+          requestTime: request.requestedAt || request.request_time || 0, // 使用requestedAt作為requestTime
+          status: request.status || 'UNKNOWN',
+          expiry: request.expiry || 0
+        };
+      });
+      
+      console.log('映射後的請求數據:', mappedRequests);
+      return mappedRequests;
     }
     return [];
   } catch (error) {
@@ -668,11 +681,13 @@ export const fetchReportContent = async (reportId, patientId) => {
       }
     });
     
+    console.log('後端 API 回應:', response.data);
+    
     if (response.data && response.data.success) {
       return {
         id: reportId,
         patient_id: patientId,
-        resultJson: response.data.result_json
+        resultJson: response.data.resultJson || response.data.result_json  // 支援兩種格式
       };
     }
     throw new Error('獲取報告內容失敗');
@@ -681,18 +696,22 @@ export const fetchReportContent = async (reportId, patientId) => {
     throw error;
   }
 };
-  /**
+
+/**
  * 獲取保險業者發出的授權請求列表
  * @returns {Promise<Array>} 授權請求列表
  */
 export const listMyAccessRequests = async () => {
   try {
     const response = await apiClient.get('/v1/access/requests/my');
+    console.log('保險業者發出的授權請求回應:', response);
+    
     if (response.data.success) {
       return response.data.requests.map(req => ({
         requestId: req.requestId,
         reportId: req.reportId,
         patientHash: req.patientHash,
+        patientName: req.patientName || '未知用戶', // 添加真實姓名字段
         reason: req.reason,
         requestedAt: new Date(req.requestedAt * 1000).toLocaleDateString(),
         expiry: new Date(req.expiry * 1000).toLocaleDateString(),
@@ -705,7 +724,6 @@ export const listMyAccessRequests = async () => {
     throw error;
   }
 };
-
 
 // 導出健康檢查服務對象
 export default {

@@ -56,6 +56,7 @@ func (s *server) ListMyReportMeta(ctx context.Context, in *emptypb.Empty) (*pb.L
 
 // 新增 ReadMyReport API 方法
 func (s *server) ReadMyReport(ctx context.Context, req *pb.ReadMyReportRequest) (*pb.ReadMyReportResponse, error) {
+	log.Printf("[Debug] ReadMyReport")
 	return sc.HandleReadMyReport(ctx, req, s.Wallet, s.Builder)
 }
 

@@ -128,6 +128,15 @@ type InsurerInfo struct {
 	Phone        string
 }
 
+// UserInfo 存儲用戶的基本資訊
+type UserInfo struct {
+	Username string
+	Name     string
+	Date     string
+	Email    string
+	Phone    string
+}
+
 // GetInsurerByHash 根據雜湊值獲取保險業者資訊
 func GetInsurerByHash(insurerHash string) (*InsurerInfo, error) {
 	var info InsurerInfo
@@ -146,6 +155,28 @@ func GetInsurerByHash(insurerHash string) (*InsurerInfo, error) {
 			return nil, fmt.Errorf("找不到對應的保險業者資訊")
 		}
 		return nil, fmt.Errorf("查詢保險業者資訊失敗: %v", err)
+	}
+	return &info, nil
+}
+
+// GetUserByHash 根據雜湊值獲取用戶資訊
+func GetUserByHash(userHash string) (*UserInfo, error) {
+	var info UserInfo
+	err := DB.QueryRow(`
+		SELECT username, name, date, email, phone 
+		FROM users 
+		WHERE username = ?`, userHash).Scan(
+		&info.Username,
+		&info.Name,
+		&info.Date,
+		&info.Email,
+		&info.Phone,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("找不到對應的用戶資訊")
+		}
+		return nil, fmt.Errorf("查詢用戶資訊失敗: %v", err)
 	}
 	return &info, nil
 }

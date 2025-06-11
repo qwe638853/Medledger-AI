@@ -225,6 +225,7 @@ message AccessRequest {
   string status = 8;
   string requester_name = 9;
   string company_name = 10;
+  string patient_name = 11;  // 病患真實姓名
 }
 
 message ListAccessRequestsResponse {
@@ -270,6 +271,7 @@ message AuthorizedReport {
   string patient_id = 2;
   string date = 4;
   string expiry = 5;
+  string patient_name = 6;  // 病患真實姓名
 }
 
 message ListAuthorizedReportsResponse {

@@ -109,9 +109,9 @@ const fetchAllAuthorizedReports = async () => {
       allAuthorizedReports.value = response.map(report => ({
         ...report,
         expanded: false,
-        id: report.id ,
-        requester_name: report.patient_id,
-        granted_at: report.date ,
+        id: report.id,
+        patientName: report.patientName || '未知病患', // 病患真實姓名
+        granted_at: report.date,
         expiry: report.expiry || null
       }));
       
@@ -125,8 +125,7 @@ const fetchAllAuthorizedReports = async () => {
         ...report,
         expanded: false,
         id: report.report_id || report.id,
-        company_name: report.company_name || '未知公司',
-        requester_name: report.requester_name || '未知請求者',
+        patientName: report.patientName || '未知病患', // 病患真實姓名
         granted_at: report.granted_at || report.created_at || new Date().toISOString(),
         expiry: report.expiry || null
       }));
@@ -842,7 +841,7 @@ const getRequestStatusInfo = (status) => {
           <v-data-table
             :headers="[
                       { title: '報告編號', key: 'id', align: 'start', width: '120px' },
-                      { title: '授權對象', key: 'requester', align: 'start', width: '200px' },
+                      { title: '授權對象', key: 'patientName', align: 'start', width: '120px' },
                       { title: '授權日期', key: 'granted_at', align: 'center', width: '120px' },
                       { title: '到期日期', key: 'expiry', align: 'center', width: '120px' },
                       { title: '操作', key: 'actions', align: 'center', width: '100px' }
@@ -861,15 +860,10 @@ const getRequestStatusInfo = (status) => {
                     </div>
             </template>
 
-                    <template v-slot:item.requester="{ item }">
+                    <template v-slot:item.patientName="{ item }">
                       <div class="d-flex align-center">
-                        <v-avatar size="32" class="me-3">
-                          <v-icon color="white" size="16">mdi-account</v-icon>
-                        </v-avatar>
-                        <div class="d-flex flex-column">
-                          <span class="font-weight-medium">{{ item.requester_name }}</span>
-                          <span class="text-caption">{{ item.company_name }}</span>
-                        </div>
+                        <v-icon size="18" class="me-2">mdi-account</v-icon>
+                        <span class="font-weight-medium">{{ item.patientName || item.patientHash || '未知用戶' }}</span>
                       </div>
             </template>
 
@@ -974,7 +968,7 @@ const getRequestStatusInfo = (status) => {
                   },
                   { 
                     title: '授權對象',
-                    key: 'requester_name',
+                    key: 'patientName',
                     align: 'start',
                     width: '200px'
                   },
@@ -1009,13 +1003,13 @@ const getRequestStatusInfo = (status) => {
                   </div>
               </template>
               
-                <!-- 授權對象欄位 -->
-                <template v-slot:item.requester_name="{ item }">
+                                <!-- 授權對象欄位 -->
+                <template v-slot:item.patientName="{ item }">
                   <div class="d-flex align-center">
                     <v-icon size="18" class="me-2">mdi-account</v-icon>
-                    <span class="font-weight-medium">{{ item.requester_name }}</span>
+                    <span class="font-weight-medium">{{ item.patientName || item.patient_id || '未知病患' }}</span>
                   </div>
-              </template>
+                </template>
               
                 <!-- 授權到期日欄位 -->
               <template v-slot:item.expiry="{ item }">
@@ -1134,7 +1128,7 @@ const getRequestStatusInfo = (status) => {
                   },
                   { 
                     title: '授權對象',
-                    key: 'patientHash',
+                    key: 'patientName',
                     align: 'start',
                     width: '120px'
                   },
@@ -1162,11 +1156,11 @@ const getRequestStatusInfo = (status) => {
                   </div>
                 </template>
 
-                <!-- 病患雜湊欄位 -->
-                <template v-slot:item.patientHash="{ item }">
+                <!-- 病患姓名欄位 -->
+                <template v-slot:item.patientName="{ item }">
                   <div class="d-flex align-center">
-                    <v-icon size="18" class="me-2">mdi-identifier</v-icon>
-                    <span class="font-weight-medium">{{ item.patientHash }}</span>
+                    <v-icon size="18" class="me-2">mdi-account</v-icon>
+                    <span class="font-weight-medium">{{ item.patientName || item.patientHash || '未知用戶' }}</span>
                   </div>
                 </template>
 
@@ -1236,7 +1230,7 @@ const getRequestStatusInfo = (status) => {
                   },
                   { 
                     title: '授權對象',
-                    key: 'patientHash',
+                    key: 'patientName',
                     align: 'start',
                     width: '120px'
                   },

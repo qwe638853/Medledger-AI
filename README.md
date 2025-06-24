@@ -37,21 +37,8 @@ Before running this project, ensure you have:
 
 ## 🛠️ Installation & Setup
 
-### 1. Environment Setup
 
-First, set up the required environment variables:
-
-```bash
-export HYPERLEDGER_HOME=$HOME/hyperledger
-```
-
-Or create a `.env` file in the `hyperledger/` directory:
-
-```bash
-echo "HYPERLEDGER_HOME=$HOME/hyperledger" > hyperledger/.env
-```
-
-### 2. Start Hyperledger Fabric Network
+###  Start Hyperledger Fabric Network
 
 Navigate to the hyperledger directory and start the network:
 
@@ -66,7 +53,7 @@ This will start:
 - Orderer service (orderer1-org1)
 - CouchDB instances for state database
 
-### 3. Deploy Smart Contracts
+###  Deploy Smart Contracts
 
 Deploy the health records chaincode:
 
@@ -75,7 +62,7 @@ Deploy the health records chaincode:
 # Refer to your chaincode deployment scripts in hyperledger/sdk_server or similar
 ```
 
-### 4. Setup AI Backend Services
+###  Setup AI Backend Services
 
 #### Install Python Dependencies
 ```bash
@@ -118,7 +105,7 @@ python test.py
 
 The backend server will start on `localhost:50051`
 
-### 5. Start Frontend Application
+###  Start Frontend Application
 
 ```bash
 cd frontend
@@ -202,120 +189,4 @@ The system runs the following Docker containers:
 | orderer1-org1 | Ordering service | 7050 |
 | couchdb1/couchdb2 | State databases | 5984 |
 
-## 📡 Backend Services
 
-| Service | Purpose | Port |
-|---------|---------|------|
-| gRPC Health Server | AI-powered health analysis | 50051 |
-| Ollama Server | LLM inference engine | 11434 |
-| ChromaDB | Vector database for RAG | - |
-
-## 📁 Project Structure
-
-```
-.
-├── hyperledger/              # Blockchain network configuration
-│   ├── docker-compose.yaml   # Docker services definition
-│   ├── configtx.yaml        # Channel configuration
-│   ├── chaincode-go/         # Smart contracts
-│   ├── orgs/                 # Organization certificates
-│   └── sdk_server/           # SDK and deployment scripts
-├── backend/                  # Python backend services
-│   └── health_check_project/ # AI health analysis service
-│       ├── test.py           # Main gRPC server
-│       ├── client.py         # Test client
-│       ├── data_pb2.py       # Generated protobuf classes
-│       ├── data_pb2_grpc.py  # Generated gRPC classes
-│       ├── add_data.py       # ChromaDB data management
-│       ├── proto/            # Protocol buffer definitions
-│       │   └── data.proto    # gRPC service definitions
-│       └── chroma_db/        # Vector database storage
-├── frontend/                 # Vue.js frontend application
-│   ├── src/                  # Source code
-│   ├── package.json          # Dependencies
-│   └── vite.config.js        # Vite configuration
-└── README.md                 # This file
-```
-
-## 🔐 Security Features
-
-- **Identity Management**: Certificate-based authentication
-- **Data Privacy**: Patient identity hashing and anonymization
-- **Access Control**: Role-based permissions (patient, clinic, provider)
-- **Audit Trail**: Immutable transaction logging
-- **TLS Encryption**: Secure communication between components
-- **AI Privacy**: Local LLM processing without external data transmission
-
-## 🧠 AI & Machine Learning Components
-
-### LangChain Integration
-- **Retrieval-Augmented Generation (RAG)**: Enhanced context-aware responses
-- **Multi-Query Retrieval**: Improved context gathering through specialized queries
-- **HyDE Implementation**: Hypothetical document embeddings for better retrieval
-- **Custom Prompt Templates**: Specialized prompts for medical analysis
-
-### Vector Database (ChromaDB)
-- **Medical Knowledge Storage**: Efficient storage and retrieval of medical reference data
-- **Similarity Search**: Context-aware document retrieval
-- **Persistent Storage**: Long-term knowledge base maintenance
-
-### Local LLM (Ollama + Llama3)
-- **Privacy-Preserving**: All AI processing done locally
-- **Medical Domain Adaptation**: Specialized prompts for healthcare analysis
-- **Multi-language Support**: Chinese-English medical terminology handling
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **Docker containers not starting**: Ensure Docker daemon is running and ports are available
-2. **Certificate errors**: Check if certificates are properly generated in `hyperledger/orgs/`
-3. **Chaincode deployment fails**: Verify Go version and dependencies in `chaincode-go/`
-4. **Frontend connection errors**: Check if backend services are running and accessible
-5. **gRPC connection issues**: Ensure the Python gRPC server is running on port 50051
-6. **Ollama model not found**: Make sure Llama3 model is downloaded with `ollama pull llama3:8b`
-7. **ChromaDB errors**: Verify database path and permissions in `add_data.py`
-8. **AI analysis errors**: Check Ollama service status and model availability
-
-### Backend Specific Troubleshooting
-
-```bash
-# Test gRPC server connectivity
-cd backend/health_check_project
-python client.py
-
-# Check Ollama status
-ollama list
-
-# Verify ChromaDB collection
-python -c "import chromadb; client = chromadb.PersistentClient(path='./chroma_db'); print(client.list_collections())"
-```
-
-### Support
-
-For support and questions:
-- Check the troubleshooting section above
-- Review Hyperledger Fabric documentation
-- Check LangChain and Ollama documentation for AI components
-- Create an issue in this repository
-
-## 🙏 Acknowledgments
-
-- [Hyperledger Fabric](https://hyperledger-fabric.readthedocs.io/) for the blockchain platform
-- [Vue.js](https://vuejs.org/) for the frontend framework
-- [Vuetify](https://vuetifyjs.com/) for the UI components
-- [LangChain](https://langchain.com/) for the AI framework
-- [Ollama](https://ollama.ai/) for local LLM inference
-- [ChromaDB](https://www.trychroma.com/) for vector database capabilities

@@ -10,6 +10,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+/**
+ * @notice 詳細列印 Fabric Gateway 的錯誤資訊
+ * @dev 解析 Endorse/Submit/Commit 類型錯誤與 peer 詳細訊息，輔助除錯
+ * @param err 來自 Gateway 的錯誤
+ * @return 無（輸出至標準輸出）
+ */
 // PrintGatewayError 詳細列印 Fabric Gateway 的錯誤
 func PrintGatewayError(err error) {
 	var (

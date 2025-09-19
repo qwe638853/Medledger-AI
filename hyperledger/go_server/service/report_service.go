@@ -20,6 +20,15 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+/**
+ * @notice 上傳健檢報告：驗證請求並提交鏈上交易
+ * @dev 由 JWT 提取使用者 → 建立 Gateway → Submit UploadReport 交易
+ * @param ctx 請求上下文
+ * @param req 上傳報告請求（reportId, userId, testResultsJson）
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.UploadReportResponse 結果, error 內部錯誤
+ */
 // HandleUploadReport 驗證請求 → 存 SQLite → 調用 Fabric
 func HandleUploadReport(
 	ctx context.Context,
@@ -78,6 +87,15 @@ func HandleUploadReport(
 
 
 // HandleRequestAccess 處理保險業者請求授權
+/**
+ * @notice 授權請求：保險業者向病患申請訪問報告
+ * @dev 檢查保險業者身份 → 建立 Gateway → Submit RequestAccess 交易
+ * @param ctx 請求上下文
+ * @param req 授權請求（reportId, patientId, reason, expiry）
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.RequestAccessResponse 結果, error 內部錯誤
+ */
 func HandleRequestAccess(
 	ctx context.Context,
 	req *pb.RequestAccessRequest,
@@ -154,6 +172,15 @@ type rawAccessRequest struct {
 	Status       string `json:"status"`
 }
 // HandleListAccessRequests 列出病患的所有授權請求
+/**
+ * @notice 列出病患的所有待處理授權請求
+ * @dev 病患身份 → Evaluate ListPendingAccessRequests
+ * @param ctx 請求上下文
+ * @param _ 空請求
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ListAccessRequestsResponse 清單, error 內部錯誤
+ */
 func HandleListAccessRequests(
 	ctx context.Context,
 	_ *emptypb.Empty,
@@ -225,6 +252,15 @@ func HandleListAccessRequests(
 }
 
 // HandleApproveAccessRequest 處理授權請求的批准
+/**
+ * @notice 病患批准授權請求
+ * @dev 病患身份 → Submit ApproveAndAuthorizeAccess
+ * @param ctx 請求上下文
+ * @param req 批准請求（requestId）
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ApproveAccessRequestResponse 結果, error 內部錯誤
+ */
 func HandleApproveAccessRequest(
 	ctx context.Context,
 	req *pb.ApproveAccessRequestRequest,
@@ -265,6 +301,15 @@ func HandleApproveAccessRequest(
 }
 
 // HandleRejectAccessRequest 處理授權請求的拒絕
+/**
+ * @notice 病患拒絕授權請求
+ * @dev 病患身份 → Submit RejectAccessRequest
+ * @param ctx 請求上下文
+ * @param req 拒絕請求（requestId）
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.RejectAccessRequestResponse 結果, error 內部錯誤
+ */
 func HandleRejectAccessRequest(
 	ctx context.Context,
 	req *pb.RejectAccessRequestRequest,
@@ -304,6 +349,15 @@ func HandleRejectAccessRequest(
 }
 
 // HandleListAuthorizedReports 獲取已授權的報告列表
+/**
+ * @notice 保險業者查看自己可存取的授權報告列表
+ * @dev 保險業者身份 → Evaluate ListAuthorizedReports → 整合 DB 顯示名稱
+ * @param ctx 請求上下文
+ * @param _ 空請求
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ListAuthorizedReportsResponse 清單, error 內部錯誤
+ */
 func HandleListAuthorizedReports(
 	ctx context.Context,
 	_ *emptypb.Empty,
@@ -399,6 +453,15 @@ func HandleListAuthorizedReports(
 }
 
 // HandleListReportMetaByPatientID 獲取特定病患的報告元數據 (不含健檢數據)
+/**
+ * @notice 保險業者按病患ID查詢報告元數據（不含內容）
+ * @dev 保險業者身份 → Evaluate ListReportMetaByPatientID
+ * @param ctx 請求上下文
+ * @param req 病患ID請求
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ListReportMetaResponse 清單, error 內部錯誤
+ */
 func HandleListReportMetaByPatientID(
 	ctx context.Context,
 	req *pb.PatientIDRequest,
@@ -472,6 +535,15 @@ func HandleListReportMetaByPatientID(
 }
 
 // ViewAuthorizedReport 實現保險業者讀取授權報告的服務
+/**
+ * @notice 保險業者讀取已授權的報告內容
+ * @dev 保險業者身份 → Evaluate ReadAuthorizedReport
+ * @param ctx 請求上下文
+ * @param req 請求（reportId, userId）
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ViewAuthorizedReportResponse 結果, error 內部錯誤
+ */
 func HandleViewAuthorizedReport(
 	ctx context.Context,
 	req *pb.ViewAuthorizedReportRequest,
@@ -527,6 +599,15 @@ func HandleViewAuthorizedReport(
 }
 
 // HandleListMyAccessRequests 處理保險業者查看自己發出的授權請求
+/**
+ * @notice 保險業者查看自己發出的授權請求
+ * @dev 保險業者身份 → Evaluate ListMyAccessRequests → 補充病患名稱
+ * @param ctx 請求上下文
+ * @param _ 空請求
+ * @param wallet 錢包介面
+ * @param builder Gateway 建構器
+ * @return *pb.ListMyAccessRequestsResponse 清單, error 內部錯誤
+ */
 func HandleListMyAccessRequests(
 	ctx context.Context,
 	_ *emptypb.Empty,
@@ -605,6 +686,10 @@ func HandleListMyAccessRequests(
 }
 
 // 添加中間結構以匹配鏈碼的 AuthTicket 結構
+/**
+ * @notice 中間結構：對應鏈碼端的 AuthTicket JSON
+ * @dev 僅供本檔案內 JSON 反序列化使用
+ */
 type rawAuthTicket struct {
 	DocType     string `json:"docType"`
 	PatientHash string `json:"patientHash"`

@@ -62,13 +62,23 @@ type HealthCheckContract struct {
 	contractapi.Contract
 }
 
-// 將身分證字號轉為雜湊值
+/**
+ * @notice 將身分證字號轉換為SHA256雜湊值
+ * @dev 使用SHA256演算法對身分證字號進行單向雜湊，保護隱私
+ * @param id 身分證字號或任何需要雜湊的字串
+ * @return string 16進位編碼的雜湊值
+ */
 func hashID(id string) string {
 	hash := sha256.Sum256([]byte(id))
 	return hex.EncodeToString(hash[:])
 }
 
-// 取得調用者身分(internal function)
+/**
+ * @notice 取得調用者身分資訊
+ * @dev 從Fabric憑證中提取用戶ID和角色，用於權限驗證
+ * @param ctx Fabric合約上下文
+ * @return userID 用戶ID, role 角色, err 錯誤訊息
+ */
 func getCaller(ctx contractapi.TransactionContextInterface) (userID, role string, err error) {
 	id, err := cid.New(ctx.GetStub())
 	if err != nil {
@@ -85,12 +95,24 @@ func getCaller(ctx contractapi.TransactionContextInterface) (userID, role string
 	return
 }
 
+/**
+ * @notice 取得診所ID
+ * @dev 從Fabric憑證中提取診所ID屬性
+ * @param ctx Fabric合約上下文
+ * @return string 診所ID
+ */
 func getClinicID(ctx contractapi.TransactionContextInterface) string {
 	id, _ := cid.New(ctx.GetStub())
 	clinic, _, _ := id.GetAttributeValue("clinicId")
 	return clinic
 }
 
+/**
+ * @notice 從原始位元組資料中提取病患雜湊值
+ * @dev 解析JSON格式的位元組資料，提取patientHash欄位
+ * @param raw 原始位元組資料
+ * @return string 病患雜湊值
+ */
 func recPatientHash(raw []byte) string {
 	var t struct {
 		PatientHash string `json:"patientHash"`
@@ -99,11 +121,24 @@ func recPatientHash(raw []byte) string {
 	return t.PatientHash
 }
 
+/**
+ * @notice 取得當前Unix時間戳（秒）
+ * @dev 取得目前時間的Unix時間戳，用於記錄時間
+ * @return int64 Unix時間戳（秒）
+ */
 func nowSec() int64 {
 	return time.Now().Unix()
 }
 
-// 上傳報告
+/**
+ * @notice 上傳健檢報告到區塊鏈
+ * @dev 只允許 clinic 身份上傳，會驗證reportID唯一性並記錄時間戳
+ * @param ctx Fabric合約上下文
+ * @param reportID 報告唯一識別ID
+ * @param patientHash 病患身份雜湊值
+ * @param resultJSON 健檢結果JSON字串
+ * @return error 上傳失敗或權限錯誤
+ */
 func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInterface, reportID, patientHash, resultJSON string) error {
 	id, err := cid.New(ctx.GetStub())
 	if err != nil {
@@ -134,6 +169,13 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 	return ctx.GetStub().PutState(repKey, bytes)
 }
 
+/**
+ * @notice 病患批准並授權訪問請求
+ * @dev 只允許 patient 身份，會產生授權票據並發送事件
+ * @param ctx Fabric合約上下文
+ * @param requestID 訪問請求ID
+ * @return error 批准失敗或權限錯誤
+ */
 func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.TransactionContextInterface, requestID string) error {
     userID, role, err := getCaller(ctx)
     if err != nil || role != "patient" {
@@ -196,7 +238,13 @@ func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.Transact
     return nil
 }
 
-// RejectAccessRequest 病患拒絕授權請求
+/**
+ * @notice 病患拒絕授權請求
+ * @dev 只允許 patient 身份，更新請求狀態為拒絕並發送事件
+ * @param ctx Fabric合約上下文
+ * @param requestID 請求ID
+ * @return error 拒絕失敗或權限錯誤
+ */
 func (h *HealthCheckContract) RejectAccessRequest(ctx contractapi.TransactionContextInterface, requestID string) error {
     userID, role, err := getCaller(ctx)
     if err != nil || role != "patient" {
@@ -433,6 +481,12 @@ func (h *HealthCheckContract) ReadAuthorizedReport(ctx contractapi.TransactionCo
 }
 
 
+/**
+ * @notice 病患查看自己已授權的票據列表
+ * @dev 只允許 patient 身份，回傳該病患發出的所有授權票據
+ * @param ctx Fabric合約上下文
+ * @return []AuthTicket 授權票據陣列, error 查詢失敗或權限錯誤
+ */
 func (h *HealthCheckContract) ListMyAuthorizedTickets(ctx contractapi.TransactionContextInterface) ([]AuthTicket, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
@@ -472,7 +526,12 @@ func (h *HealthCheckContract) ListMyAuthorizedTickets(ctx contractapi.Transactio
 	return results, nil
 }
 	
-// 保險業者查看所有已授權的報告
+/**
+ * @notice 保險業者查看所有已授權的報告
+ * @dev 只允許 insurer 身份，回傳所有授權給該保險業者且未過期的報告
+ * @param ctx Fabric合約上下文
+ * @return []map[string]interface{} 已授權報告資訊陣列, error 查詢失敗或權限錯誤
+ */
 func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionContextInterface) ([]map[string]interface{}, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil {
@@ -543,7 +602,16 @@ func (h *HealthCheckContract) ListAuthorizedReports(ctx contractapi.TransactionC
 
 
 
-// 請求授權
+/**
+ * @notice 保險業者請求訪問健檢報告
+ * @dev 只允許 insurer 身份，會建立待處理的訪問請求
+ * @param ctx Fabric合約上下文
+ * @param reportID 報告ID
+ * @param patientHash 病患雜湊值
+ * @param reason 請求原因
+ * @param expiryStr 過期時間戳字串
+ * @return error 請求失敗或權限錯誤
+ */
 func (h *HealthCheckContract) RequestAccess(ctx contractapi.TransactionContextInterface, reportID, patientHash, reason, expiryStr string) error {
 	userID, role, err := getCaller(ctx)
 	if err != nil || role != "insurer" {
@@ -582,7 +650,12 @@ func (h *HealthCheckContract) RequestAccess(ctx contractapi.TransactionContextIn
 	return ctx.GetStub().PutState(reqKey, reqBytes)
 }
 
-// 列出待處理的授權請求
+/**
+ * @notice 病患列出待處理的授權請求
+ * @dev 只允許 patient 身份，回傳所有狀態為PENDING的請求
+ * @param ctx Fabric合約上下文
+ * @return []AccessRequest 待處理請求陣列, error 查詢失敗或權限錯誤
+ */
 func (h *HealthCheckContract) ListPendingAccessRequests(ctx contractapi.TransactionContextInterface) ([]AccessRequest, error) {
 	userID, role, err := getCaller(ctx)
 	if err != nil || role != "patient" {
@@ -620,7 +693,13 @@ func (h *HealthCheckContract) ListPendingAccessRequests(ctx contractapi.Transact
 
 	return results, nil
 }
-// 列出保險業者發出的授權請求
+
+/**
+ * @notice 保險業者列出自己發出的授權請求
+ * @dev 只允許 insurer 身份，回傳該保險業者發出的所有請求
+ * @param ctx Fabric合約上下文
+ * @return []AccessRequest 請求陣列, error 查詢失敗或權限錯誤
+ */
 func (h *HealthCheckContract) ListMyAccessRequests(ctx contractapi.TransactionContextInterface) ([]AccessRequest, error) {
     userID, role, err := getCaller(ctx)
     if err != nil || role != "insurer" {

@@ -17,6 +17,14 @@ import (
 	"github.com/hyperledger/fabric-ca/api"
 )
 
+/**
+ * @notice 用戶註冊：建立 SQLite 帳號並向 Fabric CA 註冊與 Enroll
+ * @dev 驗證請求 → 查重 → CA Register → 產生金鑰與 CSR → Enroll → 錢包寫入 → DB 寫入
+ * @param ctx 請求上下文
+ * @param req 用戶註冊請求
+ * @param wallet 錢包介面，用於寫入身份
+ * @return *pb.RegisterResponse 成功與訊息, error 內部錯誤
+ */
 // HandleRegisterUser 處理用戶註冊邏輯 + 寫入 SQLite + Fabric CA 註冊
 func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet wl.WalletInterface) (*pb.RegisterResponse, error) {
 	log.Printf("收到用戶註冊請求: %v", req)
@@ -137,6 +145,14 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	return &pb.RegisterResponse{Success: true, Message: "用戶註冊成功"}, nil
 }
 
+/**
+ * @notice 保險業者註冊：建立 SQLite 帳號並向 Fabric CA 註冊與 Enroll
+ * @dev 驗證請求 → 查重 → CA Register → 產生金鑰與 CSR → Enroll → 錢包寫入 → DB 寫入
+ * @param ctx 請求上下文
+ * @param req 保險業者註冊請求
+ * @param wallet 錢包介面，用於寫入身份
+ * @return *pb.RegisterResponse 成功與訊息, error 內部錯誤
+ */
 // HandleRegisterInsurer 處理保險業者註冊邏輯 + 寫入 SQLite + Fabric CA 註冊
 func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, wallet wl.WalletInterface) (*pb.RegisterResponse, error) {
 	log.Printf("收到保險業者註冊請求: %v", req)
@@ -248,6 +264,14 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
 	return &pb.RegisterResponse{Success: true, Message: "保險業者註冊成功"}, nil
 }
 
+/**
+ * @notice 登入：驗證用戶或保險業者身份並簽發 JWT
+ * @dev 依序檢查保險業者與一般用戶的雜湊密碼，比對成功後確認錢包存在並簽發 JWT
+ * @param ctx 請求上下文
+ * @param req 登入請求（user_id、password）
+ * @param w 錢包介面，用於檢查身份是否存在
+ * @return *pb.LoginResponse 結果與 JWT, error 內部錯誤
+ */
 func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface) (*pb.LoginResponse, error) {
 	log.Printf("Received Login: %v", req)
 

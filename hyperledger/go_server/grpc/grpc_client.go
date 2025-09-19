@@ -11,6 +11,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+/**
+ * @notice gRPC 測試用客戶端
+ * @dev 連線到 localhost:50051 並調用 HealthService 的 API 進行基本驗證。
+ *      範例包含 Submit UploadReport 與 Evaluate ReadReport 的基本流程。
+ * @return 無回傳（印出日誌以顯示結果）
+ */
 func main() {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {

@@ -27,54 +27,124 @@ type server struct {
 	Builder fc.GWBuilder
 }
 
+/**
+ * @notice 上傳健檢報告 API
+ * @dev 轉呼叫 service.HandleUploadReport
+ * @param ctx 請求上下文
+ * @param req 上傳請求
+ * @return *pb.UploadReportResponse 結果, error 內部錯誤
+ */
 // UploadReport
 func (s *server) UploadReport(ctx context.Context, req *pb.UploadReportRequest) (*pb.UploadReportResponse, error) {
 	return sc.HandleUploadReport(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 登入 API
+ * @dev 轉呼叫 service.HandleLogin
+ * @param ctx 請求上下文
+ * @param req 登入請求
+ * @return *pb.LoginResponse 結果, error 內部錯誤
+ */
 // Login
 func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	return sc.HandleLogin(ctx, req, s.Wallet)
 }
 
+/**
+ * @notice 用戶註冊 API
+ * @dev 轉呼叫 service.HandleRegisterUser
+ * @param ctx 請求上下文
+ * @param req 註冊請求
+ * @return *pb.RegisterResponse 結果, error 內部錯誤
+ */
 // 實現新的註冊方法
 func (s *server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterResponse, error) {
 	return sc.HandleRegisterUser(ctx, req, s.Wallet)
 }
 
+/**
+ * @notice 保險業者註冊 API
+ * @dev 轉呼叫 service.HandleRegisterInsurer
+ * @param ctx 請求上下文
+ * @param req 註冊請求
+ * @return *pb.RegisterResponse 結果, error 內部錯誤
+ */
 func (s *server) RegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest) (*pb.RegisterResponse, error) {
 	return sc.HandleRegisterInsurer(ctx, req, s.Wallet)
 }
 
 
 
+/**
+ * @notice 病患查詢自己的報告 meta API
+ * @dev 轉呼叫 service.HandleListMyReportMeta
+ * @param ctx 請求上下文
+ * @param in 空請求
+ * @return *pb.ListMyReportMetaResponse 清單, error 內部錯誤
+ */
 // 新增 ListMyReportMeta API 方法
 func (s *server) ListMyReportMeta(ctx context.Context, in *emptypb.Empty) (*pb.ListMyReportMetaResponse, error) {
 	log.Printf("[Debug] ListMyReportMeta")
 	return sc.HandleListMyReportMeta(ctx, in, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 病患讀取自己的報告 API
+ * @dev 轉呼叫 service.HandleReadMyReport
+ * @param ctx 請求上下文
+ * @param req 讀取請求
+ * @return *pb.ReadMyReportResponse 結果, error 內部錯誤
+ */
 // 新增 ReadMyReport API 方法
 func (s *server) ReadMyReport(ctx context.Context, req *pb.ReadMyReportRequest) (*pb.ReadMyReportResponse, error) {
 	log.Printf("[Debug] ReadMyReport")
 	return sc.HandleReadMyReport(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 保險業者提出授權請求 API
+ * @dev 轉呼叫 service.HandleRequestAccess
+ * @param ctx 請求上下文
+ * @param req 授權請求
+ * @return *pb.RequestAccessResponse 結果, error 內部錯誤
+ */
 // 新增 RequestAccess API 方法
 func (s *server) RequestAccess(ctx context.Context, req *pb.RequestAccessRequest) (*pb.RequestAccessResponse, error) {
 	return sc.HandleRequestAccess(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 病患列出待處理授權請求 API
+ * @dev 轉呼叫 service.HandleListAccessRequests
+ * @param ctx 請求上下文
+ * @param in 空請求
+ * @return *pb.ListAccessRequestsResponse 清單, error 內部錯誤
+ */
 // 新增 ListAccessRequests API 方法
 func (s *server) ListAccessRequests(ctx context.Context, in *emptypb.Empty) (*pb.ListAccessRequestsResponse, error) {
 	return sc.HandleListAccessRequests(ctx, in, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 病患批准授權請求 API
+ * @dev 轉呼叫 service.HandleApproveAccessRequest
+ * @param ctx 請求上下文
+ * @param req 批准請求
+ * @return *pb.ApproveAccessRequestResponse 結果, error 內部錯誤
+ */
 // 新增 ApproveAccessRequest API 方法
 func (s *server) ApproveAccessRequest(ctx context.Context, req *pb.ApproveAccessRequestRequest) (*pb.ApproveAccessRequestResponse, error) {
 	return sc.HandleApproveAccessRequest(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 病患拒絕授權請求 API
+ * @dev 轉呼叫 service.HandleRejectAccessRequest
+ * @param ctx 請求上下文
+ * @param req 拒絕請求
+ * @return *pb.RejectAccessRequestResponse 結果, error 內部錯誤
+ */
 // 新增 RejectAccessRequest API 方法
 func (s *server) RejectAccessRequest(ctx context.Context, req *pb.RejectAccessRequestRequest) (*pb.RejectAccessRequestResponse, error) {
 	return sc.HandleRejectAccessRequest(ctx, req, s.Wallet, s.Builder)
@@ -82,28 +152,68 @@ func (s *server) RejectAccessRequest(ctx context.Context, req *pb.RejectAccessRe
 
 
 
+/**
+ * @notice 保險業者查看已授權報告列表 API
+ * @dev 轉呼叫 service.HandleListAuthorizedReports
+ * @param ctx 請求上下文
+ * @param in 空請求
+ * @return *pb.ListAuthorizedReportsResponse 清單, error 內部錯誤
+ */
 // 新增 ListAuthorizedReports API 方法
 func (s *server) ListAuthorizedReports(ctx context.Context, in *emptypb.Empty) (*pb.ListAuthorizedReportsResponse, error) {
 	return sc.HandleListAuthorizedReports(ctx, in, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 保險業者按病患ID查報告 meta API
+ * @dev 轉呼叫 service.HandleListReportMetaByPatientID
+ * @param ctx 請求上下文
+ * @param req 病患ID請求
+ * @return *pb.ListReportMetaResponse 清單, error 內部錯誤
+ */
 // 新增 ListReportMetaByPatientID API 方法
 func (s *server) ListReportMetaByPatientID(ctx context.Context, req *pb.PatientIDRequest) (*pb.ListReportMetaResponse, error) {
 	return sc.HandleListReportMetaByPatientID(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 保險業者讀取已授權的報告 API
+ * @dev 轉呼叫 service.HandleViewAuthorizedReport
+ * @param ctx 請求上下文
+ * @param req 讀取請求
+ * @return *pb.ViewAuthorizedReportResponse 結果, error 內部錯誤
+ */
 func (s *server) ViewAuthorizedReport(ctx context.Context, req *pb.ViewAuthorizedReportRequest) (*pb.ViewAuthorizedReportResponse, error) {
 	return sc.HandleViewAuthorizedReport(ctx, req, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 保險業者查看自己發出的授權請求 API
+ * @dev 轉呼叫 service.HandleListMyAccessRequests
+ * @param ctx 請求上下文
+ * @param in 空請求
+ * @return *pb.ListMyAccessRequestsResponse 清單, error 內部錯誤
+ */
 func (s *server) ListMyAccessRequests(ctx context.Context, in *emptypb.Empty) (*pb.ListMyAccessRequestsResponse, error) {
 	return sc.HandleListMyAccessRequests(ctx, in, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 病患查看自己授權票據 API
+ * @dev 轉呼叫 service.HandleListMyAuthorizedTickets
+ * @param ctx 請求上下文
+ * @param in 空請求
+ * @return *pb.ListAuthorizedTicketsResponse 清單, error 內部錯誤
+ */
 func (s *server) ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty) (*pb.ListAuthorizedTicketsResponse, error) {
 	return sc.HandleListMyAuthorizedTickets(ctx, in, s.Wallet, s.Builder)
 }
 
+/**
+ * @notice 程式進入點：初始化 DB、Peer、Gateway 並啟動 gRPC/HTTP 服務
+ * @dev 啟動前測試 Gateway 連線可用性
+ * @return 無（阻塞直到服務結束）
+ */
 func main() {
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {
@@ -144,6 +254,13 @@ func main() {
 	startHttpGatewayServer()       // 開 gRPC-Gateway server (HTTP server)
 }
 
+/**
+ * @notice 測試 Gateway 連線可用性
+ * @dev 從錢包取任一身份建立 Gateway，嘗試 Evaluate 簡單鏈碼函式
+ * @param builder Gateway 建構器
+ * @param wallet 錢包
+ * @return error 測試失敗原因
+ */
 // 添加Gateway連線測試函數
 func testGatewayConnection(builder fc.GWBuilder, wallet *wl.Wallet) error {
 	// 嘗試使用現有的用戶身份測試連線
@@ -175,6 +292,12 @@ func testGatewayConnection(builder fc.GWBuilder, wallet *wl.Wallet) error {
 	return nil
 }
 
+/**
+ * @notice 啟動 gRPC 服務
+ * @dev 監聽 :50051 並註冊 HealthServiceServer
+ * @param wallet 錢包
+ * @param builder Gateway 建構器
+ */
 func startGrpcServer(wallet *wl.Wallet, builder fc.GWBuilder) {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -190,6 +313,12 @@ func startGrpcServer(wallet *wl.Wallet, builder fc.GWBuilder) {
 	}
 }
 
+/**
+ * @notice 簡易 CORS 中介層
+ * @dev 允許指定 Origin，處理 OPTIONS 預檢請求
+ * @param h 下一層 HTTP handler
+ * @return http.Handler 包裝後的 handler
+ */
 func allowCORS(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -211,6 +340,10 @@ func allowCORS(h http.Handler) http.Handler {
 	})
 }
 
+/**
+ * @notice 啟動 HTTP gRPC-Gateway 服務
+ * @dev 監聽 :8080，透過 gRPC-Gateway 轉發到 :50051
+ */
 func startHttpGatewayServer() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)

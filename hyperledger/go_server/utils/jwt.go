@@ -12,6 +12,12 @@ import (
 
 var jwtSecret = []byte("my_super_secret") // 可放環境變數
 
+/**
+ * @notice 產生 JWT Token
+ * @dev 使用 HS256 簽章，payload 含 user_id 與 24h 過期時間
+ * @param userID 使用者識別
+ * @return string 簽章後的 JWT, error 失敗
+ */
 // 產生 JWT Token
 func GenerateJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -21,6 +27,12 @@ func GenerateJWT(userID string) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
+/**
+ * @notice 驗證 JWT 並回傳 userID
+ * @dev 以預設密鑰驗簽；解析 payload 中的 user_id
+ * @param tokenStr JWT 字串
+ * @return string userID, error 驗證或解析失敗
+ */
 // 驗證 token 並解析 userID（內部用）
 func ValidateJWT(tokenStr string) (string, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
@@ -44,7 +56,12 @@ func ValidateJWT(tokenStr string) (string, error) {
 	return userID, nil
 }
 
-// ✅ 封裝版本：從 context 取得 userID
+/**
+ * @notice 從 gRPC Context 的 metadata 解析出 userID
+ * @dev 讀取 authorization 欄位作為 JWT 來源，並呼叫 ValidateJWT
+ * @param ctx gRPC 請求上下文
+ * @return string userID, error 未授權或驗證失敗
+ */
 func ExtractUserIDFromContext(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

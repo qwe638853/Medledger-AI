@@ -28,11 +28,23 @@ type EnrollRequest struct {
 }
 
 // 將 byte 資料轉換為 Base64 編碼字串，用於 token payload 組合
+/**
+ * @notice byte → Base64 字串
+ * @dev 用於組合 Fabric CA Token payload
+ * @param data 原始位元組
+ * @return string Base64 編碼字串
+ */
 func B64Encode(data []byte) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
 // 從完整 URL 中取出 URI 路徑（不含主機與查詢字串）
+/**
+ * @notice 從完整 URL 取出 URI 路徑
+ * @dev 去除主機與查詢字串
+ * @param full 完整 URL
+ * @return string URI 路徑
+ */
 func uriPath(full string) string {
 	u, err := url.Parse(full)
 	if err != nil {
@@ -42,6 +54,17 @@ func uriPath(full string) string {
 }
 
 // 建立 ECDSA token，用來在與 Fabric CA 溝通時進行授權驗證（Authorization header）
+/**
+ * @notice 產生 ECDSA Token（Fabric CA Authorization）
+ * @dev payload = method.base64(uri).base64(body).base64(cert) → BCCSP 簽章
+ * @param csp BCCSP 實作
+ * @param cert Admin 憑證（PEM）
+ * @param key Admin 私鑰（BCCSP 匯入）
+ * @param method HTTP 方法
+ * @param uri 目標 URI
+ * @param body 請求主體
+ * @return string Token, error 失敗
+ */
 func GenECDSAToken(csp bccsp.BCCSP, cert []byte, key bccsp.Key, method, uri string, body []byte) (string, error) {
 	b64body := B64Encode(body)
 	b64cert := B64Encode(cert)
@@ -51,6 +74,10 @@ func GenECDSAToken(csp bccsp.BCCSP, cert []byte, key bccsp.Key, method, uri stri
 }
 
 // 實際進行雜湊與簽章，用於支援 GenECDSAToken
+/**
+ * @notice 產生 token 的簽章實作
+ * @dev 使用 BCCSP SHA256 做雜湊並簽章，回傳 certBase64.sigBase64
+ */
 func genECDSAToken(csp bccsp.BCCSP, key bccsp.Key, b64cert, payload string) (string, error) {
 	digest, err := csp.Hash([]byte(payload), &bccsp.SHAOpts{})
 	if err != nil {
@@ -68,6 +95,15 @@ func genECDSAToken(csp bccsp.BCCSP, key bccsp.Key, b64cert, payload string) (str
 }
 
 // 使用 Fabric 官方 api.RegistrationRequest 結構向 Fabric CA 註冊身份
+/**
+ * @notice 向 Fabric CA 註冊身份
+ * @dev 使用 api.RegistrationRequest，Admin 憑證產生 Authorization token 後 POST /api/v1/register
+ * @param caURL CA 伺服器 URL
+ * @param certPath Admin 憑證路徑
+ * @param keyPath Admin 私鑰路徑
+ * @param req 註冊請求內容
+ * @return error 失敗原因
+ */
 func RegisterUser(caURL, certPath, keyPath string, req api.RegistrationRequest) error {
 	// 將註冊資料轉為 JSON
 	bodyBytes, err := json.Marshal(req)
@@ -126,6 +162,15 @@ func RegisterUser(caURL, certPath, keyPath string, req api.RegistrationRequest) 
 	return nil
 }
 
+/**
+ * @notice Enroll 申請簽發憑證
+ * @dev 以 Basic 認證（id:secret）與 CSR JSON 呼叫 /api/v1/enroll，回傳 PEM 憑證
+ * @param caURL CA 伺服器 URL
+ * @param enrollID 帳號
+ * @param enrollSecret 密碼
+ * @param enrollRequest Enroll 請求（可含 CSR）
+ * @return []byte 憑證 PEM, error 失敗
+ */
 func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollRequest) ([]byte, error) {
 
 	var enrollResp struct {
@@ -171,6 +216,12 @@ func EnrollUser(caURL, enrollID, enrollSecret string, enrollRequest EnrollReques
 }
 
 // 建立使用者專屬 CSR（含 CommonName）與私鑰
+/**
+ * @notice 產生使用者私鑰與 CSR
+ * @dev ECDSA P-256 私鑰；CSR Subject.CommonName = commonName
+ * @param commonName CN 欄位
+ * @return *ecdsa.PrivateKey 私鑰, []byte CSR PEM, error 失敗
+ */
 func GenerateCSR(commonName string) (*ecdsa.PrivateKey, []byte, error) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -188,6 +239,12 @@ func GenerateCSR(commonName string) (*ecdsa.PrivateKey, []byte, error) {
 }
 
 // 儲存私鑰為 PEM 格式至指定路徑
+/**
+ * @notice 儲存私鑰（PEM PKCS#8）
+ * @param key 私鑰
+ * @param filename 檔案路徑
+ * @return error 寫檔失敗
+ */
 func SavePrivateKeyToFile(key *ecdsa.PrivateKey, filename string) error {
 	keyDER, err := x509.MarshalPKCS8PrivateKey(key)
 	if err != nil {
@@ -198,10 +255,22 @@ func SavePrivateKeyToFile(key *ecdsa.PrivateKey, filename string) error {
 }
 
 // 將 CSR PEM 資料寫入檔案
+/**
+ * @notice 儲存 CSR PEM
+ * @param csrPEM CSR 內容
+ * @param filename 檔案路徑
+ * @return error 寫檔失敗
+ */
 func SaveCSRToFile(csrPEM []byte, filename string) error {
 	return ioutil.WriteFile(filename, csrPEM, 0600)
 }
 
+/**
+ * @notice 儲存憑證 PEM
+ * @param certPEM 憑證內容
+ * @param filename 檔案路徑
+ * @return error 寫檔失敗
+ */
 func SaveCertToFile(certPEM []byte, filename string) error {
 	return ioutil.WriteFile(filename, certPEM, 0600)
 }

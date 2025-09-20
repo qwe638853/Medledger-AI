@@ -4,6 +4,7 @@ package wallet
 // Requires go_server/database.DB already opened. Provides PutFile, PutRaw, Get, etc.
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,6 +32,7 @@ type WalletInterface interface {
 type Entry struct {
 	ID     *identity.X509Identity
 	Signer identity.Sign
+    Cert   *x509.Certificate
 }
 
 /**
@@ -96,12 +98,6 @@ func (w *Wallet) PutFile(userID, certPath, keyPath, mspID string) error {
  * @return error 解析或存取失敗
  */
 func (w *Wallet) PutRaw(userID string, certPEM, keyPEM []byte, mspID string) error {
-	// 讀取憑證與私鑰
-	cert, err := identity.CertificateFromPEM(certPEM)
-	if err != nil {
-		return err
-	}
-	// TODO: 可以針對私鑰及憑證做更多檢查
 
 	// 建立 JSON 格式
 	payload := map[string]any{
@@ -114,7 +110,7 @@ func (w *Wallet) PutRaw(userID string, certPEM, keyPEM []byte, mspID string) err
 	// 確保這個時間只有一個 goroutine 在執行這段程式碼
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	_, err = database.DB.Exec(`INSERT INTO wallet(label,content) VALUES(?,?)
+	_, err := database.DB.Exec(`INSERT INTO wallet(label,content) VALUES(?,?)
         ON CONFLICT(label) DO UPDATE SET content=excluded.content`, userID, content)
 	if err != nil {
 		return err
@@ -150,13 +146,13 @@ func (w *Wallet) Get(userID string) (*Entry, bool) {
 	if err != nil {
 		return nil, false
 	}
-	id, _ := identity.NewX509Identity(payload.MspID, cert)
+    id, _ := identity.NewX509Identity(payload.MspID, cert)
 	privKey, err := identity.PrivateKeyFromPEM([]byte(payload.PrivateKey))
 	if err != nil {
 		return nil, false
 	}
-	signer, _ := identity.NewPrivateKeySign(privKey)
-	return &Entry{ID: id, Signer: signer}, true
+    signer, _ := identity.NewPrivateKeySign(privKey)
+    return &Entry{ID: id, Signer: signer, Cert: cert}, true
 }
 
 /**

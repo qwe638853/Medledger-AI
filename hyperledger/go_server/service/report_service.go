@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/ecdsa"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"go_server/database"
+	"go_server/ecies"
 	fc "go_server/fabric"
 	pb "go_server/proto"
 	ut "go_server/utils"
@@ -46,8 +48,8 @@ func HandleUploadReport(
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
 
-	log.Printf("[Debug] UploadReport args: reportID=%s, patientHash=%s, testResult=%s",
-		req.ReportId, req.UserId, req.TestResultsJson)
+    log.Printf("[Debug] UploadReport args: reportID=%s, patientHash=%s, dataLen=%d",
+		req.ReportId, req.UserId, len(req.TestResultsJson))
 
 	// 依使用者身分建立 Gateway + Contract
 	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
@@ -60,17 +62,34 @@ func HandleUploadReport(
 	hashedUserID := hex.EncodeToString(sum[:])
 	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
 
-	// 呼叫鏈碼
-	log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport")
-	log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, DataSize: %d bytes", 
-		req.ReportId, hashedUserID, len(req.TestResultsJson))
-	
-	result, err := contract.SubmitTransaction(
-		"UploadReport",
-		req.ReportId,
-		hashedUserID,
-		req.TestResultsJson,
-	)
+    // 以病患公鑰進行 ECIES 加密
+    patientEntry, ok := wallet.Get(req.UserId)
+    if !ok || patientEntry.Cert == nil {
+        return nil, status.Error(codes.InvalidArgument, "病患錢包不存在或缺少憑證，無法加密")
+    }
+    pubKey, ok := patientEntry.Cert.PublicKey.(*ecdsa.PublicKey)
+    if !ok {
+        return nil, status.Error(codes.InvalidArgument, "病患憑證不是 ECDSA 公鑰")
+    }
+
+    encBytes, err := ecies.Encrypt(pubKey, []byte(req.TestResultsJson))
+    if err != nil {
+        log.Printf("[Error] ECIES 加密失敗: %v", err)
+        return nil, status.Error(codes.Internal, "資料加密失敗")
+    }
+    encStr := string(encBytes)
+
+    // 呼叫鏈碼
+    log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport (encrypted)")
+    log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, EncryptedSize: %d bytes", 
+        req.ReportId, hashedUserID, len(encStr))
+
+    result, err := contract.SubmitTransaction(
+        "UploadReport",
+        req.ReportId,
+        hashedUserID,
+        encStr,
+    )
 	
 	if err != nil {
 		log.Printf("[Error] SubmitTransaction 失敗: %v", err)

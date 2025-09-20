@@ -10,20 +10,26 @@ import apiClient, { handleApiError, notifySuccess, notifyError } from './apiServ
 export const login = async (data) => {
   try {
     console.log('發送登入請求:', { 
-      data: { user_id: data.username, password: data.password }
+      data: { userId: data.username, password: data.password }
     });
     
     const response = await apiClient.post('/v1/login', {
-      user_id: data.username,
+      userId: data.username,
       password: data.password
     });
     
     console.log('登入響應:', {
-      success: response.data.success,
-      message: response.data.message,
-      hasToken: !!response.data.token,
-      tokenPrefix: response.data.token ? response.data.token.substring(0, 10) + '...' : 'N/A'
+      success: response.data?.success,
+      message: response.data?.message,
+      hasToken: !!response.data?.token,
+      tokenPrefix: response.data?.token ? response.data.token.substring(0, 10) + '...' : 'N/A'
     });
+
+    if (!response.data?.success) {
+      const msg = response.data?.message || '登入失敗';
+      notifyError(msg);
+      throw new Error(msg);
+    }
     
     return response.data;
   } catch (error) {
@@ -47,13 +53,21 @@ export const login = async (data) => {
 export const register = async (data) => {
   try {
     const response = await apiClient.post('/v1/register/user', {
-      user_id: data.username,
+      userId: data.username,
       password: data.password,
       name: data.name,
       date: data.date,
       email: data.email,
       phone: data.phone
     });
+    
+    if (!response.data?.success) {
+      const msg = response.data?.message || '註冊失敗';
+      notifyError(msg);
+      throw new Error(msg);
+    }
+    
+    notifySuccess(response.data?.message || '註冊成功');
     
     return response.data;
   } catch (error) {
@@ -83,13 +97,21 @@ export const registerInsurer = async (data) => {
     });
     
     const response = await apiClient.post('/v1/register/insurer', {
-      insurer_id: data.insurerId,
+      insurerId: data.insurerId,
       password: data.password,
-      company_name: data.companyName,
-      contact_person: data.contactPerson,
+      companyName: data.companyName,
+      contactPerson: data.contactPerson,
       email: data.email,
       phone: data.phone
     });
+    
+    if (!response.data?.success) {
+      const msg = response.data?.message || '保險業者註冊失敗';
+      notifyError(msg);
+      throw new Error(msg);
+    }
+    
+    notifySuccess(response.data?.message || '保險業者註冊成功');
     
     return response.data;
   } catch (error) {

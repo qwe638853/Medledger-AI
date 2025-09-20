@@ -663,7 +663,7 @@ const handleRegister = async () => {
         phone: registerForm.value.phoneNumber
       });
       
-      await authStore.registerInsurer({
+      const ok = await authStore.registerInsurer({
         insurerId: registerForm.value.idNumber,
         password: registerForm.value.password,
         companyName: registerForm.value.companyName,
@@ -671,6 +671,10 @@ const handleRegister = async () => {
         email: registerForm.value.email,
         phone: registerForm.value.phoneNumber
       });
+      if (!ok) {
+        showAlert('error', '註冊失敗，請確認表單資料', '錯誤');
+        return;
+      }
     } else {
       console.log('一般用戶/醫療機構註冊:', {
         username: registerForm.value.idNumber,
@@ -682,7 +686,7 @@ const handleRegister = async () => {
         role: registerForm.value.selectedRole
       });
       
-      await authStore.register({
+      const ok = await authStore.register({
         username: registerForm.value.idNumber,
         password: registerForm.value.password,
         name: registerForm.value.fullName,
@@ -691,6 +695,10 @@ const handleRegister = async () => {
         phone: registerForm.value.phoneNumber,
         role: registerForm.value.selectedRole
       });
+      if (!ok) {
+        showAlert('error', '註冊失敗，請確認表單資料', '錯誤');
+        return;
+      }
     }
     
     // 註冊成功顯示

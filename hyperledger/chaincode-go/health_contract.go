@@ -169,6 +169,59 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 	return ctx.GetStub().PutState(repKey, bytes)
 }
 
+func (h *HealthCheckContract) UpdateReport(ctx contractapi.TransactionContextInterface, reportID, newResultJSON string) error {
+    userID, role, err := getCaller(ctx)
+    if err != nil { return fmt.Errorf("failed to get caller identity") }
+    if role != "patient" { return fmt.Errorf("only patient can update report") }
+
+    repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+    b, _ := ctx.GetStub().GetState(repKey)
+    if b == nil { return fmt.Errorf("report not found") }
+
+    var rec HealthReport
+    if err := json.Unmarshal(b, &rec); err != nil { return fmt.Errorf("failed to unmarshal report: %v", err) }
+    // 歸屬檢查
+    if rec.PatientHash != hashID(userID) { return fmt.Errorf("not owner of this report") }
+
+    // 解析舊、新 envelope
+    var oldEnv, newEnv struct {
+        Ciphertext  string            `json:"ciphertext"`
+        Nonce       string            `json:"nonce"`
+        WrappedKeys map[string]string `json:"wrappedKeys"`
+        Enc         string            `json:"enc"`
+        KDF         string            `json:"kdf"`
+        Curve       string            `json:"curve"`
+    }
+    if err := json.Unmarshal([]byte(rec.ResultJSON), &oldEnv); err != nil {
+        return fmt.Errorf("bad old envelope: %v", err)
+    }
+    if err := json.Unmarshal([]byte(newResultJSON), &newEnv); err != nil {
+        return fmt.Errorf("bad new envelope: %v", err)
+    }
+
+    // 嚴格一致性檢查：不允許改密文/nonce/演算法/版本/AAD
+    if oldEnv.Ciphertext != newEnv.Ciphertext ||
+       oldEnv.Nonce != newEnv.Nonce ||
+       oldEnv.Enc != newEnv.Enc ||
+       oldEnv.KDF != newEnv.KDF ||
+       oldEnv.Curve != newEnv.Curve || {
+        return fmt.Errorf("only wrappedKeys can be changed")
+    }
+
+    // 若需要：可以改成「merge」模式，防止把既有 key 覆蓋掉
+    if oldEnv.WrappedKeys == nil { oldEnv.WrappedKeys = map[string]string{} }
+    for k, v := range newEnv.WrappedKeys {
+        oldEnv.WrappedKeys[k] = v
+    }
+
+    // 回寫
+    merged, _ := json.Marshal(oldEnv)
+    rec.ResultJSON = string(merged)
+    out, _ := json.Marshal(rec)
+    return ctx.GetStub().PutState(repKey, out)
+}
+
+
 /**
  * @notice 病患批准並授權訪問請求
  * @dev 只允許 patient 身份，會產生授權票據並發送事件
@@ -734,6 +787,8 @@ func (h *HealthCheckContract) ListMyAccessRequests(ctx contractapi.TransactionCo
     }
     return results, nil
 }
+
+
 
 
 func main() {

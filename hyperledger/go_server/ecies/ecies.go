@@ -1,157 +1,218 @@
-package ecies
+	package ecies
 
-import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"io"
-    "log"
+	import (
+		"crypto/aes"
+		"crypto/cipher"
+		"crypto/ecdsa"
+		"crypto/elliptic"
+		"crypto/rand"
+		"crypto/sha256"
+		"crypto/x509"
+		"encoding/base64"
+		"encoding/json"
+		"errors"
+		"io"
+		"log"
 
-	"golang.org/x/crypto/hkdf"
-)
+		"golang.org/x/crypto/hkdf"
+	)
 
-type Envelope struct {
-	Ciphertext   string `json:"ciphertext"`
-	Nonce        string `json:"nonce"`
-	EphemeralPub string `json:"ephemeralPub"`
-}
-
-var curve = elliptic.P256()
-
-func Encrypt(pubKey *ecdsa.PublicKey , data []byte) ([]byte, error) {
-    log.Printf("[ECIES] Encrypt: dataLen=%d", len(data))
-    if pubKey != nil {
-        log.Printf("[ECIES] Encrypt: recipient pub (P-256) X=%s Y=%s", pubKey.X.Text(16), pubKey.Y.Text(16))
-    }
-	// 檢查公鑰是否有效
-	if pubKey == nil || pubKey.Curve != curve || !curve.IsOnCurve(pubKey.X, pubKey.Y) {
-		return nil, errors.New("invalid recipient public key (need ECDSA P-256)")
-	}
-	// 生成 ephemeral key
-	ephemeralPriv, ex, ey, err := elliptic.GenerateKey(curve, rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-    // 生成 ephemeral public key
-	ephemeralPub := &ecdsa.PublicKey{
-		Curve: curve,
-		X: ex,
-		Y: ey,
-	}
-    log.Printf("[ECIES] Encrypt: eph pub X=%s Y=%s, ephPrivLen=%d", ex.Text(16), ey.Text(16), len(ephemeralPriv))
-	// ECDH
-	sx, sy := curve.ScalarMult(pubKey.X, pubKey.Y, ephemeralPriv)
-	shared := elliptic.Marshal(curve,sx,sy)
-    log.Printf("[ECIES] Encrypt: shared X=%s Y=%s, sharedBytesB64=%s", sx.Text(16), sy.Text(16), base64.StdEncoding.EncodeToString(shared))
-
-	// HKDF
-	h := hkdf.New(sha256.New, shared, nil, nil)
-	aesKey := make([]byte, 32)
-	_, err = io.ReadFull(h, aesKey)
-	if err != nil {
-		return nil, err
-	}
-    log.Printf("[ECIES] Encrypt: aesKeyB64=%s", base64.StdEncoding.EncodeToString(aesKey))
-
-	// AES-GCM
-	nonce := make([]byte, 12)
-	_, err = io.ReadFull(rand.Reader, nonce)
-	if err != nil {
-		return nil, err
-	}
-    log.Printf("[ECIES] Encrypt: nonceB64=%s", base64.StdEncoding.EncodeToString(nonce))
-	blockAes, err := aes.NewCipher(aesKey)
-	if err != nil {
-		return nil, err
-	}
-	gcm, err := cipher.NewGCM(blockAes)
-	if err != nil {
-		return nil, err
-	}
-	ct := gcm.Seal(nil, nonce, data, nil)
-    log.Printf("[ECIES] Encrypt: ctLen=%d ctB64=%s", len(ct), base64.StdEncoding.EncodeToString(ct))
-
-	ephemeralPubBytes, err := x509.MarshalPKIXPublicKey(ephemeralPub)
-	if err != nil {
-		return nil, err
-	}
-	env := Envelope{
-		Ciphertext: base64.StdEncoding.EncodeToString(ct),
-		Nonce: base64.StdEncoding.EncodeToString(nonce),
-		EphemeralPub: base64.StdEncoding.EncodeToString(ephemeralPubBytes),
+	type Envelope struct {
+		Ciphertext   string `json:"ciphertext"`
+		Nonce        string `json:"nonce"`
+		EphemeralPub string `json:"ephemeralPub"`
+		WrappedKeys  map[string]string `json:"wrappedKeys"` // label -> b64(smallWrapJSON)
+		Enc          string            `json:"enc"`         // "AES-256-GCM"
+		KDF         string            `json:"kdf"`         // "HKDF-SHA256"
+		Curve       string            `json:"curve"`       // "P-256"
 	}
 
-	out, err := json.Marshal(env)
-	if err == nil {
-		log.Printf("[ECIES] Encrypt: envJSON=%s", string(out))
+	// smallWrap：包 dataKey 的小包（再 b64 放進 WrappedKeys）
+	type smallWrap struct {
+		EphPub string `json:"ephPub"` // b64(未壓縮65B)
+		N      string `json:"n"`      // b64(12B)
+		C      string `json:"c"`      // b64(AES-GCM(kek, dataKey))
+		KDF    string `json:"kdf"`    // "HKDF-SHA256"
+		Curve  string `json:"curve"`  // "P-256"
 	}
-	return out, err
-}
 
-func Decrypt(privKey *ecdsa.PrivateKey, env Envelope) ([]byte, error) {
-    log.Printf("[ECIES] Decrypt: env.nonceB64=%s env.ciphertextLen=%d env.ephPubLen=%d",
-        env.Nonce, len(env.Ciphertext), len(env.EphemeralPub))
-	ep, err := base64.StdEncoding.DecodeString(env.EphemeralPub)
-	if err != nil {
-		return nil, err
-	}
-    log.Printf("[ECIES] Decrypt: ephPubDerLen=%d", len(ep))
-	anyPub, err := x509.ParsePKIXPublicKey(ep)
-	if err != nil {
-		return nil, err
-	}
-	ePub, ok := anyPub.(*ecdsa.PublicKey)
-	if !ok {
-		return nil, errors.New("invalid ephemeral public key (need ECDSA P-256)")
-	}
-	if ePub.Curve != curve || !curve.IsOnCurve(ePub.X, ePub.Y) {
-		return nil, errors.New("invalid ephemeral public key (need ECDSA P-256)")
-	}
-    log.Printf("[ECIES] Decrypt: eph pub X=%s Y=%s", ePub.X.Text(16), ePub.Y.Text(16))
-	
-	// ECDH: shared = d_R * Q_e
-	sx, sy := curve.ScalarMult(ePub.X, ePub.Y, privKey.D.Bytes())
-	shared := elliptic.Marshal(curve,sx,sy)
-    log.Printf("[ECIES] Decrypt: shared X=%s Y=%s, sharedBytesB64=%s", sx.Text(16), sy.Text(16), base64.StdEncoding.EncodeToString(shared))
+	var (
+		curve = elliptic.P256()
+		b64   = base64.StdEncoding
+	)
 
-	// HKDF
-	h := hkdf.New(sha256.New, shared, nil, nil)
-	aesKey := make([]byte, 32)
-	_, err = io.ReadFull(h, aesKey)
-	if err != nil {
-		return nil, err
-	}
-    log.Printf("[ECIES] Decrypt: aesKeyB64=%s", base64.StdEncoding.EncodeToString(aesKey))
 
-	// AES-GCM
-	nonce, err := base64.StdEncoding.DecodeString(env.Nonce)
-	if err != nil {
-		return nil, err
+	// EncryptReportForClinic：A/B/C 三步到位（只先包診所一份）
+	func EncryptReportForClinic(clinicPub *ecdsa.PublicKey, plaintext []byte, clinicLabel string) ([]byte, error) {
+		if clinicPub == nil || clinicLabel == "" {
+			return nil, errors.New("clinic pub/label required")
+		}
+
+		log.Printf("[ECIES] EncryptReportForClinic: clinicLabel=%s, ptLen=%d", clinicLabel, len(plaintext))
+		if clinicPub != nil {
+			log.Printf("[ECIES] ClinicPub: X=%s Y=%s", clinicPub.X.Text(16), clinicPub.Y.Text(16))
+		}
+
+		// A) dataKey = 32B 隨機；nonce = 12B
+		dataKey := make([]byte, 32)
+		if _, err := io.ReadFull(rand.Reader, dataKey); err != nil { return nil, err }
+		log.Printf("[ECIES] dataKeyB64=%s", b64.EncodeToString(dataKey))
+		nonce := make([]byte, 12)
+		if _, err := io.ReadFull(rand.Reader, nonce); err != nil { return nil, err }
+		log.Printf("[ECIES] dataNonceB64=%s", b64.EncodeToString(nonce))
+
+		// B) AES-GCM(dataKey) 加密報告
+		block, err := aes.NewCipher(dataKey)
+		if err != nil { return nil, err }
+		gcm, err := cipher.NewGCM(block)
+		if err != nil { return nil, err }
+		ct := gcm.Seal(nil, nonce, plaintext, nil)
+		log.Printf("[ECIES] dataCTLen=%d dataCTB64=%s", len(ct), b64.EncodeToString(ct))
+
+		// C) 為診所包 dataKey（ECIES：ephemeral×clinicPub → HKDF → kek → GCM 包 dataKey）
+		wrapB64, err := wrapDataKeyFor(clinicPub, dataKey)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] wrap(for=%s) len=%d", clinicLabel, len(wrapB64))
+
+		env := Envelope{
+			Ciphertext:  b64.EncodeToString(ct),
+			Nonce:       b64.EncodeToString(nonce),
+			WrappedKeys: map[string]string{clinicLabel: wrapB64},
+			Enc:         "AES-256-GCM",
+			KDF:         "HKDF-SHA256",
+			Curve:       "P-256",
+		}
+		out, err := json.Marshal(env)
+		if err == nil {
+			log.Printf("[ECIES] EnvelopeJSON=%s", string(out))
+		}
+		return out, err
 	}
-	ct, err := base64.StdEncoding.DecodeString(env.Ciphertext)
-	if err != nil {
-		return nil, err
+
+	// wrapDataKeyFor：針對某收件者公鑰，產生該收件者專屬的小包
+	func wrapDataKeyFor(recipientPub *ecdsa.PublicKey, dataKey []byte) (string, error) {
+		if recipientPub == nil || recipientPub.Curve != curve || !curve.IsOnCurve(recipientPub.X, recipientPub.Y) {
+			return "", errors.New("bad recipient pub")
+		}
+		log.Printf("[ECIES] wrapDataKeyFor: recPub X=%s Y=%s, dataKeyLen=%d", recipientPub.X.Text(16), recipientPub.Y.Text(16), len(dataKey))
+		// ephemeral for this recipient
+		ephPriv, ex, ey, err := elliptic.GenerateKey(curve, rand.Reader)
+		if err != nil { return "", err }
+		ephPub := &ecdsa.PublicKey{Curve: curve, X: ex, Y: ey}
+		log.Printf("[ECIES] wrapDataKeyFor: ephPub X=%s Y=%s ephPrivLen=%d", ex.Text(16), ey.Text(16), len(ephPriv))
+
+		// shared → kek
+		sx, sy := curve.ScalarMult(recipientPub.X, recipientPub.Y, ephPriv)
+		shared := elliptic.Marshal(curve, sx, sy)
+		log.Printf("[ECIES] wrapDataKeyFor: shared X=%s Y=%s sharedB64=%s", sx.Text(16), sy.Text(16), b64.EncodeToString(shared))
+		h := hkdf.New(sha256.New, shared, nil, []byte("ECIES-P256/WRAP-KEK/v1"))
+		kek := make([]byte, 32)
+		if _, err := io.ReadFull(h, kek); err != nil { return "", err }
+		log.Printf("[ECIES] wrapDataKeyFor: kekB64=%s", b64.EncodeToString(kek))
+
+		n := make([]byte, 12)
+		if _, err := io.ReadFull(rand.Reader, n); err != nil { return "", err }
+		log.Printf("[ECIES] wrapDataKeyFor: nB64=%s", b64.EncodeToString(n))
+		block, err := aes.NewCipher(kek)
+		if err != nil { return "", err }
+		gcm, err := cipher.NewGCM(block)
+		if err != nil { return "", err }
+		wct := gcm.Seal(nil, n, dataKey, nil)
+		log.Printf("[ECIES] wrapDataKeyFor: wctLen=%d wctB64=%s", len(wct), b64.EncodeToString(wct))
+
+		epubDER, err := x509.MarshalPKIXPublicKey(ephPub)
+		if err != nil { return "", err }
+		sw := smallWrap{
+			EphPub: b64.EncodeToString(epubDER),
+			N:      b64.EncodeToString(n),
+			C:      b64.EncodeToString(wct),
+			KDF:    "HKDF-SHA256",
+			Curve:  "P-256",
+		}
+		raw, err := json.Marshal(sw)
+		if err != nil { return "", err }
+		log.Printf("[ECIES] wrapDataKeyFor: smallWrapJSON=%s", string(raw))
+		return b64.EncodeToString(raw), nil
 	}
-    log.Printf("[ECIES] Decrypt: nonceLen=%d ctLen=%d", len(nonce), len(ct))
-	blockAes, err := aes.NewCipher(aesKey)
-	if err != nil {
-		return nil, err
+
+	// AddRecipient：用「現有持有人」取出 dataKey → 為新對象包一份 → 更新 Envelope
+	func AddRecipient(envJSON []byte, newLabel string, newRecipientPub *ecdsa.PublicKey,
+		unwrapSelf func(env Envelope) ([]byte, error)) ([]byte, error) {
+
+		if newLabel == "" || newRecipientPub == nil {
+			return nil, errors.New("label/pub required")
+		}
+		var env Envelope
+		if err := json.Unmarshal(envJSON, &env); err != nil { return nil, err }
+		log.Printf("[ECIES] AddRecipient: newLabel=%s currentKeys=%d", newLabel, len(env.WrappedKeys))
+
+		// 用現有 wrappedKey（例如診所的）解出 dataKey
+		log.Printf("[ECIES] AddRecipient: unwrapSelf start")
+		dataKey, err := unwrapSelf(env)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] AddRecipient: unwrapSelf done, dataKeyLen=%d", len(dataKey))
+
+		// 包給新收件者（病患）
+		wrapB64, err := wrapDataKeyFor(newRecipientPub, dataKey)
+		if err != nil { return nil, err }
+		if env.WrappedKeys == nil { env.WrappedKeys = make(map[string]string) }
+		env.WrappedKeys[newLabel] = wrapB64
+		out, err := json.Marshal(env)
+		if err == nil {
+			log.Printf("[ECIES] AddRecipient: EnvelopeJSON=%s", string(out))
+		}
+		return out, err
 	}
-	gcm, err := cipher.NewGCM(blockAes)
-	if err != nil {
-		return nil, err
+
+	func DecryptReport(ownPriv *ecdsa.PrivateKey, env Envelope, ownLabel string) ([]byte, error) {
+		log.Printf("[ECIES] DecryptReport: ownLabel=%s hasKeys=%d", ownLabel, len(env.WrappedKeys))
+		wrapB64, ok := env.WrappedKeys[ownLabel]
+		if !ok { return nil, errors.New("no wrappedKey for label") }
+
+		// 拆小包得 dataKey
+		raw, err := b64.DecodeString(wrapB64)
+		if err != nil { return nil, err }
+		var sw smallWrap
+		if err := json.Unmarshal(raw, &sw); err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: smallWrap=%s", string(raw))
+		epb, err := b64.DecodeString(sw.EphPub)
+		if err != nil { return nil, err }
+		apub, err := x509.ParsePKIXPublicKey(epb); if err != nil { return nil, err }
+		epub, ok := apub.(*ecdsa.PublicKey); if !ok { return nil, errors.New("bad eph pub type") }
+		log.Printf("[ECIES] DecryptReport: ephPub X=%s Y=%s", epub.X.Text(16), epub.Y.Text(16))
+
+		sx, sy := curve.ScalarMult(epub.X, epub.Y, ownPriv.D.Bytes())
+		shared := elliptic.Marshal(curve, sx, sy)
+		h := hkdf.New(sha256.New, shared, nil, []byte("ECIES-P256/WRAP-KEK/v1"))
+		kek := make([]byte, 32)
+		if _, err := io.ReadFull(h, kek); err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: kekB64=%s", b64.EncodeToString(kek))
+
+		n, err := b64.DecodeString(sw.N)
+		if err != nil { return nil, err }
+		c, err := b64.DecodeString(sw.C)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: wrap nLen=%d cLen=%d", len(n), len(c))
+		block, err := aes.NewCipher(kek)
+		if err != nil { return nil, err }
+		gcm, err := cipher.NewGCM(block)
+		if err != nil { return nil, err }
+		dataKey, err := gcm.Open(nil, n, c, nil)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: dataKeyLen=%d dataKeyB64=%s", len(dataKey), b64.EncodeToString(dataKey))
+
+		// 用 dataKey 解主密文
+		nonce, err := b64.DecodeString(env.Nonce)
+		if err != nil { return nil, err }
+		ct, err := b64.DecodeString(env.Ciphertext)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: main nonceLen=%d ctLen=%d", len(nonce), len(ct))
+		block2, err := aes.NewCipher(dataKey)
+		if err != nil { return nil, err }
+		gcm2, err := cipher.NewGCM(block2)
+		if err != nil { return nil, err }
+		pt, err := gcm2.Open(nil, nonce, ct, nil)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] DecryptReport: ptLen=%d ptPreview=%q", len(pt), string(pt))
+		return pt, nil
 	}
-	pt, err := gcm.Open(nil, nonce, ct, nil)
-	if err != nil {
-		return nil, err
-	}
-    log.Printf("[ECIES] Decrypt: ptLen=%d ptPreview=%q", len(pt), string(pt))
-	return pt, nil
-}

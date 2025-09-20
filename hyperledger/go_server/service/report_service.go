@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"log"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -62,23 +63,29 @@ func HandleUploadReport(
 	hashedUserID := hex.EncodeToString(sum[:])
 	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
 
-    // 以病患公鑰進行 ECIES 加密
-    patientEntry, ok := wallet.Get(req.UserId)
-    if !ok || patientEntry.Cert == nil {
-        return nil, status.Error(codes.InvalidArgument, "病患錢包不存在或缺少憑證，無法加密")
+    // 以診所公鑰進行 ECIES 加密 
+    clinicEntry, ok := wallet.Get(userID)
+    log.Printf("[Debug] 公鑰錢包取得結果: ok=%v certNil=%v", ok, clinicEntry == nil || clinicEntry.Cert == nil)
+    if !ok || clinicEntry == nil || clinicEntry.Cert == nil {
+        return nil, status.Error(codes.InvalidArgument, "診所錢包不存在或缺少憑證，無法加密")
     }
-    pubKey, ok := patientEntry.Cert.PublicKey.(*ecdsa.PublicKey)
+    log.Printf("[Debug] 公鑰憑證公鑰型別: %T", clinicEntry.Cert.PublicKey)
+    pubKey, ok := clinicEntry.Cert.PublicKey.(*ecdsa.PublicKey)
     if !ok {
-        return nil, status.Error(codes.InvalidArgument, "病患憑證不是 ECDSA 公鑰")
+        log.Printf("[Error] 診所憑證公鑰不是 ECDSA：got=%v", reflect.TypeOf(clinicEntry.Cert.PublicKey))
+        return nil, status.Error(codes.InvalidArgument, "診所憑證不是 ECDSA 公鑰")
     }
 
-    encBytes, err := ecies.Encrypt(pubKey, []byte(req.TestResultsJson))
+    encStart := time.Now()
+    log.Printf("[Debug] 開始 ECIES 加密，原始長度=%d", len(req.TestResultsJson))
+    encBytes, err := ecies.EncryptReportForClinic(pubKey, []byte(req.TestResultsJson), req.UserId)
+    log.Printf("[Debug] 完成 ECIES 加密，耗時=%s", time.Since(encStart))
     if err != nil {
         log.Printf("[Error] ECIES 加密失敗: %v", err)
         return nil, status.Error(codes.Internal, "資料加密失敗")
     }
     encStr := string(encBytes)
-
+    log.Printf("[Debug] 加密後字串長度=%d", len(encStr))
     // 呼叫鏈碼
     log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport (encrypted)")
     log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, EncryptedSize: %d bytes", 

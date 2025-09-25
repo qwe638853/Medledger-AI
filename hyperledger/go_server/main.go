@@ -222,6 +222,11 @@ func main() {
 
 	w := wl.New()
 
+    // ② 自動向 CA 註冊並 Enroll 平台身分，並寫入錢包（label=platform）
+    if err := sc.RegisterPlatformIdentity(context.Background(), w); err != nil {
+        log.Fatalf("❌ 平台身分註冊/Enroll 失敗: %v", err)
+    }
+
 	// ③ 建 PeerConnector (只做一次)
 	log.Println("🔗 正在連接到 Peer 節點...")
 	peer, err := fc.NewPeer(

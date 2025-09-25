@@ -339,3 +339,84 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface
 		Token:   token,
 	}, nil
 }
+
+// RegisterPlatformIdentity 幫「平台」向 Fabric CA 註冊並 Enroll，並寫入到錢包與 msp-data/platform
+// - 使用者名稱固定為 "platform"
+// - 密碼優先讀取環境變數 PLATFORM_CA_SECRET，預設為 "platformpw"
+// - MSP 名稱預設 "Org1MSP"，如需更動可調整此函式
+func RegisterPlatformIdentity(ctx context.Context, wallet wl.WalletInterface) error {
+	platformID := "platform"
+	platformSecret := os.Getenv("PLATFORM_CA_SECRET")
+	if platformSecret == "" {
+		platformSecret = "platformpw"
+	}
+
+	// 若錢包已存在，視為已完成，直接返回
+	if wallet.Exists(platformID) {
+		log.Printf("[Platform] 身分已存在於錢包，略過註冊/Enroll: %s", platformID)
+		return nil
+	}
+
+	// 1) CA 註冊（以 org admin 身分）
+	log.Printf("[Platform] 開始 Fabric CA 註冊: %s", platformID)
+	if err := fc.RegisterUser(
+		"http://localhost:7054",
+		"../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem",
+		"../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key",
+		api.RegistrationRequest{
+			Name:        platformID,
+			Secret:      platformSecret,
+			Type:        "client",
+			Affiliation: "org1.department1",
+			Attributes: []api.Attribute{{Name: "role", Value: "platform", ECert: true}},
+		},
+	); err != nil {
+		log.Printf("[Platform] ❌ CA 註冊失敗: %v", err)
+		return err
+	}
+
+	// 2) 產生私鑰與 CSR
+	privKey, csrPEM, err := fc.GenerateCSR(platformID)
+	if err != nil {
+		log.Printf("[Platform] ❌ 產生私鑰/CSR 失敗: %v", err)
+		return err
+	}
+
+	// 3) 寫入檔案結構 msp-data/platform
+	baseDir := filepath.Join("msp-data", "platform")
+	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
+	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
+	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
+
+	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
+	if err := fc.SaveCSRToFile(csrPEM, csrPath); err != nil {
+		log.Printf("[Platform] ❌ 儲存 CSR 失敗: %v", err)
+		return err
+	}
+	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
+	if err := fc.SavePrivateKeyToFile(privKey, keyPath); err != nil {
+		log.Printf("[Platform] ❌ 儲存私鑰失敗: %v", err)
+		return err
+	}
+
+	// 4) Enroll 取得憑證
+	certPem, err := fc.EnrollUser("http://localhost:7054", platformID, platformSecret, fc.EnrollRequest{Certificate_request: string(csrPEM)})
+	if err != nil {
+		log.Printf("[Platform] ❌ Enroll 憑證失敗: %v", err)
+		return err
+	}
+	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
+	if err := fc.SaveCertToFile(certPem, certPath); err != nil {
+		log.Printf("[Platform] ❌ 儲存憑證失敗: %v", err)
+		return err
+	}
+
+	// 5) 寫入錢包（label 固定為 platform）
+	if err := wallet.PutFile(platformID, certPath, keyPath, "Org1MSP"); err != nil {
+		log.Printf("[Platform] ❌ 寫入錢包失敗: %v", err)
+		return err
+	}
+
+	log.Printf("[Platform] ✅ 註冊與 Enroll 成功，已寫入錢包: %s", platformID)
+	return nil
+}

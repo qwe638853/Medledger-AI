@@ -42,15 +42,21 @@
 	)
 
 
-	// EncryptReportForClinic：A/B/C 三步到位（只先包診所一份）
-	func EncryptReportForClinic(clinicPub *ecdsa.PublicKey, plaintext []byte, clinicLabel string) ([]byte, error) {
+// EncryptReportForClinic：A/B/C 三步到位（同時包診所與平台兩份）
+func EncryptReportForClinic(clinicPub *ecdsa.PublicKey, platformPub *ecdsa.PublicKey, plaintext []byte, clinicLabel string) ([]byte, error) {
 		if clinicPub == nil || clinicLabel == "" {
 			return nil, errors.New("clinic pub/label required")
+		}
+		if platformPub == nil {
+			return nil, errors.New("platform pub required")
 		}
 
 		log.Printf("[ECIES] EncryptReportForClinic: clinicLabel=%s, ptLen=%d", clinicLabel, len(plaintext))
 		if clinicPub != nil {
 			log.Printf("[ECIES] ClinicPub: X=%s Y=%s", clinicPub.X.Text(16), clinicPub.Y.Text(16))
+		}
+		if platformPub != nil {
+			log.Printf("[ECIES] PlatformPub: X=%s Y=%s", platformPub.X.Text(16), platformPub.Y.Text(16))
 		}
 
 		// A) dataKey = 32B 隨機；nonce = 12B
@@ -69,15 +75,19 @@
 		ct := gcm.Seal(nil, nonce, plaintext, nil)
 		log.Printf("[ECIES] dataCTLen=%d dataCTB64=%s", len(ct), b64.EncodeToString(ct))
 
-		// C) 為診所包 dataKey（ECIES：ephemeral×clinicPub → HKDF → kek → GCM 包 dataKey）
-		wrapB64, err := wrapDataKeyFor(clinicPub, dataKey)
+		// C) 為診所與平台包 dataKey（ECIES：ephemeral×pub → HKDF → kek → GCM 包 dataKey）
+		wrapClinicB64, err := wrapDataKeyFor(clinicPub, dataKey)
 		if err != nil { return nil, err }
-		log.Printf("[ECIES] wrap(for=%s) len=%d", clinicLabel, len(wrapB64))
+		log.Printf("[ECIES] wrap(for=%s) len=%d", clinicLabel, len(wrapClinicB64))
+
+		wrapPlatformB64, err := wrapDataKeyFor(platformPub, dataKey)
+		if err != nil { return nil, err }
+		log.Printf("[ECIES] wrap(for=platform) len=%d", len(wrapPlatformB64))
 
 		env := Envelope{
 			Ciphertext:  b64.EncodeToString(ct),
 			Nonce:       b64.EncodeToString(nonce),
-			WrappedKeys: map[string]string{clinicLabel: wrapB64},
+			WrappedKeys: map[string]string{clinicLabel: wrapClinicB64, "platform": wrapPlatformB64},
 			Enc:         "AES-256-GCM",
 			KDF:         "HKDF-SHA256",
 			Curve:       "P-256",
@@ -136,7 +146,8 @@
 	}
 
 	// AddRecipient：用「現有持有人」取出 dataKey → 為新對象包一份 → 更新 Envelope
-	func AddRecipient(envJSON []byte, newLabel string, newRecipientPub *ecdsa.PublicKey,
+// AddRecipient：由平台呼叫。平台使用自身私鑰解開 label="platform" 的小包取得 dataKey，再為新對象包一份小包。
+func AddRecipient(envJSON []byte, newLabel string, newRecipientPub *ecdsa.PublicKey,
 		unwrapSelf func(env Envelope) ([]byte, error)) ([]byte, error) {
 
 		if newLabel == "" || newRecipientPub == nil {
@@ -146,8 +157,11 @@
 		if err := json.Unmarshal(envJSON, &env); err != nil { return nil, err }
 		log.Printf("[ECIES] AddRecipient: newLabel=%s currentKeys=%d", newLabel, len(env.WrappedKeys))
 
-		// 用現有 wrappedKey（例如診所的）解出 dataKey
-		log.Printf("[ECIES] AddRecipient: unwrapSelf start")
+		// 僅允許平台以自身私鑰解出 dataKey（label 必須為 "platform"）
+		log.Printf("[ECIES] AddRecipient: unwrapSelf start (must be platform)")
+		if _, ok := env.WrappedKeys["platform"]; !ok {
+			return nil, errors.New("no platform wrapped key")
+		}
 		dataKey, err := unwrapSelf(env)
 		if err != nil { return nil, err }
 		log.Printf("[ECIES] AddRecipient: unwrapSelf done, dataKeyLen=%d", len(dataKey))

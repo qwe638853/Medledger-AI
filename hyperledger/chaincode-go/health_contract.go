@@ -183,14 +183,18 @@ func (h *HealthCheckContract) UpdateReport(ctx contractapi.TransactionContextInt
     // 歸屬檢查
     if rec.PatientHash != hashID(userID) { return fmt.Errorf("not owner of this report") }
 
-    // 解析舊、新 envelope
+    // Transit 包裝
+    type wrapped struct {
+        Type string `json:"type"`
+        Ct   string `json:"ct"`
+    }
     var oldEnv, newEnv struct {
-        Ciphertext  string            `json:"ciphertext"`
-        Nonce       string            `json:"nonce"`
-        WrappedKeys map[string]string `json:"wrappedKeys"`
-        Enc         string            `json:"enc"`
-        KDF         string            `json:"kdf"`
-        Curve       string            `json:"curve"`
+        Ciphertext  string                 `json:"ciphertext"`
+        Nonce       string                 `json:"nonce"`
+        WrappedKeys map[string]wrapped     `json:"wrappedKeys"`
+        Enc         string                 `json:"enc"`
+        KDF         string                 `json:"kdf"`
+        Curve       string                 `json:"curve"`
     }
     if err := json.Unmarshal([]byte(rec.ResultJSON), &oldEnv); err != nil {
         return fmt.Errorf("bad old envelope: %v", err)
@@ -199,18 +203,27 @@ func (h *HealthCheckContract) UpdateReport(ctx contractapi.TransactionContextInt
         return fmt.Errorf("bad new envelope: %v", err)
     }
 
-    // 嚴格一致性檢查：不允許改密文/nonce/演算法/版本/AAD
+    // 嚴格一致性檢查：不允許改密文/nonce/演算法/版本
     if oldEnv.Ciphertext != newEnv.Ciphertext ||
        oldEnv.Nonce != newEnv.Nonce ||
        oldEnv.Enc != newEnv.Enc ||
        oldEnv.KDF != newEnv.KDF ||
-       oldEnv.Curve != newEnv.Curve || {
+       oldEnv.Curve != newEnv.Curve {
         return fmt.Errorf("only wrappedKeys can be changed")
     }
 
-    // 若需要：可以改成「merge」模式，防止把既有 key 覆蓋掉
-    if oldEnv.WrappedKeys == nil { oldEnv.WrappedKeys = map[string]string{} }
+    // 只允許新增 wrappedKeys，不可修改或覆蓋既有 key；且必須為 transit 格式
+    if oldEnv.WrappedKeys == nil { oldEnv.WrappedKeys = map[string]wrapped{} }
     for k, v := range newEnv.WrappedKeys {
+        if _, exists := oldEnv.WrappedKeys[k]; exists {
+            return fmt.Errorf("wrapped key for %s already exists", k)
+        }
+        if v.Type != "transit" {
+            return fmt.Errorf("wrapped key type must be 'transit'")
+        }
+        if v.Ct == "" {
+            return fmt.Errorf("wrapped key ciphertext is empty")
+        }
         oldEnv.WrappedKeys[k] = v
     }
 

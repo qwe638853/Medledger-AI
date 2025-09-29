@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+    "github.com/joho/godotenv"
 )
 
 type server struct {
@@ -60,7 +61,7 @@ func (s *server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResp
  */
 // 實現新的註冊方法
 func (s *server) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterResponse, error) {
-	return sc.HandleRegisterUser(ctx, req, s.Wallet)
+    return sc.HandleRegisterUser(ctx, req, s.Wallet, s.Builder)
 }
 
 /**
@@ -215,6 +216,12 @@ func (s *server) ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty)
  * @return 無（阻塞直到服務結束）
  */
 func main() {
+    // 讀取 .env（若不存在則忽略）
+    if err := godotenv.Load(); err != nil {
+        log.Printf("[env] 未找到 .env，略過載入：%v", err)
+    } else {
+        log.Printf("[env] 已載入 .env")
+    }
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
@@ -268,25 +275,34 @@ func main() {
  */
 // 添加Gateway連線測試函數
 func testGatewayConnection(builder fc.GWBuilder, wallet *wl.Wallet) error {
-	// 嘗試使用現有的用戶身份測試連線
-	entries, err := wallet.List()
-	if err != nil {
-		return fmt.Errorf("無法列出錢包條目: %w", err)
-	}
-	if len(entries) == 0 {
-		log.Println("⚠️ 錢包中沒有用戶身份，跳過Gateway測試")
-		return nil
-	}
+    // 嘗試使用現有的用戶身份測試連線
+    entries, err := wallet.List()
+    if err != nil {
+        return fmt.Errorf("無法列出錢包條目: %w", err)
+    }
+    if len(entries) == 0 {
+        log.Println("⚠️ 錢包中沒有用戶身份，跳過Gateway測試")
+        return nil
+    }
 
-	// 使用第一個用戶身份測試
-	userID := entries[0]
-	entry, _ := wallet.Get(userID)
-	
-	contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
-	if err != nil {
-		return fmt.Errorf("無法建立Gateway: %w", err)
-	}
-	defer gw.Close()
+    // 遍歷挑選第一個可成功解析的身份
+    var picked *wl.Entry
+    for _, uid := range entries {
+        if e, ok := wallet.GetResolved(uid); ok && e != nil && e.ID != nil && e.Signer != nil {
+            picked = e
+            break
+        }
+    }
+    if picked == nil {
+        log.Println("⚠️ 錢包中無可用身份（可能缺 certUri 或 Transit 金鑰未備妥），跳過Gateway測試")
+        return nil
+    }
+
+    contract, gw, err := builder.NewContract(picked.ID, picked.Signer)
+    if err != nil {
+        return fmt.Errorf("無法建立Gateway: %w", err)
+    }
+    defer gw.Close()
 
 	// 嘗試評估一個簡單的chaincode函數
 	_, err = contract.EvaluateTransaction("ListMyReportMeta")

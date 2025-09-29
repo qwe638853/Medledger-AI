@@ -1,27 +1,38 @@
 package main
 
 import (
+    "fmt"
+    "log"
+    "context"
 
-	"fmt"
-	"log"
+    db "go_server/database"
+    fc "go_server/fabric"
+    vs "go_server/vaultstore"
+    wl "go_server/wallet"
+    sg "go_server/secure/signer"
 
-	"os"
-	"path/filepath"
+    "crypto/x509"
+    "crypto/rand"
+    "crypto/x509/pkix"
+    "encoding/pem"
 
-	db "go_server/database"
-	fc "go_server/fabric"
-	wl "go_server/wallet"
-
-	"github.com/hyperledger/fabric-ca/api"
+    "github.com/hyperledger/fabric-ca/api"
+    "github.com/joho/godotenv"
 )
 
 func main() {
+    // 載入 .env（若存在）
+    if err := godotenv.Load(); err == nil {
+        log.Printf("[env] 已載入 .env")
+    } else {
+        log.Printf("[env] 無 .env 或載入失敗：%v", err)
+    }
 	// ✅ 健檢中心帳號資訊（可從設s定檔讀取，或 CLI 輸入）
 	err := db.InitDB("database/user_data.sqlite")
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
-	userId := "clinic000001"
+	userId := "clinic1"
 	password := "clinicpass"
 	name := "健檢中心1"
 	date := "2025-05-13"
@@ -58,50 +69,46 @@ func main() {
 	}
 	fmt.Println("✅ CA 註冊成功")
 
-	// ✅ 產生 CSR & 金鑰
-	privKey, csrPEM, err := fc.GenerateCSR(userId)
-	if err != nil {
-		log.Fatalf("產生 CSR 失敗: %v", err)
-	}
-
-	// ✅ 建立使用者資料夾並儲存檔案
-	baseDir := filepath.Join("msp-data", "clinic", userId)
-	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
-
-	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
-	err = fc.SaveCSRToFile(csrPEM, csrPath)
-	if err != nil {
-		log.Printf("❌ 寫入 CSR 失敗: %v", err)
-		return
-	}
-
-	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
-	err = fc.SavePrivateKeyToFile(privKey, keyPath)
-	if err != nil {
-		log.Printf("❌ 寫入私鑰失敗: %v", err)
-		return
-	}
+    // ✅ TransitSigner 產生 CSR（私鑰不出庫）
+    store, err := vs.NewFromEnv()
+    if err != nil { log.Fatalf("Vault 初始化失敗: %v", err) }
+    // 確保 Transit 簽章金鑰存在
+    if err := store.EnsureTransitKey(context.Background(), "clinic-"+userId); err != nil {
+        log.Fatalf("建立 Transit 金鑰失敗: %v", err)
+    }
+    pub, err := store.TransitGetPublicKey(context.Background(), "clinic-"+userId)
+    if err != nil { log.Fatalf("讀取 Transit 公鑰失敗: %v", err) }
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "clinic-"+userId, pub)
+    if err != nil { log.Fatalf("建立 TransitSigner 失敗: %v", err) }
+    tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: userId } }
+    csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
+    if err != nil { log.Fatalf("CSR 產生失敗: %v", err) }
+    csrPEM := pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE REQUEST", Bytes: csrDER})
+    keyPEM := []byte("")
 
 	// ✅ Enroll（用自己產生的 CSR）
 	enrollReq := fc.EnrollRequest{
 		Certificate_request: string(csrPEM),
 	}
-	certPem, err := fc.EnrollUser("http://localhost:7054", userId, password, enrollReq)
+    certPem, err := fc.EnrollUser("http://localhost:7054", userId, password, enrollReq)
 	if err != nil {
 		log.Fatalf("Enroll 失敗: %v", err)
 	}
 
-	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
-	err = fc.SaveCertToFile(certPem, certPath)
-	if err != nil {
-		log.Printf("❌ 寫入證書失敗: %v", err)
-		return
-	}
+    // ✅ 寫入 Vault（clinic 類別）
+    if store, verr := vs.NewFromEnv(); verr != nil {
+        log.Printf("[Vault] 初始化失敗（略過）：%v", verr)
+    } else {
+        if werr := store.WriteClinicMaterial(context.Background(), userId, csrPEM, keyPEM, certPem); werr != nil {
+            log.Printf("[Vault] 寫入 clinic 材料失敗：%v", werr)
+        } else {
+            log.Printf("[Vault] ✅ 已寫入 clinic 材料至 Vault：%s", userId)
+        }
+    }
 	// ✅ 寫入 wallet
 	w := wl.New()
-	err = w.PutFile(userId, certPath, keyPath, "Org1MSP")
+    // DB 僅存引用
+    err = w.PutReference(userId, "Org1MSP", "transit://clinic-"+userId, "kv://clinics/"+userId)
 	if err != nil {
 		log.Fatalf("錢包寫入失敗: %v", err)
 	}

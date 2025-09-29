@@ -204,7 +204,20 @@ services:     # 定義服務的層級
       fabric-net:
         ipv4_address: 172.18.0.8
 
-
+  vault:
+    container_name: vault
+    image: hashicorp/vault:latest
+    cap_add:
+      - IPC_LOCK   # 鎖定記憶體，避免敏感資料 swap 出去
+    command: vault server -config=/vault/config/config.hcl
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/data:/vault/data
+    networks:
+      fabric-net:
+        ipv4_address: 172.18.0.9
 
 networks:     # 定義網路
   fabric-net:

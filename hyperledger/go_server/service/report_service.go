@@ -1,26 +1,24 @@
 package service
 
 import (
-	"crypto/ecdsa"
-	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"log"
-	"reflect"
-	"strconv"
-	"time"
+    "context"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
+    "log"
+    "strconv"
+    "time"
 
-	"go_server/database"
-	"go_server/ecies"
-	fc "go_server/fabric"
-	pb "go_server/proto"
-	ut "go_server/utils"
-	wl "go_server/wallet"
+    "go_server/database"
+    fc "go_server/fabric"
+    sw "go_server/secure/wrap"
+    pb "go_server/proto"
+    ut "go_server/utils"
+    wl "go_server/wallet"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
+    "google.golang.org/grpc/codes"
+    "google.golang.org/grpc/status"
+    "google.golang.org/protobuf/types/known/emptypb"
 )
 
 /**
@@ -44,10 +42,11 @@ func HandleUploadReport(
 		return nil, err
 	}
 	log.Printf("[Debug] UploadReport userID=%s", userID)
-	entry, ok := wallet.Get(userID)
-	if !ok {
-		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
-	}
+    entry, ok := wallet.GetResolved(userID)
+    if !ok {
+        log.Printf("[UploadReport] GetResolved 失敗 userID=%s (可能缺 certUri/signerUri 或 Vault 授權/連線問題)", userID)
+        return nil, status.Error(codes.PermissionDenied, "錢包不存在")
+    }
 
     log.Printf("[Debug] UploadReport args: reportID=%s, patientHash=%s, dataLen=%d",
 		req.ReportId, req.UserId, len(req.TestResultsJson))
@@ -63,50 +62,23 @@ func HandleUploadReport(
 	hashedUserID := hex.EncodeToString(sum[:])
 	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
 
-    // 以診所公鑰與平台公鑰進行 ECIES 加密 
-    clinicEntry, ok := wallet.Get(userID)
-    log.Printf("[Debug] 公鑰錢包取得結果: ok=%v certNil=%v", ok, clinicEntry == nil || clinicEntry.Cert == nil)
-    if !ok || clinicEntry == nil || clinicEntry.Cert == nil {
-        return nil, status.Error(codes.InvalidArgument, "診所錢包不存在或缺少憑證，無法加密")
-    }
-    log.Printf("[Debug] 公鑰憑證公鑰型別: %T", clinicEntry.Cert.PublicKey)
-    pubKey, ok := clinicEntry.Cert.PublicKey.(*ecdsa.PublicKey)
-    if !ok {
-        log.Printf("[Error] 診所憑證公鑰不是 ECDSA：got=%v", reflect.TypeOf(clinicEntry.Cert.PublicKey))
-        return nil, status.Error(codes.InvalidArgument, "診所憑證不是 ECDSA 公鑰")
-    }
-
-    // 取得平台公鑰（錢包標籤固定為 "platform"）
-    platformEntry, ok := wallet.Get("platform")
-    if !ok || platformEntry == nil || platformEntry.Cert == nil {
-        return nil, status.Error(codes.InvalidArgument, "平台錢包不存在或缺少憑證，無法加密")
-    }
-    platformPub, ok2 := platformEntry.Cert.PublicKey.(*ecdsa.PublicKey)
-    if !ok2 {
-        log.Printf("[Error] 平台憑證公鑰不是 ECDSA：got=%v", reflect.TypeOf(platformEntry.Cert.PublicKey))
-        return nil, status.Error(codes.InvalidArgument, "平台憑證不是 ECDSA 公鑰")
-    }
-
-    encStart := time.Now()
-    log.Printf("[Debug] 開始 ECIES 加密，原始長度=%d", len(req.TestResultsJson))
-    encBytes, err := ecies.EncryptReportForClinic(pubKey, platformPub, []byte(req.TestResultsJson), req.UserId)
-    log.Printf("[Debug] 完成 ECIES 加密，耗時=%s", time.Since(encStart))
-    if err != nil {
-        log.Printf("[Error] ECIES 加密失敗: %v", err)
-        return nil, status.Error(codes.Internal, "資料加密失敗")
-    }
-    encStr := string(encBytes)
-    log.Printf("[Debug] 加密後字串長度=%d", len(encStr))
+    // 統一 Transit：呼叫封裝好的模組
+    tw, err := sw.NewTransitWrapperFromEnv(); if err != nil { return nil, status.Error(codes.Internal, "Vault 初始化失敗") }
+    envJSON, err := tw.EncryptReportTransit(ctx, []byte(req.TestResultsJson), userID, "clinic-"+userID)
+    if err != nil { return nil, status.Error(codes.Internal, "資料加密失敗") }
+    // 立即為病患加入 wrapped key，避免讀取時缺少 patient 標籤
+    envJSON, err = tw.AddRecipientTransit(ctx, envJSON, "patient", "user-"+req.UserId)
+    if err != nil { return nil, status.Error(codes.Internal, "加入病患包鍵失敗") }
     // 呼叫鏈碼
     log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport (encrypted)")
     log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, EncryptedSize: %d bytes", 
-        req.ReportId, hashedUserID, len(encStr))
+        req.ReportId, hashedUserID, len(envJSON))
 
     result, err := contract.SubmitTransaction(
         "UploadReport",
         req.ReportId,
         hashedUserID,
-        encStr,
+        string(envJSON),
     )
 	
 	if err != nil {
@@ -163,7 +135,7 @@ func HandleRequestAccess(
 	}
 
 	// 取得合約
-	entry, ok := wallet.Get(requesterId)
+    entry, ok := wallet.GetResolved(requesterId)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -230,7 +202,7 @@ func HandleListAccessRequests(
 		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
 	}
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -309,7 +281,7 @@ func HandleApproveAccessRequest(
 		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
 	}
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -319,6 +291,8 @@ func HandleApproveAccessRequest(
 		return nil, err
 	}
 	defer gw.Close()
+
+    // 此處不需要額外使用 insurer 物件，鏈碼只需 requestId
 
 	// 呼叫鏈碼
 	log.Printf("[Debug] 批准授權請求: %s", req.RequestId)
@@ -358,7 +332,7 @@ func HandleRejectAccessRequest(
 		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
 	}
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -414,7 +388,7 @@ func HandleListAuthorizedReports(
 	}
 
 	// 取得保險業者錢包
-	entry, ok := wallet.Get(insurerId)
+    entry, ok := wallet.GetResolved(insurerId)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -523,7 +497,7 @@ func HandleListReportMetaByPatientID(
 	}
 
 	// 取得保險業者錢包
-	entry, ok := wallet.Get(insurerId)
+    entry, ok := wallet.GetResolved(insurerId)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -606,7 +580,7 @@ func HandleViewAuthorizedReport(
 	}
 
 	// 取得保險業者錢包
-	entry, ok := wallet.Get(insurerId)
+    entry, ok := wallet.GetResolved(insurerId)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -619,8 +593,8 @@ func HandleViewAuthorizedReport(
 	defer gw.Close()
 
 	log.Printf("[Debug] HandleViewAuthorizedReport %s", req)
-	// 呼叫智能合約方法
-	result, err := contract.EvaluateTransaction("ReadAuthorizedReport", req.UserId, req.ReportId)
+    // 呼叫智能合約方法
+    result, err := contract.EvaluateTransaction("ReadAuthorizedReport", req.UserId, req.ReportId)
 	if err != nil {
 		fc.PrintGatewayError(err)
 		return nil, status.Error(codes.Internal, "查詢病患報告元數據失敗")
@@ -629,10 +603,13 @@ func HandleViewAuthorizedReport(
 	
 	log.Printf("[Info] 查詢到報告: %s", string(result))
 
-	return &pb.ViewAuthorizedReportResponse{
-		Success: true,
-		ResultJson: string(result),
-	}, nil
+    // 以保險業者身分解密回傳
+    tw, tErr := sw.NewTransitWrapperFromEnv(); if tErr != nil { return nil, status.Error(codes.Internal, "Vault 初始化失敗") }
+    pt, dErr := tw.DecryptReportTransit(ctx, result, "insurer", "insurer-"+insurerId)
+    if dErr != nil {
+        return nil, status.Error(codes.Internal, "解密失敗")
+    }
+    return &pb.ViewAuthorizedReportResponse{ Success: true, ResultJson: string(pt) }, nil
 }
 
 // HandleListMyAccessRequests 處理保險業者查看自己發出的授權請求
@@ -663,8 +640,8 @@ func HandleListMyAccessRequests(
 		return nil, status.Error(codes.PermissionDenied, "只有保險業者可以查看授權請求")
 	}
 
-	// 取得保險業者錢包
-	entry, ok := wallet.Get(insurerId)
+    // 取得保險業者錢包
+    entry, ok := wallet.GetResolved(insurerId)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -747,7 +724,7 @@ func HandleListMyAuthorizedTickets(
 		return nil, status.Error(codes.Unauthenticated, "無法解析授權資訊")
 	}
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -816,7 +793,7 @@ func HandleListMyReportMeta(
 	}
 	log.Printf("[Debug] HandleListMyReportMeta %s", userID)
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -872,7 +849,7 @@ func HandleReadMyReport(
 		return nil, status.Error(codes.Unauthenticated, "無法解析 JWT")
 	}
 
-	entry, ok := wallet.Get(userID)
+    entry, ok := wallet.GetResolved(userID)
 	if !ok {
 		return nil, status.Error(codes.PermissionDenied, "錢包不存在")
 	}
@@ -883,15 +860,21 @@ func HandleReadMyReport(
 	}
 	defer gw.Close()
 
-	// 呼叫鏈碼方法
-	result, err := contract.EvaluateTransaction("ReadMyReport", req.ReportId)
+    // 呼叫鏈碼方法
+    result, err := contract.EvaluateTransaction("ReadMyReport", req.ReportId)
 	if err != nil {
 		fc.PrintGatewayError(err)
 		return nil, status.Error(codes.Internal, "讀取報告失敗")
 	}
 
-	return &pb.ReadMyReportResponse{
-		Success:    true,
-		ResultJson: string(result),
-	}, nil
+    // 以病患身分解密回傳給前端
+    tw, tErr := sw.NewTransitWrapperFromEnv()
+    if tErr != nil {
+        return nil, status.Error(codes.Internal, "Vault 初始化失敗")
+    }
+    pt, dErr := tw.DecryptReportTransit(ctx, result, "patient", "user-"+userID)
+    if dErr != nil {
+        return nil, status.Error(codes.Internal, "解密失敗")
+    }
+    return &pb.ReadMyReportResponse{ Success: true, ResultJson: string(pt) }, nil
 }	

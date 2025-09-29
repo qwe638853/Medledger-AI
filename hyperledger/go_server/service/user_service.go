@@ -1,20 +1,28 @@
 package service
 
 import (
-	"context"
-	"log"
-	"os"
-	"path/filepath"
-	"regexp"
-	"unicode"
+    "crypto/ecdsa"
+    "crypto/x509"
+    "encoding/pem"
+    "encoding/json"
+    "context"
+    "log"
+    "os"
+    "regexp"
+    "unicode"
+    "crypto/rand"
+    "crypto/x509/pkix"
 
-	"go_server/database"
-	fc "go_server/fabric"
-	pb "go_server/proto"
-	ut "go_server/utils"
-	wl "go_server/wallet"
+    "go_server/database"
+    fc "go_server/fabric"
+    wrap "go_server/secure/wrap"
+    vs "go_server/vaultstore"
+    pb "go_server/proto"
+    ut "go_server/utils"
+    wl "go_server/wallet"
+    sg "go_server/secure/signer"
 
-	"github.com/hyperledger/fabric-ca/api"
+    "github.com/hyperledger/fabric-ca/api"
 )
 
 /**
@@ -26,7 +34,7 @@ import (
  * @return *pb.RegisterResponse 成功與訊息, error 內部錯誤
  */
 // HandleRegisterUser 處理用戶註冊邏輯 + 寫入 SQLite + Fabric CA 註冊
-func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet wl.WalletInterface) (*pb.RegisterResponse, error) {
+func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet wl.WalletInterface, builder fc.GWBuilder) (*pb.RegisterResponse, error) {
 	log.Printf("收到用戶註冊請求: %v", req)
 
 	// ✅ 基本欄位驗證
@@ -81,55 +89,46 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	}
 	log.Printf("[DEBUG] ✅ Fabric CA 註冊成功，用戶ID: %s", req.UserId)
 
-	// ✅ 產生私鑰與 CSR
-	log.Printf("[DEBUG] 開始產生私鑰與 CSR，用戶ID: %s", req.UserId)
-	privKey, csrPEM, err := fc.GenerateCSR(req.UserId)
-	if err != nil {
-		log.Printf("❌ 產生私鑰或 CSR 失敗: %v", err)
-		log.Printf("[DEBUG] CSR 產生失敗詳細信息 - 用戶: %s, 錯誤: %v", req.UserId, err)
-		return &pb.RegisterResponse{Success: false, Message: "無法產生憑證"}, nil
-	}
-	log.Printf("[DEBUG] ✅ 私鑰與 CSR 產生成功，用戶ID: %s", req.UserId)
-
-	// ✅ 建立使用者資料夾並儲存檔案
-	baseDir := filepath.Join("msp-data", "users", req.UserId)
-	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
-
-	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
-	err = fc.SaveCSRToFile(csrPEM, csrPath)
-	if err != nil {
-		log.Printf("❌ 寫入 CSR 失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存 CSR 失敗"}, nil
-	}
-
-	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
-	err = fc.SavePrivateKeyToFile(privKey, keyPath)
-	if err != nil {
-		log.Printf("❌ 寫入私鑰失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存私鑰失敗"}, nil
-	}
+    // ✅ 以 TransitSigner 產生 CSR（私鑰不出庫）
+    log.Printf("[DEBUG] 開始 Transit 產生 CSR，用戶ID: %s", req.UserId)
+    store, err := vs.NewFromEnv()
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"Vault 初始化失敗"}, nil }
+    // 確保 Transit key 存在
+    if err := store.EnsureTransitKey(ctx, "user-"+req.UserId); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立使用者 Transit 金鑰失敗"}, nil
+    }
+    pub, err := store.TransitGetPublicKey(ctx, "user-"+req.UserId)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"取得公鑰失敗"}, nil }
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "user-"+req.UserId, pub)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"建立 Transit 簽章器失敗"}, nil }
+    tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: req.UserId } }
+    csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"CSR 產生失敗"}, nil }
+    csrPEM := pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE REQUEST", Bytes: csrDER})
+    keyPEM := []byte("")
 
 	// ✅ Enroll 產生證書
 	enrollReq := fc.EnrollRequest{
 		Certificate_request: string(csrPEM),
 	}
 
-	certPem, err := fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, enrollReq)
+    certPem, err := fc.EnrollUser("http://localhost:7054", req.UserId, req.Password, enrollReq)
 	if err != nil {
 		log.Fatalf("Enroll 失敗: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
 	}
-
-	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
-	err = fc.SaveCertToFile(certPem, certPath)
-	if err != nil {
-		log.Printf("❌ 寫入證書失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存證書失敗"}, nil
-	}
-
-	err = wallet.PutFile(req.UserId, certPath, keyPath, "Org1MSP")
+    // ✅ 寫入 Vault + 錢包改為僅存引用（DB 不存證書與私鑰）
+    if store, verr := vs.NewFromEnv(); verr != nil {
+        log.Printf("[Vault] 初始化失敗（略過）：%v", verr)
+    } else {
+        if werr := store.WriteUserMaterial(ctx, req.UserId, csrPEM, keyPEM, certPem); werr != nil {
+            log.Printf("[Vault] 寫入使用者材料失敗：%v", werr)
+        } else {
+            log.Printf("[Vault] ✅ 已寫入使用者材料至 Vault：%s", req.UserId)
+        }
+    }
+    // signerUri 使用使用者專屬 Transit key：user-<id>
+    err = wallet.PutReference(req.UserId, "Org1MSP", "transit://user-"+req.UserId, "kv://users/"+req.UserId)
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil
@@ -142,7 +141,69 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 		return &pb.RegisterResponse{Success: false, Message: "寫入資料庫失敗"}, nil
 	}
 
-	return &pb.RegisterResponse{Success: true, Message: "用戶註冊成功"}, nil
+    // 背景回填：為使用者既有報告包一份 patient 的 wrapped key（若存在報告）
+    go func(userID string) {
+        defer func() { recover() }()
+        // 取得使用者與平台身份（從 Vault 補齊）
+        userEntry, okU := wallet.GetResolved(userID)
+        platformEntry, okP := wallet.GetResolved("platform")
+        if !okU || !okP || userEntry == nil || platformEntry == nil || userEntry.Cert == nil {
+            log.Printf("[Backfill] 缺少必要身份或金鑰，略過包鍵 user=%v platform=%v", okU, okP)
+            return
+        }
+
+        // 確認憑證公鑰型別（不使用變數）
+        if _, ok := userEntry.Cert.PublicKey.(*ecdsa.PublicKey); !ok {
+            log.Printf("[Backfill] 用戶公鑰不是 ECDSA，略過 user=%s", userID)
+            return
+        }
+
+        // 建立以用戶身分的合約
+        contract, gw, err := builder.NewContract(userEntry.ID, userEntry.Signer)
+        if err != nil { log.Printf("[Backfill] NewContract 失敗: %v", err); return }
+        defer gw.Close()
+
+        // 查詢 meta 列表
+        metasRaw, err := contract.EvaluateTransaction("ListMyReportMeta")
+        if err != nil { log.Printf("[Backfill] 查 meta 失敗: %v", err); return }
+        var metas []struct {
+            ReportID  string `json:"reportId"`
+            ClinicID  string `json:"clinicId"`
+            CreatedAt int64  `json:"createdAt"`
+        }
+        if err := json.Unmarshal(metasRaw, &metas); err != nil {
+            log.Printf("[Backfill] 解析 meta 失敗: %v", err); return
+        }
+        if len(metas) == 0 { return }
+
+        for _, m := range metas {
+            // 讀取 envelope JSON
+            envRaw, err := contract.EvaluateTransaction("ReadMyReport", m.ReportID)
+            if err != nil { log.Printf("[Backfill] 讀取報告失敗 id=%s err=%v", m.ReportID, err); continue }
+
+            // 若已存在 patient key 則略過
+            var env struct{ WrappedKeys map[string]any `json:"wrappedKeys"` }
+            if err := json.Unmarshal(envRaw, &env); err != nil { log.Printf("[Backfill] 解析 envelope 失敗: %v", err); continue }
+            if env.WrappedKeys != nil {
+                if _, exists := env.WrappedKeys["patient"]; exists { continue }
+            }
+
+    // Transit 模組：平台用 Transit decrypt 解出 dataKey，再用 Transit encrypt 為用戶包一份
+    tw, err := wrap.NewTransitWrapperFromEnv(); if err != nil { log.Printf("[Backfill] Vault 初始化失敗: %v", err); return }
+    updated, err := tw.AddRecipientTransit(context.Background(), envRaw, "patient", "user-"+userID)
+    if err != nil { log.Printf("[Backfill] AddRecipientTransit 失敗: %v", err); return }
+            if err != nil { log.Printf("[Backfill] AddRecipient 失敗 id=%s err=%v", m.ReportID, err); continue }
+
+            // 以用戶身分提交鏈上更新
+            if _, err := contract.SubmitTransaction("UpdateReport", m.ReportID, string(updated)); err != nil {
+                log.Printf("[Backfill] UpdateReport 失敗 id=%s err=%v", m.ReportID, err)
+                continue
+            }
+            log.Printf("[Backfill] 已為報告 %s 加入 patient wrapped key", m.ReportID)
+        }
+    }(req.UserId)
+
+    return &pb.RegisterResponse{Success: true, Message: "用戶註冊成功"}, nil
 }
 
 /**
@@ -201,32 +262,21 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
 		return &pb.RegisterResponse{Success: false, Message: "Fabric 註冊失敗"}, nil
 	}
 
-	// ✅ 產生私鑰與 CSR
-	privKey, csrPEM, err := fc.GenerateCSR(req.InsurerId)
-	if err != nil {
-		log.Printf("❌ 產生私鑰或 CSR 失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "無法產生憑證"}, nil
-	}
-
-	// ✅ 建立保險業者資料夾並儲存檔案
-	baseDir := filepath.Join("msp-data", "insurers", req.InsurerId)
-	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
-
-	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
-	err = fc.SaveCSRToFile(csrPEM, csrPath)
-	if err != nil {
-		log.Printf("❌ 寫入 CSR 失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存 CSR 失敗"}, nil
-	}
-
-	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
-	err = fc.SavePrivateKeyToFile(privKey, keyPath)
-	if err != nil {
-		log.Printf("❌ 寫入私鑰失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存私鑰失敗"}, nil
-	}
+    // ✅ 以 TransitSigner 產生 CSR（私鑰不出庫）
+    store, err := vs.NewFromEnv()
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"Vault 初始化失敗"}, nil }
+    if err := store.EnsureTransitKey(ctx, "insurer-"+req.InsurerId); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立保險業者 Transit 金鑰失敗"}, nil
+    }
+    pub, err := store.TransitGetPublicKey(ctx, "insurer-"+req.InsurerId)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"取得公鑰失敗"}, nil }
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "insurer-"+req.InsurerId, pub)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"建立 Transit 簽章器失敗"}, nil }
+    tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: req.InsurerId } }
+    csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
+    if err != nil { return &pb.RegisterResponse{Success:false, Message:"CSR 產生失敗"}, nil }
+    csrPEM := pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE REQUEST", Bytes: csrDER})
+    keyPEM := []byte("")
 
 	// ✅ Enroll 產生證書
 	enrollReq := fc.EnrollRequest{
@@ -239,14 +289,17 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
 		return &pb.RegisterResponse{Success: false, Message: "Enroll 憑證註冊失敗"}, nil
 	}
 
-	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
-	err = fc.SaveCertToFile(certPem, certPath)
-	if err != nil {
-		log.Printf("❌ 寫入證書失敗: %v", err)
-		return &pb.RegisterResponse{Success: false, Message: "儲存證書失敗"}, nil
-	}
-
-	err = wallet.PutFile(req.InsurerId, certPath, keyPath, "Org1MSP")
+    // ✅ 寫入 Vault + 錢包改為僅存引用（DB 不存證書與私鑰）
+    if store, verr := vs.NewFromEnv(); verr != nil {
+        log.Printf("[Vault] 初始化失敗（略過）：%v", verr)
+    } else {
+        if werr := store.WriteInsurerMaterial(ctx, req.InsurerId, csrPEM, keyPEM, certPem); werr != nil {
+            log.Printf("[Vault] 寫入保險業者材料失敗：%v", werr)
+        } else {
+            log.Printf("[Vault] ✅ 已寫入保險業者材料至 Vault：%s", req.InsurerId)
+        }
+    }
+    err = wallet.PutReference(req.InsurerId, "Org1MSP", "transit://insurer-"+req.InsurerId, "kv://insurers/"+req.InsurerId)
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil
@@ -375,44 +428,39 @@ func RegisterPlatformIdentity(ctx context.Context, wallet wl.WalletInterface) er
 		return err
 	}
 
-	// 2) 產生私鑰與 CSR
-	privKey, csrPEM, err := fc.GenerateCSR(platformID)
-	if err != nil {
-		log.Printf("[Platform] ❌ 產生私鑰/CSR 失敗: %v", err)
-		return err
-	}
-
-	// 3) 寫入檔案結構 msp-data/platform
-	baseDir := filepath.Join("msp-data", "platform")
-	os.MkdirAll(filepath.Join(baseDir, "keystore"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "signcerts"), 0700)
-	os.MkdirAll(filepath.Join(baseDir, "csr"), 0700)
-
-	csrPath := filepath.Join(baseDir, "csr", "csr.pem")
-	if err := fc.SaveCSRToFile(csrPEM, csrPath); err != nil {
-		log.Printf("[Platform] ❌ 儲存 CSR 失敗: %v", err)
-		return err
-	}
-	keyPath := filepath.Join(baseDir, "keystore", "key.pem")
-	if err := fc.SavePrivateKeyToFile(privKey, keyPath); err != nil {
-		log.Printf("[Platform] ❌ 儲存私鑰失敗: %v", err)
-		return err
-	}
+    // 2) 以 TransitSigner 產生 CSR（私鑰不出庫）
+    store, err := vs.NewFromEnv()
+    if err != nil { log.Printf("[Platform] ❌ Vault 初始化失敗: %v", err); return err }
+    if err := store.EnsureTransitKey(ctx, "platform"); err != nil { log.Printf("[Platform] ❌ 建立 Transit 金鑰失敗: %v", err); return err }
+    pub, err := store.TransitGetPublicKey(ctx, "platform")
+    if err != nil { log.Printf("[Platform] ❌ 讀取 Transit 公鑰失敗: %v", err); return err }
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "platform", pub)
+    if err != nil { log.Printf("[Platform] ❌ 建立 TransitSigner 失敗: %v", err); return err }
+    tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: platformID } }
+    csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
+    if err != nil { log.Printf("[Platform] ❌ CSR 產生失敗: %v", err); return err }
+    csrPEM := pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE REQUEST", Bytes: csrDER})
+    keyPEM := []byte("")
 
 	// 4) Enroll 取得憑證
-	certPem, err := fc.EnrollUser("http://localhost:7054", platformID, platformSecret, fc.EnrollRequest{Certificate_request: string(csrPEM)})
+    certPem, err := fc.EnrollUser("http://localhost:7054", platformID, platformSecret, fc.EnrollRequest{Certificate_request: string(csrPEM)})
 	if err != nil {
 		log.Printf("[Platform] ❌ Enroll 憑證失敗: %v", err)
 		return err
 	}
-	certPath := filepath.Join(baseDir, "signcerts", "cert.pem")
-	if err := fc.SaveCertToFile(certPem, certPath); err != nil {
-		log.Printf("[Platform] ❌ 儲存憑證失敗: %v", err)
-		return err
-	}
+    // 寫入 Vault（platform 固定節點）
+    if store, verr := vs.NewFromEnv(); verr != nil {
+        log.Printf("[Vault] 初始化失敗（略過）：%v", verr)
+    } else {
+        if werr := store.WritePlatformMaterial(ctx, csrPEM, keyPEM, certPem); werr != nil {
+            log.Printf("[Vault] 寫入 platform 材料失敗：%v", werr)
+        } else {
+            log.Printf("[Vault] ✅ 已寫入 platform 材料至 Vault")
+        }
+    }
 
 	// 5) 寫入錢包（label 固定為 platform）
-	if err := wallet.PutFile(platformID, certPath, keyPath, "Org1MSP"); err != nil {
+    if err := wallet.PutReference(platformID, "Org1MSP", "transit://platform", "kv://platform"); err != nil {
 		log.Printf("[Platform] ❌ 寫入錢包失敗: %v", err)
 		return err
 	}

@@ -26,7 +26,7 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       fabric-net:
-        ipv4_address: 172.18.0.10
+        ipv4_address: 172.18.0.12
 
   explorer.mynetwork.com:
     image: ghcr.io/hyperledger-labs/explorer:latest
@@ -46,7 +46,7 @@ services:
       
     volumes:
       - ${EXPLORER_CONFIG_FILE_PATH}:/opt/explorer/app/platform/fabric/config.json
-      - ${EXPLORER_PROFILE_DIR_PATH}:/opt/explorer/app/platform/fabric/connection-profile
+      - ${EXPLORER_PROFILE_DIR_PATH}:/opt/explorer/app/platform/fabric/connection-profile 
       - ${FABRIC_CRYPTO_PATH}:/tmp/crypto
       - walletstore:/opt/explorer/wallet
     ports:
@@ -56,7 +56,7 @@ services:
         condition: service_healthy
     networks:
       fabric-net:
-        ipv4_address: 172.18.0.11
+        ipv4_address: 172.18.0.13
 
 
 networks:

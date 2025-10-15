@@ -739,18 +739,6 @@ const tableHeaders = computed(() => {
                       variant="text"
                       size="small"
                       class="share-btn"
-                      @click="deleteReport(item)"
-                    >
-                      <v-icon>mdi-trash-can-outline</v-icon>
-                      <v-tooltip activator="parent" location="top">
-                        刪除
-                      </v-tooltip>
-                    </v-btn>
-                    <v-btn
-                      icon
-                      variant="text"
-                      size="small"
-                      class="share-btn"
                     >
                       <v-icon>mdi-share-variant</v-icon>
                       <v-tooltip activator="parent" location="top">

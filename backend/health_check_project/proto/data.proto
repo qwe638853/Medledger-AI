@@ -1,0 +1,308 @@
+syntax = "proto3";
+
+package health;
+
+option go_package = "sdk_test/proto;health"; 
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service HealthService {
+  rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
+    option (google.api.http) = {
+      post: "/v1/upload"
+      body: "*"
+    };
+  }
+  rpc ClaimReport(ClaimReportRequest) returns (ClaimReportResponse) {
+    option (google.api.http) = {
+      post: "/v1/claim"
+      body: "*"
+    };
+  }
+
+  rpc ReadReport(ReadReportRequest) returns (ReadReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/report/{report_id}"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/user"
+      body: "*"
+    };
+  }
+
+  rpc RegisterInsurer(RegisterInsurerRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/insurer"
+      body: "*"
+    };
+  }
+  rpc ListMyReports(google.protobuf.Empty) returns (ListMyReportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports"
+    };
+  }
+
+  rpc RequestAccess(RequestAccessRequest) returns (RequestAccessResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/request"
+      body: "*"
+    };
+  }
+
+  rpc ListAccessRequests(google.protobuf.Empty) returns (ListAccessRequestsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/requests"
+    };
+  }
+
+  rpc ApproveAccessRequest(ApproveAccessRequestRequest) returns (ApproveAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/approve"
+      body: "*"
+    };
+  }
+
+  rpc RejectAccessRequest(RejectAccessRequestRequest) returns (RejectAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/reject"
+      body: "*"
+    };
+  }
+
+  rpc GetInsurerDashboardStats(google.protobuf.Empty) returns (InsurerDashboardStatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/dashboard/summary"
+    };
+  }
+  rpc ListAuthorizedReports(google.protobuf.Empty) returns (ListAuthorizedReportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/authorized"
+    };
+  }
+
+  rpc ListReportMetaByPatientID(PatientIDRequest) returns (ListReportMetaResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/meta/{patient_id}"
+    };
+  }
+
+  // 給用戶的健康報告分析
+  rpc AnalyzeHealthReportForUser(AnalyzeHealthReportRequest) returns (UserHealthAnalysisResponse) {
+    option (google.api.http) = {
+      post: "/v1/analyze/user"
+      body: "*"
+    };
+  }
+
+  // 給保險公司的健康報告分析
+  rpc AnalyzeHealthReportForInsurer(AnalyzeHealthReportRequest) returns (InsurerHealthAnalysisResponse) {
+    option (google.api.http) = {
+      post: "/v1/analyze/insurer"
+      body: "*"
+    };
+  }
+}
+
+message UploadReportRequest {
+  string report_id = 1;
+  string user_id = 2;
+  string test_results_json = 3;
+}
+
+message UploadReportResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ClaimReportRequest {
+  string report_id = 1;
+}
+
+message ClaimReportResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ReadReportRequest {
+  string report_id = 1;
+}
+
+message ReadReportResponse {
+  bool success = 1;
+  string report_content = 2;
+}
+
+message LoginRequest {
+  string user_id = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+    bool success = 1;
+    string message = 2;
+    string token = 3; 
+}
+
+message RegisterUserRequest {
+  string user_id = 1;
+  string password = 2;
+  string name = 3;
+  string date = 4;
+  string email = 5;
+  string phone = 6;
+}
+
+message RegisterInsurerRequest {
+  string insurer_id = 1;      // 例如: CATHAY-01
+  string password = 2;
+  string company_name = 3;
+  string contact_person = 4;
+  string email = 5;
+  string phone = 6;
+}
+
+message RegisterResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message Report {
+  string report_id = 1;
+  string clinic_id = 2;
+  string patient_hash = 3; 
+  string result_json = 4;
+  int64 created_at = 5;
+}
+
+message ListMyReportsResponse {
+  repeated Report reports = 1;
+}
+
+// 🔵 保險業者送出授權申請
+message RequestAccessRequest {
+  string report_id = 1;
+  string patient_id = 2;
+  string reason = 3;
+  int64 expiry = 4; // Unix 秒
+}
+
+message RequestAccessResponse {
+  bool success = 1;
+  string request_id = 2; // optional: 回傳申請單 ID
+}
+
+// 🟢 病患查詢自己的待審申請
+message AccessRequest {
+  string request_id = 1;
+  string report_id = 2;
+  string patient_hash = 3;
+  string target_hash = 4;
+  string reason = 5;
+  int64 requested_at = 6;
+  int64 expiry = 7;
+  string status = 8; // pending / approved / rejected
+}
+
+message ListAccessRequestsResponse {
+  repeated AccessRequest requests = 1;
+}
+
+// 🟡 病患點同意授權
+message ApproveAccessRequestRequest {
+  string request_id = 1;
+}
+
+message ApproveAccessRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// 🔴 病患拒絕授權
+message RejectAccessRequestRequest {
+  string request_id = 1;
+}
+
+message RejectAccessRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+enum AccessRequestStatus {
+  PENDING = 0;
+  APPROVED = 1;
+  REJECTED = 2;
+}
+
+message InsurerDashboardStatsResponse {
+  int32 total_authorized = 1;
+  int32 pending_requests = 2;
+  int32 total_patients = 3;
+}
+
+message AuthorizedReport {
+  string report_id = 1;
+  string patient_id = 2;
+  string content = 3;
+  string date = 4;
+  string expiry = 5;
+}
+
+message ListAuthorizedReportsResponse {
+  repeated AuthorizedReport reports = 1;
+}
+
+message PatientIDRequest {
+  string patient_id = 1;
+}
+
+message ReportMeta {
+  string report_id = 1;
+  string clinic_id = 2;
+  int64 created_at = 3;
+}
+
+message ListReportMetaResponse {
+  repeated ReportMeta reports = 1;
+}
+
+// 健康報告分析的請求消息
+message AnalyzeHealthReportRequest {
+  string report_id = 1;
+  string patient_hash = 2;
+  string test_results_json = 3;  // 健康檢查結果的 JSON 字符串
+}
+
+// 給用戶看的健康分析響應
+message UserHealthAnalysisResponse {
+  string summary = 1; // 健康報告總結，例如 "你的血壓偏高，建議..."
+  string advice = 2; // 健康建議，例如 "建議多運動，減少鹽分攝入"
+  optional bool success = 3;
+  optional string recommended_policy = 4; // 推薦的保單類型，例如 "標準健康保單"
+}
+
+// 給保險公司看的健康分析響應
+message InsurerHealthAnalysisResponse {
+  string summary = 1; // 健康報告總結，例如 "血壓 150/90，血糖 130 mg/dL"
+  string metrics = 2; // 健康狀態，例如 "正常" 或 "異常"
+  repeated Risk risks = 3; // 疾病風險列表
+  string policy_type = 4; // 推薦的保單類型，例如 "高風險保單"
+  optional bool success = 5;
+  optional string insurance_suitability = 6; // 承保建議，例如 "高風險，建議提高保費"
+}
+
+// 疾病風險結構
+message Risk {
+  string disease = 1; // 疾病名稱，例如 "高血壓"
+  string description = 2; // 風險描述，例如 "血壓長期偏高，建議醫療追蹤"
+  string impact = 3; // 潛在影響，例如 "可能導致心血管疾病"
+}

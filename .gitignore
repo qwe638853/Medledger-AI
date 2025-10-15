@@ -1,0 +1,51 @@
+# VSCode 設定
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.log
+
+
+# 虛擬環境
+.venv/
+venv/
+
+# 資料與大型檔案
+*.zip
+*.rar
+*.7z
+*.h5
+*.pt
+*.pth
+
+# 忽略 Chroma DB 中的大檔案
+chroma_db/*
+
+# JSON 與 QA Data（大檔案）
+huatuo_medical_qa_sharegpt_traditional.json
+huatuo_medical_qa_sharegpt.json
+medical_dialogue_traditional.json
+
+# Node.js 前端相關
+node_modules/
+frontend/node_modules/
+testFrontend/node_modules/
+dist/
+build/
+
+# Mac 和 Windows 系統檔案
+.DS_Store
+Thumbs.db
+hyperledger/orgs/org1.example.com/orderer/orderer1-data/
+hyperledger/orgs/org1.example.com/peers/peer1-data/
+hyperledger/orgs/org1.example.com/peers/peer2-data/
+
+.env

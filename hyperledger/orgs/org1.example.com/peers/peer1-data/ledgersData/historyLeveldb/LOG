@@ -149,3 +149,39 @@
 06:34:34.196428 version@stat F·[1] S·119B[119B] Sc·[0.25]
 06:34:34.280956 db@janitor F·3 G·0
 06:34:34.281009 db@open done T·85.418194ms
+=============== Oct 9, 2025 (UTC) ===============
+09:47:55.479916 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+09:47:55.481922 version@stat F·[1] S·119B[119B] Sc·[0.25]
+09:47:55.481970 db@open opening
+09:47:55.482018 journal@recovery F·1
+09:47:55.482153 journal@recovery recovering @33
+09:47:55.487485 memdb@flush created L0@35 N·18 S·485B "cha..\x01\x02\x00,v9":"cha..1\x00s,v3"
+09:47:55.487814 version@stat F·[2] S·604B[604B] Sc·[0.50]
+09:47:55.498948 db@janitor F·4 G·0
+09:47:55.498985 db@open done T·17.006997ms
+=============== Oct 31, 2025 (UTC) ===============
+12:45:24.768251 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+12:45:24.769308 version@stat F·[2] S·604B[604B] Sc·[0.50]
+12:45:24.769334 db@open opening
+12:45:24.769376 journal@recovery F·1
+12:45:24.769462 journal@recovery recovering @36
+12:45:24.773318 memdb@flush created L0@38 N·2 S·175B "cha..\x01\b\x00,v22":"cha..1\x00s,v23"
+12:45:24.773861 version@stat F·[3] S·779B[779B] Sc·[0.75]
+12:45:24.789702 db@janitor F·5 G·0
+12:45:24.789736 db@open done T·20.391565ms
+=============== Nov 1, 2025 (UTC) ===============
+05:40:31.210313 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:40:31.211579 version@stat F·[3] S·779B[779B] Sc·[0.75]
+05:40:31.211652 db@open opening
+05:40:31.211719 journal@recovery F·1
+05:40:31.211911 journal@recovery recovering @39
+05:40:31.215736 memdb@flush created L0@41 N·14 S·381B "cha..\x01\n\x00,v27":"cha..1\x00s,v25"
+05:40:31.216886 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+05:40:31.242052 db@janitor F·6 G·0
+05:40:31.242081 db@open done T·30.419896ms
+05:40:31.243710 table@compaction L0·3 -> L1·0 S·1KiB Q·39
+05:40:31.256110 table@build created L1@44 N·19 S·546B "cha..\x01\x02\x00,v9":"cha..1\x00s,v38"
+05:40:31.256183 version@stat F·[1 1] S·665B[119B 546B] Sc·[0.25 0.00]
+05:40:31.263987 table@compaction committed F-2 S-495B Ke·0 D·15 T·20.213997ms
+05:40:31.264279 table@remove removed @38
+05:40:31.264381 table@remove removed @35

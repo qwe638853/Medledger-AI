@@ -44,7 +44,7 @@ type AccessRequest struct {
 	RequestID    string `json:"requestId"`
 	ReportID     string `json:"reportId"`
 	PatientHash  string `json:"patientHash"`
-	RequesterHash string `json:"requesterHash"`
+	RequesterHash string `json:"requesterHash"`  // 統一使用 hash（用於 Transit key 命名）
 	Reason       string `json:"reason"`
 	RequestedAt  int64  `json:"requestedAt"`
 	Expiry       int64  `json:"expiry"`
@@ -170,68 +170,20 @@ func (h *HealthCheckContract) UploadReport(ctx contractapi.TransactionContextInt
 }
 
 func (h *HealthCheckContract) UpdateReport(ctx contractapi.TransactionContextInterface, reportID, newResultJSON string) error {
-    userID, role, err := getCaller(ctx)
-    if err != nil { return fmt.Errorf("failed to get caller identity") }
-    if role != "patient" { return fmt.Errorf("only patient can update report") }
+    userID, err := requireRole(ctx, "patient")
+    if err != nil { return err }
 
-    repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
-    b, _ := ctx.GetStub().GetState(repKey)
-    if b == nil { return fmt.Errorf("report not found") }
-
-    var rec HealthReport
-    if err := json.Unmarshal(b, &rec); err != nil { return fmt.Errorf("failed to unmarshal report: %v", err) }
+    rec, repKey, err := readReport(ctx, reportID)
+    if err != nil { return err }
     // 歸屬檢查
     if rec.PatientHash != hashID(userID) { return fmt.Errorf("not owner of this report") }
 
-    // Transit 包裝
-    type wrapped struct {
-        Type string `json:"type"`
-        Ct   string `json:"ct"`
+    // 驗證僅允許新增 wrappedKeys（不可移除/修改既有 key），演算法／密文欄位不可變。
+    if err := validateEnvelopeUpdate(rec.ResultJSON, newResultJSON, nil, false, true); err != nil {
+        return err
     }
-    var oldEnv, newEnv struct {
-        Ciphertext  string                 `json:"ciphertext"`
-        Nonce       string                 `json:"nonce"`
-        WrappedKeys map[string]wrapped     `json:"wrappedKeys"`
-        Enc         string                 `json:"enc"`
-        KDF         string                 `json:"kdf"`
-        Curve       string                 `json:"curve"`
-    }
-    if err := json.Unmarshal([]byte(rec.ResultJSON), &oldEnv); err != nil {
-        return fmt.Errorf("bad old envelope: %v", err)
-    }
-    if err := json.Unmarshal([]byte(newResultJSON), &newEnv); err != nil {
-        return fmt.Errorf("bad new envelope: %v", err)
-    }
-
-    // 嚴格一致性檢查：不允許改密文/nonce/演算法/版本
-    if oldEnv.Ciphertext != newEnv.Ciphertext ||
-       oldEnv.Nonce != newEnv.Nonce ||
-       oldEnv.Enc != newEnv.Enc ||
-       oldEnv.KDF != newEnv.KDF ||
-       oldEnv.Curve != newEnv.Curve {
-        return fmt.Errorf("only wrappedKeys can be changed")
-    }
-
-    // 只允許新增 wrappedKeys，不可修改或覆蓋既有 key；且必須為 transit 格式
-    if oldEnv.WrappedKeys == nil { oldEnv.WrappedKeys = map[string]wrapped{} }
-    for k, v := range newEnv.WrappedKeys {
-        if _, exists := oldEnv.WrappedKeys[k]; exists {
-            return fmt.Errorf("wrapped key for %s already exists", k)
-        }
-        if v.Type != "transit" {
-            return fmt.Errorf("wrapped key type must be 'transit'")
-        }
-        if v.Ct == "" {
-            return fmt.Errorf("wrapped key ciphertext is empty")
-        }
-        oldEnv.WrappedKeys[k] = v
-    }
-
-    // 回寫
-    merged, _ := json.Marshal(oldEnv)
-    rec.ResultJSON = string(merged)
-    out, _ := json.Marshal(rec)
-    return ctx.GetStub().PutState(repKey, out)
+    rec.ResultJSON = newResultJSON
+    return writeReport(ctx, repKey, rec)
 }
 
 
@@ -243,64 +195,165 @@ func (h *HealthCheckContract) UpdateReport(ctx contractapi.TransactionContextInt
  * @return error 批准失敗或權限錯誤
  */
 func (h *HealthCheckContract) ApproveAndAuthorizeAccess(ctx contractapi.TransactionContextInterface, requestID string) error {
-    userID, role, err := getCaller(ctx)
-    if err != nil || role != "patient" {
-        return fmt.Errorf("only patient can approve")
+    userID, err := requireRole(ctx, "patient")
+    if err != nil { return err }
+
+    req, reqKey, err := readAccessRequest(ctx, requestID)
+    if err != nil { return err }
+    if req.PatientHash != hashID(userID) { return fmt.Errorf("not authorized to approve this request") }
+    if req.Status != "PENDING" { return fmt.Errorf("request already handled") }
+
+    return approveRequestAndEmit(ctx, req, reqKey)
+}
+
+// ApproveAndUpdateReport
+// 說明：在同一筆交易內原子地（1）批准授權請求；（2）更新報告的 Envelope（僅允許新增 insurer 的 wrapped key）
+// 約束：
+//  - 呼叫者必須為 patient，且為該報告擁有者
+//  - 只允許新增 wrappedKeys，且密文/nonce/演算法欄位不可變
+//  - 僅允許新增一個 key：label 必須為 "insurer"，並且其對應對象需與 request.requesterHash 相符（鏈碼僅檢查 label 與存在性）
+func (h *HealthCheckContract) ApproveAndUpdateReport(ctx contractapi.TransactionContextInterface, requestID, newResultJSON string) error {
+    userID, err := requireRole(ctx, "patient")
+    if err != nil { return err }
+
+    // 1) 取得請求並驗證
+    req, reqKey, err := readAccessRequest(ctx, requestID)
+    if err != nil { return err }
+    patientHash := hashID(userID)
+    if req.PatientHash != patientHash { return fmt.Errorf("not authorized to approve this request") }
+    if req.Status != "PENDING" { return fmt.Errorf("request already handled") }
+
+    // 2) 讀取舊報告並驗證擁有權
+    rec, repKey, err := readReport(ctx, req.ReportID)
+    if err != nil { return err }
+    if rec.PatientHash != patientHash { return fmt.Errorf("not owner of this report") }
+
+    // 3) 驗證新的 Envelope（僅允許新增 insurer key；不可移除/修改既有 key；密文/nonce/alg 不可變）
+    allowed := map[string]bool{"insurer": true}
+    if err := validateEnvelopeUpdate(rec.ResultJSON, newResultJSON, allowed, true, true); err != nil { return err }
+
+    // 4) 批准請求（寫入票據）
+    if err := approveRequestAndEmit(ctx, req, reqKey); err != nil { return err }
+
+    // 5) 更新報告（保留 sig 等其他欄位）
+    rec.ResultJSON = newResultJSON
+    if err := writeReport(ctx, repKey, rec); err != nil { return fmt.Errorf("failed to update report") }
+
+    // 6) 事件
+    eventPayload, _ := json.Marshal(map[string]interface{}{
+        "requestId": req.RequestID,
+        "reportId":  req.ReportID,
+        "patientHash": req.PatientHash,
+        "requesterHash": req.RequesterHash,
+        "status":    "APPROVED",
+        "grantedAt": nowSec(),
+        "expiry":    req.Expiry,
+    })
+    if err := emitEvent(ctx, "AccessApproved", eventPayload); err != nil { return err }
+
+    return nil
+}
+
+// validateEnvelopeUpdate 檢查 envelope 更新是否符合規則：
+// - ciphertext/nonce/enc/kdf/curve 必須完全一致
+// - 若 enforceNoRemoval=true：不允許移除或修改既有 wrappedKeys
+// - 只允許新增 transit 類型且 ct 非空的 wrapped key
+// - 若 allowedNewLabels 非空，僅允許新增於該集合內的標籤；若 requireExactlyOne=true 則必須恰好新增一個
+func validateEnvelopeUpdate(oldJSON, newJSON string, allowedNewLabels map[string]bool, requireExactlyOne bool, enforceNoRemoval bool) error {
+    type wrapped struct { Type string `json:"type"`; Ct string `json:"ct"` }
+    var oldEnv, newEnv struct {
+        Ciphertext  string                 `json:"ciphertext"`
+        Nonce       string                 `json:"nonce"`
+        WrappedKeys map[string]wrapped     `json:"wrappedKeys"`
+        Enc         string                 `json:"enc"`
+        KDF         string                 `json:"kdf"`
+        Curve       string                 `json:"curve"`
+    }
+    if err := json.Unmarshal([]byte(oldJSON), &oldEnv); err != nil { return fmt.Errorf("bad old envelope: %v", err) }
+    if err := json.Unmarshal([]byte(newJSON), &newEnv); err != nil { return fmt.Errorf("bad new envelope: %v", err) }
+
+    if oldEnv.Ciphertext != newEnv.Ciphertext || oldEnv.Nonce != newEnv.Nonce || oldEnv.Enc != newEnv.Enc || oldEnv.KDF != newEnv.KDF || oldEnv.Curve != newEnv.Curve {
+        return fmt.Errorf("only wrappedKeys can be changed")
+    }
+    if oldEnv.WrappedKeys == nil { oldEnv.WrappedKeys = map[string]wrapped{} }
+    if newEnv.WrappedKeys == nil { newEnv.WrappedKeys = map[string]wrapped{} }
+
+    if enforceNoRemoval {
+        for k, v := range oldEnv.WrappedKeys {
+            nv, ok := newEnv.WrappedKeys[k]
+            if !ok { return fmt.Errorf("missing existing wrapped key: %s", k) }
+            if nv != v { return fmt.Errorf("existing wrapped key modified: %s", k) }
+        }
     }
 
-    // 1. 取得請求並驗證
+    added := 0
+    for k, v := range newEnv.WrappedKeys {
+        if _, exists := oldEnv.WrappedKeys[k]; !exists {
+            if allowedNewLabels != nil {
+                if !allowedNewLabels[k] { return fmt.Errorf("adding wrapped key '%s' not allowed", k) }
+            }
+            if v.Type != "transit" { return fmt.Errorf("wrapped key type must be 'transit'") }
+            if v.Ct == "" { return fmt.Errorf("wrapped key ciphertext is empty") }
+            added++
+        }
+    }
+    if requireExactlyOne && added != 1 { return fmt.Errorf("exactly one allowed wrapped key must be added") }
+    return nil
+}
+
+// --- helpers (DRY) ---
+func requireRole(ctx contractapi.TransactionContextInterface, want string) (string, error) {
+    userID, role, err := getCaller(ctx)
+    if err != nil { return "", fmt.Errorf("failed to get caller identity") }
+    if role != want { return "", fmt.Errorf("only %s can invoke", want) }
+    return userID, nil
+}
+
+func readAccessRequest(ctx contractapi.TransactionContextInterface, requestID string) (AccessRequest, string, error) {
     reqKey, _ := ctx.GetStub().CreateCompositeKey(keyAccessRequestNS, []string{requestID})
     reqBytes, err := ctx.GetStub().GetState(reqKey)
-    if err != nil || reqBytes == nil {
-        return fmt.Errorf("request not found")
-    }
+    if err != nil || reqBytes == nil { return AccessRequest{}, "", fmt.Errorf("request not found") }
     var req AccessRequest
-    if err := json.Unmarshal(reqBytes, &req); err != nil {
-        return fmt.Errorf("failed to unmarshal request: %v", err)
-    }
-    patientHash := hashID(userID)
-    if req.PatientHash != patientHash {
-        return fmt.Errorf("not authorized to approve this request")
-    }
-    if req.Status != "PENDING" {
-        return fmt.Errorf("request already handled")
-    }
+    if err := json.Unmarshal(reqBytes, &req); err != nil { return AccessRequest{}, "", fmt.Errorf("failed to unmarshal request: %v", err) }
+    return req, reqKey, nil
+}
 
-    // 2. 更新狀態
+func writeAccessRequest(ctx contractapi.TransactionContextInterface, key string, req AccessRequest) error {
+    b, _ := json.Marshal(req)
+    return ctx.GetStub().PutState(key, b)
+}
+
+func approveRequestAndEmit(ctx contractapi.TransactionContextInterface, req AccessRequest, reqKey string) error {
+    if req.Status != "PENDING" { return fmt.Errorf("request already handled") }
     req.Status = "APPROVED"
-    newReqBytes, _ := json.Marshal(req)
-    if err := ctx.GetStub().PutState(reqKey, newReqBytes); err != nil {
-        return fmt.Errorf("failed to update request status")
-    }
-
-    // 3. 產生授權票據
+    if err := writeAccessRequest(ctx, reqKey, req); err != nil { return fmt.Errorf("failed to update request status") }
     ticketKey, _ := ctx.GetStub().CreateCompositeKey(keyAuthNS, []string{req.PatientHash, req.RequesterHash, req.ReportID})
-    tk := AuthTicket{
-        DocType:     docAuth,
-        PatientHash: req.PatientHash,
-        TargetHash:  req.RequesterHash,
-        ReportID:    req.ReportID,
-        GrantedAt:   nowSec(),
-        Expiry:      req.Expiry,
-    }
+    tk := AuthTicket{ DocType: docAuth, PatientHash: req.PatientHash, TargetHash: req.RequesterHash, ReportID: req.ReportID, GrantedAt: nowSec(), Expiry: req.Expiry }
     tbytes, _ := json.Marshal(tk)
-	if err := ctx.GetStub().PutState(ticketKey, tbytes); err != nil {
-        return fmt.Errorf("failed to store auth ticket")
-    }
-
-	eventPayload, _ := json.Marshal(map[string]interface{}{
-        "requestId":    req.RequestID,
-        "reportId":     req.ReportID,
-        "patientHash":  req.PatientHash,
-        "requesterHash": req.RequesterHash,
-        "status":       "APPROVED",
-        "grantedAt":    nowSec(),
-        "expiry":       req.Expiry,
+    if err := ctx.GetStub().PutState(ticketKey, tbytes); err != nil { return fmt.Errorf("failed to store auth ticket") }
+    eventPayload, _ := json.Marshal(map[string]interface{}{
+        "requestId": req.RequestID, "reportId": req.ReportID, "patientHash": req.PatientHash,
+        "requesterHash": req.RequesterHash, "status": "APPROVED", "grantedAt": nowSec(), "expiry": req.Expiry,
     })
-    if err := ctx.GetStub().SetEvent("AccessApproved", eventPayload); err != nil {
-        return fmt.Errorf("failed to set event")
-    }
+    return emitEvent(ctx, "AccessApproved", eventPayload)
+}
 
+func readReport(ctx contractapi.TransactionContextInterface, reportID string) (HealthReport, string, error) {
+    repKey, _ := ctx.GetStub().CreateCompositeKey(keyReportNS, []string{reportID})
+    b, err := ctx.GetStub().GetState(repKey)
+    if err != nil || b == nil { return HealthReport{}, "", fmt.Errorf("report not found") }
+    var rec HealthReport
+    if err := json.Unmarshal(b, &rec); err != nil { return HealthReport{}, "", fmt.Errorf("failed to unmarshal report: %v", err) }
+    return rec, repKey, nil
+}
+
+func writeReport(ctx contractapi.TransactionContextInterface, key string, rec HealthReport) error {
+    out, _ := json.Marshal(rec)
+    return ctx.GetStub().PutState(key, out)
+}
+
+func emitEvent(ctx contractapi.TransactionContextInterface, name string, payload []byte) error {
+    if err := ctx.GetStub().SetEvent(name, payload); err != nil { return fmt.Errorf("failed to set event") }
     return nil
 }
 
@@ -705,7 +758,7 @@ func (h *HealthCheckContract) RequestAccess(ctx contractapi.TransactionContextIn
 		RequestID:     requestID,
 		ReportID:      reportID,
 		PatientHash:   patientHash,
-		RequesterHash: requesterHash,
+		RequesterHash: requesterHash,  // 統一使用 hash（用於 Transit key 命名）
 		Reason:        reason,
 		RequestedAt:   nowSec(),
 		Expiry:        expiry,

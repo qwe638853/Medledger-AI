@@ -1,13 +1,10 @@
 package service
 
 import (
-    "crypto/ecdsa"
     "crypto/x509"
     "encoding/pem"
-    "encoding/json"
     "context"
     "log"
-    "os"
     "regexp"
     "unicode"
     "crypto/rand"
@@ -15,7 +12,6 @@ import (
 
     "go_server/database"
     fc "go_server/fabric"
-    wrap "go_server/secure/wrap"
     vs "go_server/vaultstore"
     pb "go_server/proto"
     ut "go_server/utils"
@@ -93,13 +89,19 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
     log.Printf("[DEBUG] 開始 Transit 產生 CSR，用戶ID: %s", req.UserId)
     store, err := vs.NewFromEnv()
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"Vault 初始化失敗"}, nil }
-    // 確保 Transit key 存在
-    if err := store.EnsureTransitKey(ctx, "user-"+req.UserId); err != nil {
-        return &pb.RegisterResponse{Success:false, Message:"建立使用者 Transit 金鑰失敗"}, nil
+    // 統一使用 hash 值建立 Transit key（與資料庫設計一致）
+    userHash := database.HashString(req.UserId)
+    // 確保 Transit 簽章金鑰存在（用於 CSR 和 Fabric 交易簽章）
+    if err := store.EnsureTransitKey(ctx, "user-"+userHash); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立使用者 Transit 簽章金鑰失敗"}, nil
     }
-    pub, err := store.TransitGetPublicKey(ctx, "user-"+req.UserId)
+    // 確保 Transit wrap 金鑰存在（用於資料金鑰包裝/解包，與註冊時一併建立）
+    if err := store.EnsureTransitKeyOfType(ctx, "user-"+userHash+"-wrap", "aes256-gcm96"); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立使用者 Transit wrap 金鑰失敗"}, nil
+    }
+    pub, err := store.TransitGetPublicKey(ctx, "user-"+userHash)
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"取得公鑰失敗"}, nil }
-    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "user-"+req.UserId, pub)
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "user-"+userHash, pub)
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"建立 Transit 簽章器失敗"}, nil }
     tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: req.UserId } }
     csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
@@ -127,8 +129,8 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
             log.Printf("[Vault] ✅ 已寫入使用者材料至 Vault：%s", req.UserId)
         }
     }
-    // signerUri 使用使用者專屬 Transit key：user-<id>
-    err = wallet.PutReference(req.UserId, "Org1MSP", "transit://user-"+req.UserId, "kv://users/"+req.UserId)
+    // signerUri 使用使用者專屬 Transit key：user-<hash>（統一使用 hash）
+    err = wallet.PutReference(req.UserId, "Org1MSP", "transit://user-"+userHash, "kv://users/"+req.UserId)
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil
@@ -142,66 +144,7 @@ func HandleRegisterUser(ctx context.Context, req *pb.RegisterUserRequest, wallet
 	}
 
     // 背景回填：為使用者既有報告包一份 patient 的 wrapped key（若存在報告）
-    go func(userID string) {
-        defer func() { recover() }()
-        // 取得使用者與平台身份（從 Vault 補齊）
-        userEntry, okU := wallet.GetResolved(userID)
-        platformEntry, okP := wallet.GetResolved("platform")
-        if !okU || !okP || userEntry == nil || platformEntry == nil || userEntry.Cert == nil {
-            log.Printf("[Backfill] 缺少必要身份或金鑰，略過包鍵 user=%v platform=%v", okU, okP)
-            return
-        }
-
-        // 確認憑證公鑰型別（不使用變數）
-        if _, ok := userEntry.Cert.PublicKey.(*ecdsa.PublicKey); !ok {
-            log.Printf("[Backfill] 用戶公鑰不是 ECDSA，略過 user=%s", userID)
-            return
-        }
-
-        // 建立以用戶身分的合約
-        contract, gw, err := builder.NewContract(userEntry.ID, userEntry.Signer)
-        if err != nil { log.Printf("[Backfill] NewContract 失敗: %v", err); return }
-        defer gw.Close()
-
-        // 查詢 meta 列表
-        metasRaw, err := contract.EvaluateTransaction("ListMyReportMeta")
-        if err != nil { log.Printf("[Backfill] 查 meta 失敗: %v", err); return }
-        var metas []struct {
-            ReportID  string `json:"reportId"`
-            ClinicID  string `json:"clinicId"`
-            CreatedAt int64  `json:"createdAt"`
-        }
-        if err := json.Unmarshal(metasRaw, &metas); err != nil {
-            log.Printf("[Backfill] 解析 meta 失敗: %v", err); return
-        }
-        if len(metas) == 0 { return }
-
-        for _, m := range metas {
-            // 讀取 envelope JSON
-            envRaw, err := contract.EvaluateTransaction("ReadMyReport", m.ReportID)
-            if err != nil { log.Printf("[Backfill] 讀取報告失敗 id=%s err=%v", m.ReportID, err); continue }
-
-            // 若已存在 patient key 則略過
-            var env struct{ WrappedKeys map[string]any `json:"wrappedKeys"` }
-            if err := json.Unmarshal(envRaw, &env); err != nil { log.Printf("[Backfill] 解析 envelope 失敗: %v", err); continue }
-            if env.WrappedKeys != nil {
-                if _, exists := env.WrappedKeys["patient"]; exists { continue }
-            }
-
-    // Transit 模組：平台用 Transit decrypt 解出 dataKey，再用 Transit encrypt 為用戶包一份
-    tw, err := wrap.NewTransitWrapperFromEnv(); if err != nil { log.Printf("[Backfill] Vault 初始化失敗: %v", err); return }
-    updated, err := tw.AddRecipientTransit(context.Background(), envRaw, "patient", "user-"+userID)
-    if err != nil { log.Printf("[Backfill] AddRecipientTransit 失敗: %v", err); return }
-            if err != nil { log.Printf("[Backfill] AddRecipient 失敗 id=%s err=%v", m.ReportID, err); continue }
-
-            // 以用戶身分提交鏈上更新
-            if _, err := contract.SubmitTransaction("UpdateReport", m.ReportID, string(updated)); err != nil {
-                log.Printf("[Backfill] UpdateReport 失敗 id=%s err=%v", m.ReportID, err)
-                continue
-            }
-            log.Printf("[Backfill] 已為報告 %s 加入 patient wrapped key", m.ReportID)
-        }
-    }(req.UserId)
+    go BackfillPatientAccessAfterRegister(ctx, req.UserId, wallet, builder)
 
     return &pb.RegisterResponse{Success: true, Message: "用戶註冊成功"}, nil
 }
@@ -265,12 +208,19 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
     // ✅ 以 TransitSigner 產生 CSR（私鑰不出庫）
     store, err := vs.NewFromEnv()
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"Vault 初始化失敗"}, nil }
-    if err := store.EnsureTransitKey(ctx, "insurer-"+req.InsurerId); err != nil {
-        return &pb.RegisterResponse{Success:false, Message:"建立保險業者 Transit 金鑰失敗"}, nil
+    // 統一使用 hash 值建立 Transit key（與資料庫設計一致）
+    insurerHash := database.HashString(req.InsurerId)
+    // 確保 Transit 簽章金鑰存在（用於 CSR 和 Fabric 交易簽章）
+    if err := store.EnsureTransitKey(ctx, "insurer-"+insurerHash); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立保險業者 Transit 簽章金鑰失敗"}, nil
     }
-    pub, err := store.TransitGetPublicKey(ctx, "insurer-"+req.InsurerId)
+    // 確保 Transit wrap 金鑰存在（用於資料金鑰包裝/解包，與註冊時一併建立）
+    if err := store.EnsureTransitKeyOfType(ctx, "insurer-"+insurerHash+"-wrap", "aes256-gcm96"); err != nil {
+        return &pb.RegisterResponse{Success:false, Message:"建立保險業者 Transit wrap 金鑰失敗"}, nil
+    }
+    pub, err := store.TransitGetPublicKey(ctx, "insurer-"+insurerHash)
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"取得公鑰失敗"}, nil }
-    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "insurer-"+req.InsurerId, pub)
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "insurer-"+insurerHash, pub)
     if err != nil { return &pb.RegisterResponse{Success:false, Message:"建立 Transit 簽章器失敗"}, nil }
     tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: req.InsurerId } }
     csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
@@ -299,7 +249,8 @@ func HandleRegisterInsurer(ctx context.Context, req *pb.RegisterInsurerRequest, 
             log.Printf("[Vault] ✅ 已寫入保險業者材料至 Vault：%s", req.InsurerId)
         }
     }
-    err = wallet.PutReference(req.InsurerId, "Org1MSP", "transit://insurer-"+req.InsurerId, "kv://insurers/"+req.InsurerId)
+    // signerUri 使用保險業者 Transit key：insurer-<hash>（統一使用 hash）
+    err = wallet.PutReference(req.InsurerId, "Org1MSP", "transit://insurer-"+insurerHash, "kv://insurers/"+req.InsurerId)
 	if err != nil {
 		log.Printf("wallet save error: %v", err)
 		return &pb.RegisterResponse{Success: false, Message: "儲存錢包失敗"}, nil
@@ -393,78 +344,3 @@ func HandleLogin(ctx context.Context, req *pb.LoginRequest, w wl.WalletInterface
 	}, nil
 }
 
-// RegisterPlatformIdentity 幫「平台」向 Fabric CA 註冊並 Enroll，並寫入到錢包與 msp-data/platform
-// - 使用者名稱固定為 "platform"
-// - 密碼優先讀取環境變數 PLATFORM_CA_SECRET，預設為 "platformpw"
-// - MSP 名稱預設 "Org1MSP"，如需更動可調整此函式
-func RegisterPlatformIdentity(ctx context.Context, wallet wl.WalletInterface) error {
-	platformID := "platform"
-	platformSecret := os.Getenv("PLATFORM_CA_SECRET")
-	if platformSecret == "" {
-		platformSecret = "platformpw"
-	}
-
-	// 若錢包已存在，視為已完成，直接返回
-	if wallet.Exists(platformID) {
-		log.Printf("[Platform] 身分已存在於錢包，略過註冊/Enroll: %s", platformID)
-		return nil
-	}
-
-	// 1) CA 註冊（以 org admin 身分）
-	log.Printf("[Platform] 開始 Fabric CA 註冊: %s", platformID)
-	if err := fc.RegisterUser(
-		"http://localhost:7054",
-		"../orgs/org1.example.com/users/org1-admin/msp/signcerts/cert.pem",
-		"../orgs/org1.example.com/users/org1-admin/msp/keystore/server.key",
-		api.RegistrationRequest{
-			Name:        platformID,
-			Secret:      platformSecret,
-			Type:        "client",
-			Affiliation: "org1.department1",
-			Attributes: []api.Attribute{{Name: "role", Value: "platform", ECert: true}},
-		},
-	); err != nil {
-		log.Printf("[Platform] ❌ CA 註冊失敗: %v", err)
-		return err
-	}
-
-    // 2) 以 TransitSigner 產生 CSR（私鑰不出庫）
-    store, err := vs.NewFromEnv()
-    if err != nil { log.Printf("[Platform] ❌ Vault 初始化失敗: %v", err); return err }
-    if err := store.EnsureTransitKey(ctx, "platform"); err != nil { log.Printf("[Platform] ❌ 建立 Transit 金鑰失敗: %v", err); return err }
-    pub, err := store.TransitGetPublicKey(ctx, "platform")
-    if err != nil { log.Printf("[Platform] ❌ 讀取 Transit 公鑰失敗: %v", err); return err }
-    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "platform", pub)
-    if err != nil { log.Printf("[Platform] ❌ 建立 TransitSigner 失敗: %v", err); return err }
-    tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: platformID } }
-    csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
-    if err != nil { log.Printf("[Platform] ❌ CSR 產生失敗: %v", err); return err }
-    csrPEM := pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE REQUEST", Bytes: csrDER})
-    keyPEM := []byte("")
-
-	// 4) Enroll 取得憑證
-    certPem, err := fc.EnrollUser("http://localhost:7054", platformID, platformSecret, fc.EnrollRequest{Certificate_request: string(csrPEM)})
-	if err != nil {
-		log.Printf("[Platform] ❌ Enroll 憑證失敗: %v", err)
-		return err
-	}
-    // 寫入 Vault（platform 固定節點）
-    if store, verr := vs.NewFromEnv(); verr != nil {
-        log.Printf("[Vault] 初始化失敗（略過）：%v", verr)
-    } else {
-        if werr := store.WritePlatformMaterial(ctx, csrPEM, keyPEM, certPem); werr != nil {
-            log.Printf("[Vault] 寫入 platform 材料失敗：%v", werr)
-        } else {
-            log.Printf("[Vault] ✅ 已寫入 platform 材料至 Vault")
-        }
-    }
-
-	// 5) 寫入錢包（label 固定為 platform）
-    if err := wallet.PutReference(platformID, "Org1MSP", "transit://platform", "kv://platform"); err != nil {
-		log.Printf("[Platform] ❌ 寫入錢包失敗: %v", err)
-		return err
-	}
-
-	log.Printf("[Platform] ✅ 註冊與 Enroll 成功，已寫入錢包: %s", platformID)
-	return nil
-}

@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ SQLite 初始化失敗: %v", err)
 	}
-	userId := "clinic1"
+	userId := "clinic2"
 	password := "clinicpass"
 	name := "健檢中心1"
 	date := "2025-05-13"
@@ -72,13 +72,19 @@ func main() {
     // ✅ TransitSigner 產生 CSR（私鑰不出庫）
     store, err := vs.NewFromEnv()
     if err != nil { log.Fatalf("Vault 初始化失敗: %v", err) }
-    // 確保 Transit 簽章金鑰存在
-    if err := store.EnsureTransitKey(context.Background(), "clinic-"+userId); err != nil {
-        log.Fatalf("建立 Transit 金鑰失敗: %v", err)
+    // 統一使用 hash 值建立 Transit key（與資料庫設計一致）
+    clinicHash := db.HashString(userId)
+    // 確保 Transit 簽章金鑰存在（用於 CSR 和 Fabric 交易簽章）
+    if err := store.EnsureTransitKey(context.Background(), "clinic-"+clinicHash); err != nil {
+        log.Fatalf("建立 Transit 簽章金鑰失敗: %v", err)
     }
-    pub, err := store.TransitGetPublicKey(context.Background(), "clinic-"+userId)
+    // 確保 Transit wrap 金鑰存在（用於資料金鑰包裝/解包，與註冊時一併建立）
+    if err := store.EnsureTransitKeyOfType(context.Background(), "clinic-"+clinicHash+"-wrap", "aes256-gcm96"); err != nil {
+        log.Fatalf("建立 Transit wrap 金鑰失敗: %v", err)
+    }
+    pub, err := store.TransitGetPublicKey(context.Background(), "clinic-"+clinicHash)
     if err != nil { log.Fatalf("讀取 Transit 公鑰失敗: %v", err) }
-    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "clinic-"+userId, pub)
+    signerObj, err := sg.NewTransitSignerWithPublicKey(store, "clinic-"+clinicHash, pub)
     if err != nil { log.Fatalf("建立 TransitSigner 失敗: %v", err) }
     tmpl := x509.CertificateRequest{ Subject: pkix.Name{ CommonName: userId } }
     csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, signerObj)
@@ -108,7 +114,8 @@ func main() {
 	// ✅ 寫入 wallet
 	w := wl.New()
     // DB 僅存引用
-    err = w.PutReference(userId, "Org1MSP", "transit://clinic-"+userId, "kv://clinics/"+userId)
+    // signerUri 使用診所 Transit key：clinic-<hash>（統一使用 hash）
+    err = w.PutReference(userId, "Org1MSP", "transit://clinic-"+clinicHash, "kv://clinics/"+userId)
 	if err != nil {
 		log.Fatalf("錢包寫入失敗: %v", err)
 	}

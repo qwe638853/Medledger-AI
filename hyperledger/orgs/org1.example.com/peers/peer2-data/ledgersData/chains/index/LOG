@@ -149,3 +149,39 @@
 06:34:33.192297 version@stat F·[1] S·119B[119B] Sc·[0.25]
 06:34:33.245444 db@janitor F·3 G·0
 06:34:33.245519 db@open done T·54.389536ms
+=============== Oct 9, 2025 (UTC) ===============
+09:47:55.412318 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+09:47:55.413295 version@stat F·[1] S·119B[119B] Sc·[0.25]
+09:47:55.413359 db@open opening
+09:47:55.413398 journal@recovery F·1
+09:47:55.413577 journal@recovery recovering @33
+09:47:55.417388 memdb@flush created L0@35 N·49 S·1KiB "cha..a\x00\x00,v8":"cha..\x01\x02\x00,v19"
+09:47:55.417890 version@stat F·[2] S·1KiB[1KiB] Sc·[0.50]
+09:47:55.435930 db@janitor F·4 G·0
+09:47:55.435989 db@open done T·22.620959ms
+=============== Oct 31, 2025 (UTC) ===============
+12:45:24.660909 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+12:45:24.661443 version@stat F·[2] S·1KiB[1KiB] Sc·[0.50]
+12:45:24.661486 db@open opening
+12:45:24.661528 journal@recovery F·1
+12:45:24.661793 journal@recovery recovering @36
+12:45:24.664971 memdb@flush created L0@38 N·7 S·356B "cha..\x01\b\x00,v58":"cha..\x01\b\x00,v57"
+12:45:24.667917 version@stat F·[3] S·2KiB[2KiB] Sc·[0.75]
+12:45:24.687523 db@janitor F·5 G·0
+12:45:24.687568 db@open done T·26.073017ms
+=============== Nov 1, 2025 (UTC) ===============
+05:40:31.107075 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:40:31.107915 version@stat F·[3] S·2KiB[2KiB] Sc·[0.75]
+05:40:31.107948 db@open opening
+05:40:31.107993 journal@recovery F·1
+05:40:31.108148 journal@recovery recovering @39
+05:40:31.113003 memdb@flush created L0@41 N·43 S·1KiB "cha..\x01\t\x00,v66":"cha..\x01\r\x00,v89"
+05:40:31.113793 version@stat F·[4] S·3KiB[3KiB] Sc·[1.00]
+05:40:31.134324 db@janitor F·6 G·0
+05:40:31.134346 db@open done T·26.387397ms
+05:40:31.134596 table@compaction L0·3 -> L1·0 S·3KiB Q·104
+05:40:31.142345 table@build created L1@44 N·66 S·2KiB "cha..a\x00\x00,v8":"cha..\x01\r\x00,v89"
+05:40:31.142487 version@stat F·[1 1] S·2KiB[119B 2KiB] Sc·[0.25 0.00]
+05:40:31.149051 table@compaction committed F-2 S-623B Ke·0 D·33 T·14.363499ms
+05:40:31.150613 table@remove removed @38
+05:40:31.150942 table@remove removed @35

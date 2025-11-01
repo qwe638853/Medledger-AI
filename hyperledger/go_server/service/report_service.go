@@ -62,13 +62,28 @@ func HandleUploadReport(
 	hashedUserID := hex.EncodeToString(sum[:])
 	log.Printf("[Debug] 查詢患者雜湊: %s", hashedUserID)
 
-    // 統一 Transit：呼叫封裝好的模組
+    // Transit：改為 clinic-only 加密，平台不再持有解包能力
     tw, err := sw.NewTransitWrapperFromEnv(); if err != nil { return nil, status.Error(codes.Internal, "Vault 初始化失敗") }
-    envJSON, err := tw.EncryptReportTransit(ctx, []byte(req.TestResultsJson), userID, "clinic-"+userID)
+    // 統一使用 hash 值（與資料庫和註冊邏輯一致）
+    clinicHash := database.HashString(userID)
+    // label 固定為 "clinic"，實際身分由 baseKey（clinic-<hash>-wrap）決定
+    envJSON, err := tw.EncryptReportTransitClinicOnly(ctx, []byte(req.TestResultsJson), "clinic", "clinic-"+clinicHash)
     if err != nil { return nil, status.Error(codes.Internal, "資料加密失敗") }
-    // 立即為病患加入 wrapped key，避免讀取時缺少 patient 標籤
-    envJSON, err = tw.AddRecipientTransit(ctx, envJSON, "patient", "user-"+req.UserId)
-    if err != nil { return nil, status.Error(codes.Internal, "加入病患包鍵失敗") }
+    // 上傳階段預先授權病患：僅在病患已註冊時才追加 patient wrapped key
+    // 檢查方式：確認用戶在資料庫中已註冊（避免自動建立 wrap key）
+    userExists, checkErr := database.IsUserExists(req.UserId)
+    if checkErr == nil && userExists {
+        // 用戶已註冊，嘗試添加 patient wrapped key（使用 hash）
+        patientHash := database.HashString(req.UserId)
+        if envJSON2, aerr := tw.AddRecipientTransitFrom(ctx, envJSON, "clinic", "clinic-"+clinicHash, "patient", "user-"+patientHash); aerr != nil {
+            log.Printf("[Warn] 追加病患 wrapped key 失敗（Vault 權限不足或 wrap key 不存在）userId=%s err=%v — 將以 clinic-only 續傳", req.UserId, aerr)
+        } else {
+            envJSON = envJSON2
+            log.Printf("[Debug] 已追加病患 wrapped key: user-%s-wrap", patientHash)
+        } 
+    } else {
+        log.Printf("[Info] 病患尚未註冊 userId=%s，跳過追加 wrapped key（將以 clinic-only 續傳）", req.UserId)
+    }
     // 呼叫鏈碼
     log.Printf("[Debug] 準備調用 SubmitTransaction: UploadReport (encrypted)")
     log.Printf("[Debug] 參數 - ReportID: %s, PatientHash: %s, EncryptedSize: %d bytes", 
@@ -92,6 +107,65 @@ func HandleUploadReport(
 	return &pb.UploadReportResponse{
 		Success: true, Message: "上傳成功",
 	}, nil
+}
+
+// BackfillPatientAccessAfterRegister
+// 說明：用於「病患註冊完成後」背景補授權，為該病患的歷史報告追加 patient wrapped key
+// 邏輯：以病患身份查詢自己的報告 → 對沒有 patient wrapped key 的報告，
+//      以診所 unwrap 來源（clinic-<hash>-wrap）重包到 user-<hash>-wrap → 提交 UpdateReport
+// 注意：統一使用 hash 值建立 Transit key（與註冊邏輯一致）
+func BackfillPatientAccessAfterRegister(ctx context.Context, userID string, wallet wl.WalletInterface, builder fc.GWBuilder) {
+    defer func() { recover() }()
+    entry, ok := wallet.GetResolved(userID)
+    if !ok || entry == nil || entry.Cert == nil {
+        log.Printf("[Backfill] 缺少必要身份或金鑰，略過包鍵 user=%v", ok)
+        return
+    }
+    // 以用戶身分建立合約
+    contract, gw, err := builder.NewContract(entry.ID, entry.Signer)
+    if err != nil { log.Printf("[Backfill] NewContract 失敗: %v", err); return }
+    defer gw.Close()
+
+    // 查詢 meta 列表
+    metasRaw, err := contract.EvaluateTransaction("ListMyReportMeta")
+    if err != nil { log.Printf("[Backfill] 查 meta 失敗: %v", err); return }
+    var metas []struct {
+        ReportID  string `json:"reportId"`
+        ClinicID  string `json:"clinicId"`
+        CreatedAt int64  `json:"createdAt"`
+    }
+    if err := json.Unmarshal(metasRaw, &metas); err != nil {
+        log.Printf("[Backfill] 解析 meta 失敗: %v", err); return
+    }
+    if len(metas) == 0 { return }
+
+    for _, m := range metas {
+        // 讀取 envelope JSON
+        envRaw, err := contract.EvaluateTransaction("ReadMyReport", m.ReportID)
+        if err != nil { log.Printf("[Backfill] 讀取報告失敗 id=%s err=%v", m.ReportID, err); continue }
+
+        // 若已存在 patient key 則略過
+        var env struct{ WrappedKeys map[string]any `json:"wrappedKeys"` }
+        if err := json.Unmarshal(envRaw, &env); err != nil { log.Printf("[Backfill] 解析 envelope 失敗: %v", err); continue }
+        if env.WrappedKeys != nil {
+            if _, exists := env.WrappedKeys["patient"]; exists { continue }
+        }
+
+        // 以診所 unwrap 來源重包 patient
+        tw, err := sw.NewTransitWrapperFromEnv(); if err != nil { log.Printf("[Backfill] Vault 初始化失敗: %v", err); return }
+        // 統一使用 hash 值（與註冊邏輯一致）
+        clinicHash := database.HashString(m.ClinicID)
+        patientHash := database.HashString(userID)
+        updated, err := tw.AddRecipientTransitFrom(context.Background(), envRaw, "clinic", "clinic-"+clinicHash, "patient", "user-"+patientHash)
+        if err != nil { log.Printf("[Backfill] AddRecipientTransitFrom 失敗: %v", err); continue }
+
+        // 提交鏈上更新
+        if _, err := contract.SubmitTransaction("UpdateReport", m.ReportID, string(updated)); err != nil {
+            log.Printf("[Backfill] UpdateReport 失敗 id=%s err=%v", m.ReportID, err)
+            continue
+        }
+        log.Printf("[Backfill] 已為報告 %s 加入 patient wrapped key", m.ReportID)
+    }
 }
 
 
@@ -174,7 +248,7 @@ type rawAccessRequest struct {
 	RequestID    string `json:"requestId"`
 	ReportID     string `json:"reportId"`
 	PatientHash  string `json:"patientHash"`
-	RequesterHash string `json:"requesterHash"`
+	RequesterHash string `json:"requesterHash"`  // 統一使用 hash（用於 Transit key 命名）
 	Reason       string `json:"reason"`
 	RequestedAt  int64  `json:"requestedAt"`
 	Expiry       int64  `json:"expiry"`
@@ -292,23 +366,102 @@ func HandleApproveAccessRequest(
 	}
 	defer gw.Close()
 
-    // 此處不需要額外使用 insurer 物件，鏈碼只需 requestId
+    // 在批准前先取得該 request 的必要資訊（reportId、requesterHash），避免批准後從 PENDING 列表取不到
+    var pendingReq rawAccessRequest
+    {
+        result, qErr := contract.EvaluateTransaction("ListPendingAccessRequests")
+        if qErr != nil {
+            log.Printf("[Warn] 取得待處理授權請求失敗，將直接批准 requestId=%s err=%v", req.RequestId, qErr)
+        } else {
+            var raws []rawAccessRequest
+            if uErr := json.Unmarshal(result, &raws); uErr != nil {
+                log.Printf("[Warn] 解析待處理清單失敗，將直接批准 requestId=%s err=%v", req.RequestId, uErr)
+            } else {
+                for _, r := range raws {
+                    if r.RequestID == req.RequestId {
+                        pendingReq = r
+                        break
+                    }
+                }
+            }
+        }
+    }
 
-	// 呼叫鏈碼
-	log.Printf("[Debug] 批准授權請求: %s", req.RequestId)
-	_, err = contract.SubmitTransaction(
-		"ApproveAndAuthorizeAccess", 
-		req.RequestId,
-	)
-	if err != nil {
-		fc.PrintGatewayError(err)
-		return nil, status.Error(codes.Internal, "更新授權狀態失敗")
-	}
+    // 呼叫鏈碼：批准請求
+    log.Printf("[Debug] 批准授權請求: %s", req.RequestId)
+    _, err = contract.SubmitTransaction(
+        "ApproveAndAuthorizeAccess", 
+        req.RequestId,
+    )
+    if err != nil {
+        fc.PrintGatewayError(err)
+        return nil, status.Error(codes.Internal, "更新授權狀態失敗")
+    }
 
-	return &pb.ApproveAccessRequestResponse{
-		Success: true,
-		Message: "已批准授權請求",
-	}, nil
+    // 最佳努力：批准後追加 insurer 的 wrapped key
+    if pendingReq.ReportID != "" && pendingReq.RequesterHash != "" {
+        // 統一使用 hash 值（與註冊邏輯一致）
+        insurerHash := pendingReq.RequesterHash
+        
+        // 2) 取得 clinicId（由病患的報告 meta）
+        metasRaw, mErr := contract.EvaluateTransaction("ListMyReportMeta")
+        if mErr != nil {
+            log.Printf("[Warn] 取得報告 meta 失敗: %v", mErr)
+        } else {
+            var metas []struct { ReportID string `json:"reportId"`; ClinicID string `json:"clinicId"` }
+            if u2 := json.Unmarshal(metasRaw, &metas); u2 != nil {
+                log.Printf("[Warn] 解析報告 meta 失敗: %v", u2)
+            } else {
+                var clinicID string
+                for _, m := range metas { if m.ReportID == pendingReq.ReportID { clinicID = m.ClinicID; break } }
+                if clinicID == "" { 
+                    log.Printf("[Warn] 找不到報告的 clinicId reportId=%s", pendingReq.ReportID)
+                } else {
+                    // 計算診所 hash（與註冊時一致）
+                    clinicHash := database.HashString(clinicID)
+                    // 計算病患 hash（與註冊時一致）
+                    patientHash := database.HashString(userID)
+                    
+                    // 3) 讀取報告 Envelope
+                    envRaw, rErr := contract.EvaluateTransaction("ReadMyReport", pendingReq.ReportID)
+                    if rErr != nil {
+                        log.Printf("[Warn] 讀取報告失敗 reportId=%s err=%v", pendingReq.ReportID, rErr)
+                    } else {
+                        // 4) 優先以病患 unwrap → 以 insurer 重包；若無 patient 包鍵則回退用診所 unwrap
+                        tw, iw := sw.NewTransitWrapperFromEnv(); if iw != nil { log.Printf("[Warn] Vault 初始化失敗: %v", iw)
+                        } else {
+                            // 檢查是否已有 patient wrapped key
+                            var envChk struct{ WrappedKeys map[string]any `json:"wrappedKeys"` }
+                            usePatient := false
+                            if jerr := json.Unmarshal(envRaw, &envChk); jerr == nil {
+                                if envChk.WrappedKeys != nil { if _, ok := envChk.WrappedKeys["patient"]; ok { usePatient = true } }
+                            }
+                            unwrapLabel := "clinic"
+                            unwrapBase := "clinic-"+clinicHash
+                            if usePatient {
+                                unwrapLabel = "patient"
+                                unwrapBase = "user-"+patientHash
+                            }
+                            updated, wErr := tw.AddRecipientTransitFrom(ctx, envRaw, unwrapLabel, unwrapBase, "insurer", "insurer-"+insurerHash)
+                            if wErr != nil {
+                                log.Printf("[Warn] 追加 insurer 包鍵失敗 reportId=%s err=%v (unwrap via %s:%s)", pendingReq.ReportID, wErr, unwrapLabel, unwrapBase)
+                            } else {
+                                if _, sErr := contract.SubmitTransaction("UpdateReport", pendingReq.ReportID, string(updated)); sErr != nil {
+                                    log.Printf("[Warn] UpdateReport 失敗 reportId=%s err=%v", pendingReq.ReportID, sErr)
+                                } else {
+                                    log.Printf("[Info] 已為報告 %s 追加 insurer 包鍵: insurer-%s-wrap（unwrap via %s）", pendingReq.ReportID, insurerHash, unwrapLabel)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        log.Printf("[Warn] 缺少必要資訊，略過追加包鍵 requestId=%s", req.RequestId)
+    }
+
+    return &pb.ApproveAccessRequestResponse{ Success: true, Message: "已批准授權請求" }, nil
 }
 
 // HandleRejectAccessRequest 處理授權請求的拒絕
@@ -605,7 +758,9 @@ func HandleViewAuthorizedReport(
 
     // 以保險業者身分解密回傳
     tw, tErr := sw.NewTransitWrapperFromEnv(); if tErr != nil { return nil, status.Error(codes.Internal, "Vault 初始化失敗") }
-    pt, dErr := tw.DecryptReportTransit(ctx, result, "insurer", "insurer-"+insurerId)
+    // 統一使用 hash 值（與註冊邏輯一致）
+    insurerHash := database.HashString(insurerId)
+    pt, dErr := tw.DecryptReportTransit(ctx, result, "insurer", "insurer-"+insurerHash)
     if dErr != nil {
         return nil, status.Error(codes.Internal, "解密失敗")
     }
@@ -872,7 +1027,9 @@ func HandleReadMyReport(
     if tErr != nil {
         return nil, status.Error(codes.Internal, "Vault 初始化失敗")
     }
-    pt, dErr := tw.DecryptReportTransit(ctx, result, "patient", "user-"+userID)
+    // 統一使用 hash 值（與註冊邏輯一致）
+    patientHash := database.HashString(userID)
+    pt, dErr := tw.DecryptReportTransit(ctx, result, "patient", "user-"+patientHash)
     if dErr != nil {
         return nil, status.Error(codes.Internal, "解密失敗")
     }

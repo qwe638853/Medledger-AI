@@ -336,3 +336,77 @@
 06:34:33.891527 version@stat F·[1] S·119B[119B] Sc·[0.25]
 06:34:34.127248 db@janitor F·3 G·0
 06:34:34.127295 db@open done T·236.355049ms
+=============== Oct 9, 2025 (UTC) ===============
+09:47:55.437416 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+09:47:55.438504 version@stat F·[1] S·119B[119B] Sc·[0.25]
+09:47:55.438547 db@open opening
+09:47:55.438586 journal@recovery F·1
+09:47:55.438891 journal@recovery recovering @67
+09:47:55.441126 memdb@flush created L0@69 N·16 S·875B "cha..1\x00\x01,v18":"cha..\x01\x01\x00,v9"
+09:47:55.443195 version@stat F·[2] S·994B[994B] Sc·[0.50]
+09:47:55.460241 db@janitor F·4 G·0
+09:47:55.460255 db@open done T·21.700067ms
+09:47:55.460611 db@close closing
+09:47:55.460684 db@close done T·70.35µs
+=============== Oct 9, 2025 (UTC) ===============
+09:47:55.464641 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+09:47:55.465156 version@stat F·[2] S·994B[994B] Sc·[0.50]
+09:47:55.465183 db@open opening
+09:47:55.465219 journal@recovery F·1
+09:47:55.465315 journal@recovery recovering @70
+09:47:55.465626 version@stat F·[2] S·994B[994B] Sc·[0.50]
+09:47:55.476094 db@janitor F·4 G·0
+09:47:55.476129 db@open done T·10.937875ms
+=============== Oct 31, 2025 (UTC) ===============
+12:45:24.707535 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+12:45:24.708705 version@stat F·[2] S·994B[994B] Sc·[0.50]
+12:45:24.708754 db@open opening
+12:45:24.708810 journal@recovery F·1
+12:45:24.709180 journal@recovery recovering @72
+12:45:24.712784 memdb@flush created L0@74 N·2 S·136B "cha..1\x00\x01,v21":"cha..1\x00\a,d20"
+12:45:24.715822 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+12:45:24.739457 db@janitor F·5 G·0
+12:45:24.739514 db@open done T·30.747385ms
+12:45:24.741950 db@close closing
+12:45:24.742170 db@close done T·219.444µs
+=============== Oct 31, 2025 (UTC) ===============
+12:45:24.747086 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+12:45:24.747514 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+12:45:24.747552 db@open opening
+12:45:24.747592 journal@recovery F·1
+12:45:24.747704 journal@recovery recovering @75
+12:45:24.747880 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+12:45:24.765000 db@janitor F·5 G·0
+12:45:24.765043 db@open done T·17.48144ms
+=============== Nov 1, 2025 (UTC) ===============
+05:40:31.132765 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:40:31.133764 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+05:40:31.133814 db@open opening
+05:40:31.133858 journal@recovery F·1
+05:40:31.134065 journal@recovery recovering @77
+05:40:31.136703 memdb@flush created L0@79 N·15 S·857B "cha..1\x00\x01,v37":"cha..\x01\t\x00,v28"
+05:40:31.140231 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+05:40:31.166499 db@janitor F·6 G·0
+05:40:31.166569 db@open done T·32.740895ms
+05:40:31.166647 table@compaction L0·3 -> L1·0 S·1KiB Q·38
+05:40:31.169398 db@close closing
+05:40:31.173014 table@build created L1@82 N·15 S·1KiB "cha..1\x00\x01,v37":"cha..\x01\x01\x00,v9"
+05:40:31.173873 table@build exiting
+05:40:31.173888 table@build revert @82
+05:40:31.174334 db@close done T·4.935399ms
+=============== Nov 1, 2025 (UTC) ===============
+05:40:31.186556 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+05:40:31.186769 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+05:40:31.186801 db@open opening
+05:40:31.186847 journal@recovery F·1
+05:40:31.187015 journal@recovery recovering @80
+05:40:31.188642 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+05:40:31.203079 db@janitor F·6 G·0
+05:40:31.203130 db@open done T·16.318298ms
+05:40:31.203790 table@compaction L0·3 -> L1·0 S·1KiB Q·38
+05:40:31.208904 table@build created L1@84 N·15 S·1KiB "cha..1\x00\x01,v37":"cha..\x01\x01\x00,v9"
+05:40:31.209026 version@stat F·[1 1] S·1KiB[119B 1KiB] Sc·[0.25 0.00]
+05:40:31.218841 table@compaction committed F-2 S-631B Ke·0 D·18 T·14.980798ms
+05:40:31.219154 table@remove removed @79
+05:40:31.219189 table@remove removed @74
+05:40:31.219455 table@remove removed @69

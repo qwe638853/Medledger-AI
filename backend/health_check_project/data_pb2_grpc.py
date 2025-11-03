@@ -4,9 +4,8 @@ import grpc
 import warnings
 
 import data_pb2 as data__pb2
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
-GRPC_GENERATED_VERSION = '1.71.0'
+GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -19,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in data_pb2_grpc.py depends on'
+        + ' but the generated code in data_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -27,7 +26,9 @@ if _version_not_supported:
 
 
 class HealthServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """import "google/api/annotations.proto";
+
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -35,76 +36,6 @@ class HealthServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.UploadReport = channel.unary_unary(
-                '/health.HealthService/UploadReport',
-                request_serializer=data__pb2.UploadReportRequest.SerializeToString,
-                response_deserializer=data__pb2.UploadReportResponse.FromString,
-                _registered_method=True)
-        self.ClaimReport = channel.unary_unary(
-                '/health.HealthService/ClaimReport',
-                request_serializer=data__pb2.ClaimReportRequest.SerializeToString,
-                response_deserializer=data__pb2.ClaimReportResponse.FromString,
-                _registered_method=True)
-        self.ReadReport = channel.unary_unary(
-                '/health.HealthService/ReadReport',
-                request_serializer=data__pb2.ReadReportRequest.SerializeToString,
-                response_deserializer=data__pb2.ReadReportResponse.FromString,
-                _registered_method=True)
-        self.Login = channel.unary_unary(
-                '/health.HealthService/Login',
-                request_serializer=data__pb2.LoginRequest.SerializeToString,
-                response_deserializer=data__pb2.LoginResponse.FromString,
-                _registered_method=True)
-        self.RegisterUser = channel.unary_unary(
-                '/health.HealthService/RegisterUser',
-                request_serializer=data__pb2.RegisterUserRequest.SerializeToString,
-                response_deserializer=data__pb2.RegisterResponse.FromString,
-                _registered_method=True)
-        self.RegisterInsurer = channel.unary_unary(
-                '/health.HealthService/RegisterInsurer',
-                request_serializer=data__pb2.RegisterInsurerRequest.SerializeToString,
-                response_deserializer=data__pb2.RegisterResponse.FromString,
-                _registered_method=True)
-        self.ListMyReports = channel.unary_unary(
-                '/health.HealthService/ListMyReports',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=data__pb2.ListMyReportsResponse.FromString,
-                _registered_method=True)
-        self.RequestAccess = channel.unary_unary(
-                '/health.HealthService/RequestAccess',
-                request_serializer=data__pb2.RequestAccessRequest.SerializeToString,
-                response_deserializer=data__pb2.RequestAccessResponse.FromString,
-                _registered_method=True)
-        self.ListAccessRequests = channel.unary_unary(
-                '/health.HealthService/ListAccessRequests',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=data__pb2.ListAccessRequestsResponse.FromString,
-                _registered_method=True)
-        self.ApproveAccessRequest = channel.unary_unary(
-                '/health.HealthService/ApproveAccessRequest',
-                request_serializer=data__pb2.ApproveAccessRequestRequest.SerializeToString,
-                response_deserializer=data__pb2.ApproveAccessRequestResponse.FromString,
-                _registered_method=True)
-        self.RejectAccessRequest = channel.unary_unary(
-                '/health.HealthService/RejectAccessRequest',
-                request_serializer=data__pb2.RejectAccessRequestRequest.SerializeToString,
-                response_deserializer=data__pb2.RejectAccessRequestResponse.FromString,
-                _registered_method=True)
-        self.GetInsurerDashboardStats = channel.unary_unary(
-                '/health.HealthService/GetInsurerDashboardStats',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=data__pb2.InsurerDashboardStatsResponse.FromString,
-                _registered_method=True)
-        self.ListAuthorizedReports = channel.unary_unary(
-                '/health.HealthService/ListAuthorizedReports',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=data__pb2.ListAuthorizedReportsResponse.FromString,
-                _registered_method=True)
-        self.ListReportMetaByPatientID = channel.unary_unary(
-                '/health.HealthService/ListReportMetaByPatientID',
-                request_serializer=data__pb2.PatientIDRequest.SerializeToString,
-                response_deserializer=data__pb2.ListReportMetaResponse.FromString,
-                _registered_method=True)
         self.AnalyzeHealthReportForUser = channel.unary_unary(
                 '/health.HealthService/AnalyzeHealthReportForUser',
                 request_serializer=data__pb2.AnalyzeHealthReportRequest.SerializeToString,
@@ -118,101 +49,25 @@ class HealthServiceStub(object):
 
 
 class HealthServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """import "google/api/annotations.proto";
 
-    def UploadReport(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ClaimReport(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ReadReport(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def Login(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RegisterUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RegisterInsurer(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListMyReports(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RequestAccess(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListAccessRequests(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ApproveAccessRequest(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def RejectAccessRequest(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetInsurerDashboardStats(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListAuthorizedReports(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListReportMetaByPatientID(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+    """
 
     def AnalyzeHealthReportForUser(self, request, context):
-        """給用戶的健康報告分析
+        """option (google.api.http) = {
+        post: "/v1/analyze/user"
+        body: "*"
+        };
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def AnalyzeHealthReportForInsurer(self, request, context):
-        """給保險公司的健康報告分析
+        """option (google.api.http) = {
+        post: "/v1/analyze/insurer"
+        body: "*"
+        };
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -221,76 +76,6 @@ class HealthServiceServicer(object):
 
 def add_HealthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'UploadReport': grpc.unary_unary_rpc_method_handler(
-                    servicer.UploadReport,
-                    request_deserializer=data__pb2.UploadReportRequest.FromString,
-                    response_serializer=data__pb2.UploadReportResponse.SerializeToString,
-            ),
-            'ClaimReport': grpc.unary_unary_rpc_method_handler(
-                    servicer.ClaimReport,
-                    request_deserializer=data__pb2.ClaimReportRequest.FromString,
-                    response_serializer=data__pb2.ClaimReportResponse.SerializeToString,
-            ),
-            'ReadReport': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReadReport,
-                    request_deserializer=data__pb2.ReadReportRequest.FromString,
-                    response_serializer=data__pb2.ReadReportResponse.SerializeToString,
-            ),
-            'Login': grpc.unary_unary_rpc_method_handler(
-                    servicer.Login,
-                    request_deserializer=data__pb2.LoginRequest.FromString,
-                    response_serializer=data__pb2.LoginResponse.SerializeToString,
-            ),
-            'RegisterUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterUser,
-                    request_deserializer=data__pb2.RegisterUserRequest.FromString,
-                    response_serializer=data__pb2.RegisterResponse.SerializeToString,
-            ),
-            'RegisterInsurer': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterInsurer,
-                    request_deserializer=data__pb2.RegisterInsurerRequest.FromString,
-                    response_serializer=data__pb2.RegisterResponse.SerializeToString,
-            ),
-            'ListMyReports': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListMyReports,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=data__pb2.ListMyReportsResponse.SerializeToString,
-            ),
-            'RequestAccess': grpc.unary_unary_rpc_method_handler(
-                    servicer.RequestAccess,
-                    request_deserializer=data__pb2.RequestAccessRequest.FromString,
-                    response_serializer=data__pb2.RequestAccessResponse.SerializeToString,
-            ),
-            'ListAccessRequests': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListAccessRequests,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=data__pb2.ListAccessRequestsResponse.SerializeToString,
-            ),
-            'ApproveAccessRequest': grpc.unary_unary_rpc_method_handler(
-                    servicer.ApproveAccessRequest,
-                    request_deserializer=data__pb2.ApproveAccessRequestRequest.FromString,
-                    response_serializer=data__pb2.ApproveAccessRequestResponse.SerializeToString,
-            ),
-            'RejectAccessRequest': grpc.unary_unary_rpc_method_handler(
-                    servicer.RejectAccessRequest,
-                    request_deserializer=data__pb2.RejectAccessRequestRequest.FromString,
-                    response_serializer=data__pb2.RejectAccessRequestResponse.SerializeToString,
-            ),
-            'GetInsurerDashboardStats': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetInsurerDashboardStats,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=data__pb2.InsurerDashboardStatsResponse.SerializeToString,
-            ),
-            'ListAuthorizedReports': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListAuthorizedReports,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=data__pb2.ListAuthorizedReportsResponse.SerializeToString,
-            ),
-            'ListReportMetaByPatientID': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListReportMetaByPatientID,
-                    request_deserializer=data__pb2.PatientIDRequest.FromString,
-                    response_serializer=data__pb2.ListReportMetaResponse.SerializeToString,
-            ),
             'AnalyzeHealthReportForUser': grpc.unary_unary_rpc_method_handler(
                     servicer.AnalyzeHealthReportForUser,
                     request_deserializer=data__pb2.AnalyzeHealthReportRequest.FromString,
@@ -310,385 +95,9 @@ def add_HealthServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class HealthService(object):
-    """Missing associated documentation comment in .proto file."""
+    """import "google/api/annotations.proto";
 
-    @staticmethod
-    def UploadReport(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/UploadReport',
-            data__pb2.UploadReportRequest.SerializeToString,
-            data__pb2.UploadReportResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ClaimReport(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ClaimReport',
-            data__pb2.ClaimReportRequest.SerializeToString,
-            data__pb2.ClaimReportResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ReadReport(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ReadReport',
-            data__pb2.ReadReportRequest.SerializeToString,
-            data__pb2.ReadReportResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def Login(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/Login',
-            data__pb2.LoginRequest.SerializeToString,
-            data__pb2.LoginResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def RegisterUser(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/RegisterUser',
-            data__pb2.RegisterUserRequest.SerializeToString,
-            data__pb2.RegisterResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def RegisterInsurer(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/RegisterInsurer',
-            data__pb2.RegisterInsurerRequest.SerializeToString,
-            data__pb2.RegisterResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListMyReports(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ListMyReports',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            data__pb2.ListMyReportsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def RequestAccess(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/RequestAccess',
-            data__pb2.RequestAccessRequest.SerializeToString,
-            data__pb2.RequestAccessResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListAccessRequests(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ListAccessRequests',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            data__pb2.ListAccessRequestsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ApproveAccessRequest(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ApproveAccessRequest',
-            data__pb2.ApproveAccessRequestRequest.SerializeToString,
-            data__pb2.ApproveAccessRequestResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def RejectAccessRequest(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/RejectAccessRequest',
-            data__pb2.RejectAccessRequestRequest.SerializeToString,
-            data__pb2.RejectAccessRequestResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetInsurerDashboardStats(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/GetInsurerDashboardStats',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            data__pb2.InsurerDashboardStatsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListAuthorizedReports(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ListAuthorizedReports',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            data__pb2.ListAuthorizedReportsResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListReportMetaByPatientID(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/health.HealthService/ListReportMetaByPatientID',
-            data__pb2.PatientIDRequest.SerializeToString,
-            data__pb2.ListReportMetaResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
+    """
 
     @staticmethod
     def AnalyzeHealthReportForUser(request,

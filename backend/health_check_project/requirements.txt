@@ -1,0 +1,9 @@
+grpcio==1.66.0
+grpcio-tools==1.66.0
+pydantic==2.9.2
+ollama==0.6.0
+langchain-chroma==0.1.2
+langchain-huggingface==0.0.3
+chromadb==0.5.3
+sentence-transformers==3.0.1
+

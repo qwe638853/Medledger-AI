@@ -8,6 +8,29 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service HealthService {
+  // ========================
+  // 健康分析功能（Python Backend 提供）
+  // ========================
+  rpc AnalyzeHealthReportForUser(AnalyzeHealthReportRequest) returns (UserHealthAnalysisResponse) {
+    // 這些方法在 Python backend 中實現
+  }
+  
+  rpc AnalyzeHealthReportForInsurer(AnalyzeHealthReportRequest) returns (InsurerHealthAnalysisResponse) {
+    // 這些方法在 Python backend 中實現
+  }
+
+  // 前端請求健檢資料分析（通過報告 ID）
+  rpc GetHealthAnalysis(AnalyzeReportRequest) returns (HealthAnalysisResponse) {
+    option (google.api.http) = {
+      post: "/v1/health/analyze"
+      body: "*"
+    };
+  }
+
+  // ========================
+  // Hyperledger Fabric 功能（Go Server 提供）
+  // ========================
+  
   //健檢中心上傳報告
   rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
     option (google.api.http) = {
@@ -84,7 +107,6 @@ service HealthService {
     };
   }
 
-
   //拒絕授權
   rpc RejectAccessRequest(RejectAccessRequestRequest) returns (RejectAccessRequestResponse) {
     option (google.api.http) = {
@@ -92,7 +114,6 @@ service HealthService {
       body: "*"
     };
   }
-
 
   rpc ListAuthorizedReports(google.protobuf.Empty) returns (ListAuthorizedReportsResponse) {
     option (google.api.http) = {
@@ -119,23 +140,67 @@ service HealthService {
       get: "/v1/access/requests/my"
     };
   }
-
-  
-
 }
 
+// ========================
+// 健康分析相關 Message（Python Backend 使用）
+// ========================
+message AnalyzeHealthReportRequest {
+  string report_id = 1;
+  string patient_id = 2;
+  string test_results_json = 3;
+}
+
+// 用戶端專用：摘要、分數、個人風險、推薦、健康計畫
+message DiseaseRisk {
+  string disease = 1;            // 疾病名稱
+  int32 risk_percent = 2;        // 風險百分比
+  string risk_level = 3;         // "低風險"等
+  repeated string main_factors = 4; // 主因
+  string advice = 5;             // 預防建議
+}
+
+message UserHealthAnalysisResponse {
+  int32 health_score = 1;                    // 健康分數
+  string summary = 2;                        // 摘要
+  string personal_analysis = 3;              // 個人健康分析
+  repeated DiseaseRisk disease_risks = 4;    // 疾病風險
+  repeated string insurance_recommendation = 5; // 智能保險推薦
+  repeated string protection_plan = 6;       // 健康防護計畫
+  bool success = 7;
+}
+
+// 保險業者專用：核保分數、分類風險、核保建議
+message DiseaseRiskForInsurer {
+  string disease = 1;
+  int32 risk_score = 2;           // 分數（如45分）
+  string risk_level = 3;          // "低風險"
+  repeated string main_factors = 4;
+  string advice = 5;
+}
+
+message InsurerHealthAnalysisResponse {
+  int32 overall_risk_score = 1;                 // 整體風險分數
+  string risk_level_label = 2;                  // 低/中/高風險客戶
+  string summary = 3;                           // 專業核保摘要
+  repeated string core_recommendation = 4;      // 專業核保建議
+  repeated DiseaseRiskForInsurer disease_risk_evaluation = 5; // 疾病分類風險
+  bool success = 6;
+}
+
+// ========================
+// Hyperledger Fabric 相關 Message（Go Server 使用）
+// ========================
 message UploadReportRequest {
   string report_id = 1;
   string user_id = 2;
   string test_results_json = 3;
 }
 
-
 message UploadReportResponse {
     bool success = 1;
     string message = 2;
 }
-
 
 message ReadMyReportRequest {
   string report_id = 1;
@@ -149,7 +214,6 @@ message ReadMyReportResponse {
 message ListMyReportMetaResponse {
   repeated ReportMeta reports = 1;
 }
-
 
 message LoginRequest {
   string user_id = 1;
@@ -180,11 +244,9 @@ message RegisterInsurerRequest {
   string phone = 6;
 }
 
-
 message RegisterResponse {
     bool success = 1;
     string message = 2;
-    
 }
 
 message Report {
@@ -194,7 +256,6 @@ message Report {
   string result_json = 4;
   int64 created_at = 5;
 }
-
 
 message ListMyReportsResponse {
   repeated Report reports = 1;
@@ -211,6 +272,7 @@ message RequestAccessRequest {
 message RequestAccessResponse {
   bool success = 1;
   string message = 2;
+  string request_id = 3;
 }
 
 // 🟢 病患查詢自己的待審申請
@@ -258,13 +320,11 @@ enum AccessRequestStatus {
   REJECTED = 2;
 }
 
-
 message InsurerDashboardStatsResponse {
   int32 total_authorized = 1;
   int32 pending_requests = 2;
   int32 total_patients = 3;
 }
-
 
 message AuthorizedReport {
   string report_id = 1;
@@ -277,7 +337,6 @@ message AuthorizedReport {
 message ListAuthorizedReportsResponse {
   repeated AuthorizedReport reports = 1;
 }
-
 
 message PatientIDRequest {
   string patient_id = 1;
@@ -303,7 +362,6 @@ message ViewAuthorizedReportResponse {
   string result_json = 2;        // 報告全文或格式化內容
 }
 
-
 message ListMyAccessRequestsResponse {
   bool success = 1;
   repeated AccessRequest requests = 3;
@@ -324,3 +382,22 @@ message ListAuthorizedTicketsResponse {
   bool success = 3;
 }
 
+// ========================
+// 前端健檢分析相關 Message
+// ========================
+// 前端請求分析（通過報告 ID）
+message AnalyzeReportRequest {
+  string report_id = 1;           // 報告 ID（從鏈上獲取）
+  string user_id = 2;             // 用戶 ID（可選，用於權限驗證）
+  string analysis_type = 3;       // 分析類型：user 或 insurer（默認 user）
+}
+
+// 統一的健康分析回應（包含用戶和保險業者分析）
+message HealthAnalysisResponse {
+  bool success = 1;
+  string message = 2;
+  // 用戶分析結果（analysis_type = "user" 時返回）
+  UserHealthAnalysisResponse user_analysis = 3;
+  // 保險業者分析結果（analysis_type = "insurer" 時返回）
+  InsurerHealthAnalysisResponse insurer_analysis = 4;
+}

@@ -100,22 +100,54 @@ export const authorizeHealthData = async (targetId, healthData) => {
 };
 
 /**
- * 使用 LLM 分析健康數據
+ * 獲取健檢資料分析（通過報告 ID）
+ * @param {string} reportId - 報告 ID
+ * @param {string} analysisType - 分析類型：'user' 或 'insurer'（默認 'user'）
+ * @returns {Promise<Object>} - 分析結果的Promise
+ */
+export const getHealthAnalysis = async (reportId, analysisType = 'user') => {
+  try {
+    console.log(`[getHealthAnalysis] 請求分析: reportId=${reportId}, analysisType=${analysisType}`);
+    
+    const response = await apiClient.post('/v1/health/analyze', {
+      report_id: reportId,
+      analysis_type: analysisType
+    });
+    
+    console.log('[getHealthAnalysis] API 回應:', response.data);
+    
+    if (response.data.success) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || '分析失敗');
+    }
+  } catch (error) {
+    const errorMsg = handleApiError(error, '健檢資料分析');
+    notifyError(errorMsg);
+    throw error;
+  }
+};
+
+/**
+ * 使用 LLM 分析健康數據（保留舊方法以向後兼容）
  * @param {Array} healthData - 要分析的健康數據
  * @returns {Promise<string>} - 分析結果的Promise
  */
 export const analyzeLLMSummary = async (healthData) => {
   try {
-    // 待後端實現 LLM 分析 API
-    const response = await apiClient.post('/v1/llm/analyze', {
-      reportIds: healthData.map(data => data.id)
-    });
-    
-    if (response.data.success) {
-      return response.data.summary;
-    } else {
-      throw new Error(response.data.message || 'LLM 分析失敗');
+    // 如果 healthData 是數組，使用第一個報告的 ID
+    if (Array.isArray(healthData) && healthData.length > 0) {
+      const reportId = healthData[0].id || healthData[0].report_id || healthData[0].reportId;
+      if (reportId) {
+        const analysis = await getHealthAnalysis(reportId, 'user');
+        if (analysis.user_analysis) {
+          return analysis.user_analysis.summary || '分析完成';
+        }
+      }
     }
+    
+    // 如果無法獲取報告 ID，返回錯誤
+    throw new Error('無法獲取報告 ID');
   } catch (error) {
     const errorMsg = handleApiError(error, 'LLM 分析');
     notifyError(errorMsg);
@@ -732,6 +764,7 @@ export default {
   fetchAuthorizeTargets,
   authorizeHealthData,
   analyzeLLMSummary,
+  getHealthAnalysis, // 新增：獲取健檢資料分析
   fetchOtherHealthData,
   uploadHealthReport,
   batchUploadHealthReports,

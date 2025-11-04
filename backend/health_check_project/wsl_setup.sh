@@ -24,8 +24,8 @@ pip install --upgrade pip
 cat > requirements.txt << EOL
 grpcio==1.66.0
 grpcio-tools==1.66.0
-pydantic==2.8.2
-ollama==0.1.45
+pydantic==2.9.2
+ollama==0.6.0
 langchain-chroma==0.1.2
 langchain-huggingface==0.0.3
 chromadb==0.5.3
@@ -44,12 +44,31 @@ if ! command -v protoc &> /dev/null; then
 fi
 
 # 8. 編譯 proto
-mkdir -p generated
-python -m grpc_tools.protoc \
-    -I ./proto \
-    --python_out=./generated \
-    --grpc_python_out=./generated \
-    ./proto/health.proto
+if [ -f "./proto/data.proto" ]; then
+    # 確保 google/protobuf 目錄存在並複製必要的文件
+    mkdir -p google/protobuf
+    if [ -d "venv/lib/python3.12/site-packages/grpc_tools/_proto/google/protobuf" ]; then
+        cp venv/lib/python3.12/site-packages/grpc_tools/_proto/google/protobuf/*.proto google/protobuf/ 2>/dev/null || true
+    fi
+    
+    # 編譯 proto 文件（使用 -I . 從當前目錄開始查找）
+    python -m grpc_tools.protoc \
+        -I . \
+        -I ./google \
+        --python_out=. \
+        --grpc_python_out=. \
+        ./proto/data.proto
+    
+    # 如果文件生成在 proto 目錄，移動到當前目錄
+    if [ -f "./proto/data_pb2.py" ]; then
+        cp ./proto/data_pb2.py ./proto/data_pb2_grpc.py . 2>/dev/null || true
+    fi
+    
+    echo "✅ Proto 文件編譯完成"
+else
+    echo "⚠️ 警告: ./proto/data.proto 不存在，跳過 proto 編譯"
+    echo "   如果已有生成的 data_pb2.py 和 data_pb2_grpc.py，可以繼續使用"
+fi
 
 # 9. 安裝 Ollama
 if ! command -v ollama &> /dev/null; then

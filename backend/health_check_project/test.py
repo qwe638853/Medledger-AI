@@ -21,8 +21,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 環境配置
-OLLAMA_HOST = "http://localhost:11434"
-MODEL_NAME = "meditron:7b"
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3:8b")
 
 # Pydantic 模型
 class DiseaseRisk(BaseModel):
@@ -86,20 +86,47 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
 
     def _check_ollama_connection(self, max_retries=3, delay=2) -> bool:
         try:
-            host, port = OLLAMA_HOST.replace("http://", "").split(":")
+            # 解析主機和端口
+            host_port = OLLAMA_HOST.replace("http://", "").replace("https://", "")
+            if ":" in host_port:
+                host, port = host_port.split(":")
+            else:
+                host = host_port
+                port = 11434
+            
+            logger.info(f"檢查 Ollama 連接: {host}:{port}")
+            
             for attempt in range(max_retries):
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(5)
                     result = s.connect_ex((host, int(port)))
                     if result == 0:
-                        logger.info(f"Ollama 連線檢查成功，嘗試次數: {attempt + 1}")
-                        return True
+                        # 進一步檢查 API 是否可用（可選，如果 requests 不可用則跳過）
+                        try:
+                            import requests
+                            response = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=3)
+                            if response.status_code == 200:
+                                logger.info(f"Ollama 連線檢查成功（API 可用），嘗試次數: {attempt + 1}")
+                                return True
+                        except ImportError:
+                            # requests 未安裝，跳過 API 檢查
+                            logger.info(f"Ollama 端口連接成功（跳過 API 檢查），嘗試次數: {attempt + 1}")
+                            return True
+                        except Exception as api_error:
+                            logger.warning(f"Ollama API 檢查失敗: {str(api_error)}")
+                            # 即使 API 檢查失敗，如果端口可連接，也認為連接成功
+                            logger.info(f"Ollama 端口連接成功，嘗試次數: {attempt + 1}")
+                            return True
                     logger.warning(f"Ollama 連線檢查失敗，嘗試 {attempt + 1}/{max_retries}，代碼 {result}")
-                    time.sleep(delay)
+                    if attempt < max_retries - 1:
+                        time.sleep(delay)
             logger.error("Ollama 連線檢查失敗，所有重試均失敗")
+            logger.error(f"請確保 Ollama 服務正在運行在 {OLLAMA_HOST}")
+            logger.error("提示: 可以運行 './start_ollama.sh' 來啟動 Ollama 服務")
             return False
         except Exception as e:
             logger.error(f"Ollama 連線檢查失敗: {str(e)}")
+            logger.error(f"請檢查 OLLAMA_HOST 環境變數設置: {OLLAMA_HOST}")
             return False
 
     def _clean_doc_content(self, text: str) -> str:
@@ -306,10 +333,18 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
 
 def serve():
     try:
+        # 從環境變數獲取端口，默認使用 50052（避免與 Go Server 的 50051 衝突）
+        grpc_port = os.getenv("PYTHON_BACKEND_GRPC_PORT", "50052")
+        grpc_host = os.getenv("PYTHON_BACKEND_GRPC_HOST", "[::]")
+        
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         data_pb2_grpc.add_HealthServiceServicer_to_server(HealthAnalysisServicer(), server)
-        server.add_insecure_port('[::]:50051')
-        logger.info("gRPC 服務器啟動，監聽端口 50051")
+        
+        listen_addr = f"{grpc_host}:{grpc_port}"
+        server.add_insecure_port(listen_addr)
+        logger.info(f"Python gRPC 服務器啟動，監聽地址: {listen_addr}")
+        logger.info(f"注意: Go Server 運行在 :50051，Python Backend 運行在 :{grpc_port}")
+        
         server.start()
         try:
             while True:

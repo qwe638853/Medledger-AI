@@ -233,6 +233,7 @@ const showRisk = ref(false);
 const aiSummary = ref('這是 AI 分析摘要的假資料。');
 const riskLevel = ref('低風險');
 const riskAdvice = ref('您的主要指標均在正常範圍，請持續保持健康生活。');
+const aiAnalysisLoading = ref(false);
 
 // 風險評估簡單規則
 function evaluateRisk(metrics = {}) {
@@ -640,6 +641,123 @@ const competitorHeaders = [
   { title: '競爭力評分', key: 'score', align: 'center' }
 ];
 
+// 載入健康分析數據
+const loadHealthAnalysis = async () => {
+  if (!reportId) {
+    console.error('報告 ID 不存在，無法載入分析');
+    return;
+  }
+
+  aiAnalysisLoading.value = true;
+  showAISummary.value = true; // 先打開彈窗顯示載入狀態
+
+  try {
+    console.log(`[loadHealthAnalysis] 開始載入分析: reportId=${reportId}`);
+    
+    // 根據用戶角色選擇分析類型
+    const analysisType = userRole.value === 'insurer' ? 'insurer' : 'user';
+    const response = await healthCheckService.getHealthAnalysis(reportId, analysisType);
+    
+    console.log('[loadHealthAnalysis] API 回應:', response);
+    
+    if (response.success) {
+      // 根據分析類型選擇對應的數據
+      const analysisData = analysisType === 'user' 
+        ? response.user_analysis 
+        : response.insurer_analysis;
+      
+      if (analysisData) {
+        // 轉換用戶分析數據格式
+        if (analysisType === 'user') {
+          aiAnalysis.value = {
+            summary: analysisData.summary || analysisData.personal_analysis || '',
+            healthScore: analysisData.health_score || 0,
+            riskLevel: getRiskLevel(analysisData.health_score),
+            diseaseRisks: (analysisData.disease_risks || []).map(risk => ({
+              name: risk.disease || '',
+              risk: risk.risk_percent || 0,
+              level: mapRiskLevel(risk.risk_level || ''),
+              factors: risk.main_factors || [],
+              prevention: risk.advice || ''
+            })),
+            healthTrends: [], // API 目前沒有提供此數據
+            recommendations: [
+              {
+                type: 'diet',
+                title: '飲食建議',
+                items: analysisData.protection_plan || []
+              },
+              {
+                type: 'exercise',
+                title: '運動建議',
+                items: []
+              },
+              {
+                type: 'lifestyle',
+                title: '生活習慣',
+                items: []
+              }
+            ],
+            insuranceRecommendations: (analysisData.insurance_recommendation || []).map(rec => ({
+              name: rec,
+              coverage: '',
+              features: [],
+              monthlyPremium: 0,
+              suitability: 0
+            }))
+          };
+        } else {
+          // 轉換保險業者分析數據格式（簡化版）
+          aiAnalysis.value = {
+            summary: analysisData.summary || '',
+            healthScore: 100 - (analysisData.overall_risk_score || 0), // 轉換為健康分數
+            riskLevel: mapRiskLevel(analysisData.risk_level_label || ''),
+            diseaseRisks: (analysisData.disease_risk_evaluation || []).map(risk => ({
+              name: risk.disease || '',
+              risk: risk.risk_score || 0,
+              level: mapRiskLevel(risk.risk_level || ''),
+              factors: risk.main_factors || [],
+              prevention: risk.advice || ''
+            })),
+            healthTrends: [],
+            recommendations: [
+              {
+                type: 'diet',
+                title: '核保建議',
+                items: analysisData.core_recommendation || []
+              }
+            ],
+            insuranceRecommendations: []
+          };
+        }
+      }
+    } else {
+      throw new Error(response.message || '分析失敗');
+    }
+  } catch (error) {
+    console.error('[loadHealthAnalysis] 載入分析失敗:', error);
+    // 保持原有的假數據，不更新
+  } finally {
+    aiAnalysisLoading.value = false;
+  }
+};
+
+// 輔助函數：根據健康分數獲取風險等級
+const getRiskLevel = (score) => {
+  if (score >= 80) return 'low';
+  if (score >= 60) return 'medium';
+  return 'high';
+};
+
+// 輔助函數：映射風險等級
+const mapRiskLevel = (level) => {
+  const levelLower = (level || '').toLowerCase();
+  if (levelLower.includes('低') || levelLower.includes('low')) return 'low';
+  if (levelLower.includes('中') || levelLower.includes('medium') || levelLower.includes('中風險')) return 'medium';
+  if (levelLower.includes('高') || levelLower.includes('high')) return 'high';
+  return 'medium'; // 默認
+};
+
 onMounted(() => {
   fetchReportData();
 });
@@ -676,7 +794,8 @@ onMounted(() => {
             class="action-btn ai-btn"
             elevation="0"
             color="#00B8D9"
-            @click="showAISummary = true"
+            :loading="aiAnalysisLoading"
+            @click="loadHealthAnalysis"
           >
             <v-icon start size="20">mdi-robot-outline</v-icon>
             AI 智能分析
@@ -861,6 +980,19 @@ onMounted(() => {
         </v-card-title>
 
         <v-card-text class="ai-dialog-content">
+          <!-- 載入狀態 -->
+          <div v-if="aiAnalysisLoading" class="loading-wrapper">
+            <v-progress-circular
+              indeterminate
+              color="#00B8D9"
+              size="64"
+              width="6"
+            />
+            <div class="loading-text">正在分析您的健康數據...</div>
+          </div>
+
+          <!-- 分析內容 -->
+          <template v-else>
           <!-- 健康評分區域 -->
           <div class="health-score-wrapper">
             <div class="health-score-main">
@@ -1065,7 +1197,7 @@ onMounted(() => {
           </div>
 
           <!-- 保險推薦 -->
-          <div class="insurance-wrapper">
+          <div v-if="aiAnalysis.insuranceRecommendations && aiAnalysis.insuranceRecommendations.length > 0" class="insurance-wrapper">
             <div class="section-header-large">
               <div class="section-icon-large insurance-icon">
                 <v-icon size="32" color="white">mdi-shield-account</v-icon>
@@ -1129,6 +1261,7 @@ onMounted(() => {
               </div>
             </div>
           </div>
+          </template>
         </v-card-text>
       </v-card>
     </v-dialog>

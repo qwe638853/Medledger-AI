@@ -185,3 +185,14 @@
 05:40:31.149051 table@compaction committed F-2 S-623B Ke·0 D·33 T·14.363499ms
 05:40:31.150613 table@remove removed @38
 05:40:31.150942 table@remove removed @35
+=============== Nov 2, 2025 (UTC) ===============
+12:38:40.323678 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+12:38:40.324672 version@stat F·[1 1] S·2KiB[119B 2KiB] Sc·[0.25 0.00]
+12:38:40.324718 db@open opening
+12:38:40.324761 journal@recovery F·1
+12:38:40.324954 journal@recovery recovering @42
+12:38:40.329491 memdb@flush created L0@45 N·67 S·2KiB "cha..\x01\x10\x00,v110":"cha..\x01\x10\x00,v109"
+12:38:40.331857 version@stat F·[2 1] S·4KiB[2KiB 2KiB] Sc·[0.50 0.00]
+12:38:40.349945 db@janitor F·6 G·1
+12:38:40.349975 db@janitor removing table-41
+12:38:40.350816 db@open done T·26.083319ms

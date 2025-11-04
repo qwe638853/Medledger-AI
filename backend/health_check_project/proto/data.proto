@@ -2,26 +2,149 @@ syntax = "proto3";
 
 package health;
 
-option go_package = "sdk_test/proto;health";
+option go_package = "go_server/proto;health"; 
 
-//import "google/api/annotations.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 service HealthService {
+  // ========================
+  // 健康分析功能（Python Backend 提供）
+  // ========================
   rpc AnalyzeHealthReportForUser(AnalyzeHealthReportRequest) returns (UserHealthAnalysisResponse) {
-    //option (google.api.http) = {
-      //post: "/v1/analyze/user"
-      //body: "*"
-    //};
+    // 這些方法在 Python backend 中實現
   }
+  
   rpc AnalyzeHealthReportForInsurer(AnalyzeHealthReportRequest) returns (InsurerHealthAnalysisResponse) {
-    //option (google.api.http) = {
-      //post: "/v1/analyze/insurer"
-      //body: "*"
-    //};
+    // 這些方法在 Python backend 中實現
   }
-  // ...保留原有API（略）
+
+  // 前端請求健檢資料分析（通過報告 ID）
+  rpc GetHealthAnalysis(AnalyzeReportRequest) returns (HealthAnalysisResponse) {
+    option (google.api.http) = {
+      post: "/v1/health/analyze"
+      body: "*"
+    };
+  }
+
+  // ========================
+  // Hyperledger Fabric 功能（Go Server 提供）
+  // ========================
+  
+  //健檢中心上傳報告
+  rpc UploadReport(UploadReportRequest) returns (UploadReportResponse){
+    option (google.api.http) = {
+      post: "/v1/upload"
+      body: "*"
+    };
+  }
+
+  //登入
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+
+  //用戶註冊
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/user"
+      body: "*"
+    };
+  }
+
+  //保險業者註冊
+  rpc RegisterInsurer(RegisterInsurerRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register/insurer"
+      body: "*"
+    };
+  }
+
+  //用戶讀取自己的報告 meta (只有metadata，不包含內容)
+  rpc ListMyReportMeta(google.protobuf.Empty) returns (ListMyReportMetaResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/my/meta"
+    };
+  }
+
+  //用戶讀取自己的完整報告內容
+  rpc ReadMyReport(ReadMyReportRequest) returns (ReadMyReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/{report_id}"
+    };
+  }
+
+  //用戶讀取授權紀錄
+  rpc ListMyAuthorizedTickets(google.protobuf.Empty) returns (ListAuthorizedTicketsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/tickets"
+    };
+  }
+
+  //請求授權
+  rpc RequestAccess(RequestAccessRequest) returns (RequestAccessResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/request"
+      body: "*"
+    };
+  }
+
+  //請求授權列表
+  rpc ListAccessRequests(google.protobuf.Empty) returns (ListAccessRequestsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/requests"
+    };
+  }
+
+  //接受授權
+  rpc ApproveAccessRequest(ApproveAccessRequestRequest) returns (ApproveAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/approve"
+      body: "*"
+    };
+  }
+
+  //拒絕授權
+  rpc RejectAccessRequest(RejectAccessRequestRequest) returns (RejectAccessRequestResponse) {
+    option (google.api.http) = {
+      post: "/v1/access/reject"
+      body: "*"
+    };
+  }
+
+  rpc ListAuthorizedReports(google.protobuf.Empty) returns (ListAuthorizedReportsResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/authorized"
+    };
+  }
+
+  rpc ListReportMetaByPatientID(PatientIDRequest) returns (ListReportMetaResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/meta/{patient_id}"
+    };
+  }
+
+  //保險業者讀授權報告
+  rpc ViewAuthorizedReport(ViewAuthorizedReportRequest) returns (ViewAuthorizedReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/reports/authorized/{user_id}/{report_id}"
+    };
+  }
+
+  // 保險業者查看自己發出的授權請求
+  rpc ListMyAccessRequests(google.protobuf.Empty) returns (ListMyAccessRequestsResponse) {
+    option (google.api.http) = {
+      get: "/v1/access/requests/my"
+    };
+  }
 }
 
+// ========================
+// 健康分析相關 Message（Python Backend 使用）
+// ========================
 message AnalyzeHealthReportRequest {
   string report_id = 1;
   string patient_id = 2;
@@ -66,40 +189,43 @@ message InsurerHealthAnalysisResponse {
 }
 
 // ========================
-// 其餘原有 message 保留
+// Hyperledger Fabric 相關 Message（Go Server 使用）
 // ========================
 message UploadReportRequest {
   string report_id = 1;
   string user_id = 2;
   string test_results_json = 3;
 }
+
 message UploadReportResponse {
     bool success = 1;
     string message = 2;
 }
-message ClaimReportRequest {
+
+message ReadMyReportRequest {
   string report_id = 1;
 }
-message ClaimReportResponse {
+
+message ReadMyReportResponse {
   bool success = 1;
-  string message = 2;
+  string result_json = 2;
 }
-message ReadReportRequest {
-  string report_id = 1;
+
+message ListMyReportMetaResponse {
+  repeated ReportMeta reports = 1;
 }
-message ReadReportResponse {
-  bool success = 1;
-  string report_content = 2;
-}
+
 message LoginRequest {
   string user_id = 1;
   string password = 2;
 }
+
 message LoginResponse {
     bool success = 1;
     string message = 2;
     string token = 3; 
 }
+
 message RegisterUserRequest {
   string user_id = 1;
   string password = 2;
@@ -108,18 +234,21 @@ message RegisterUserRequest {
   string email = 5;
   string phone = 6;
 }
+
 message RegisterInsurerRequest {
-  string insurer_id = 1;
+  string insurer_id = 1;      // 例如: CATHAY-01
   string password = 2;
   string company_name = 3;
   string contact_person = 4;
   string email = 5;
   string phone = 6;
 }
+
 message RegisterResponse {
     bool success = 1;
     string message = 2;
 }
+
 message Report {
   string report_id = 1;
   string clinic_id = 2;
@@ -127,74 +256,148 @@ message Report {
   string result_json = 4;
   int64 created_at = 5;
 }
+
 message ListMyReportsResponse {
   repeated Report reports = 1;
 }
+
+// 🔵 保險業者送出授權申請
 message RequestAccessRequest {
   string report_id = 1;
   string patient_id = 2;
   string reason = 3;
-  int64 expiry = 4;
+  int64 expiry = 4; // Unix 秒
 }
+
 message RequestAccessResponse {
   bool success = 1;
-  string request_id = 2;
+  string message = 2;
+  string request_id = 3;
 }
+
+// 🟢 病患查詢自己的待審申請
 message AccessRequest {
   string request_id = 1;
   string report_id = 2;
   string patient_hash = 3;
-  string target_hash = 4;
+  string requester_hash = 4;
   string reason = 5;
   int64 requested_at = 6;
   int64 expiry = 7;
   string status = 8;
+  string requester_name = 9;
+  string company_name = 10;
+  string patient_name = 11;  // 病患真實姓名
 }
+
 message ListAccessRequestsResponse {
   repeated AccessRequest requests = 1;
 }
+
+// 🟡 病患點同意授權
 message ApproveAccessRequestRequest {
   string request_id = 1;
 }
+
 message ApproveAccessRequestResponse {
   bool success = 1;
   string message = 2;
 }
+
+// 🔴 病患拒絕授權
 message RejectAccessRequestRequest {
   string request_id = 1;
 }
+
 message RejectAccessRequestResponse {
   bool success = 1;
   string message = 2;
 }
+
 enum AccessRequestStatus {
   PENDING = 0;
   APPROVED = 1;
   REJECTED = 2;
 }
+
 message InsurerDashboardStatsResponse {
   int32 total_authorized = 1;
   int32 pending_requests = 2;
   int32 total_patients = 3;
 }
+
 message AuthorizedReport {
   string report_id = 1;
   string patient_id = 2;
-  string content = 3;
   string date = 4;
   string expiry = 5;
+  string patient_name = 6;  // 病患真實姓名
 }
+
 message ListAuthorizedReportsResponse {
   repeated AuthorizedReport reports = 1;
 }
+
 message PatientIDRequest {
   string patient_id = 1;
 }
+
 message ReportMeta {
   string report_id = 1;
   string clinic_id = 2;
   int64 created_at = 3;
 }
+
 message ListReportMetaResponse {
   repeated ReportMeta reports = 1;
+}
+
+message ViewAuthorizedReportRequest {
+  string report_id = 1;
+  string user_id = 2;
+}
+
+message ViewAuthorizedReportResponse {
+  bool success = 1;
+  string result_json = 2;        // 報告全文或格式化內容
+}
+
+message ListMyAccessRequestsResponse {
+  bool success = 1;
+  repeated AccessRequest requests = 3;
+}
+
+message AuthTicket {
+  string patient_hash = 1;
+  string target_hash = 2;
+  string report_id = 3;
+  int64 granted_at = 4;
+  int64 expiry = 5;
+  string requester_name = 6;  // 保險業者名稱
+  string company_name = 7;    // 公司名稱
+}
+
+message ListAuthorizedTicketsResponse {
+  repeated AuthTicket tickets = 1;
+  bool success = 3;
+}
+
+// ========================
+// 前端健檢分析相關 Message
+// ========================
+// 前端請求分析（通過報告 ID）
+message AnalyzeReportRequest {
+  string report_id = 1;           // 報告 ID（從鏈上獲取）
+  string user_id = 2;             // 用戶 ID（可選，用於權限驗證）
+  string analysis_type = 3;       // 分析類型：user 或 insurer（默認 user）
+}
+
+// 統一的健康分析回應（包含用戶和保險業者分析）
+message HealthAnalysisResponse {
+  bool success = 1;
+  string message = 2;
+  // 用戶分析結果（analysis_type = "user" 時返回）
+  UserHealthAnalysisResponse user_analysis = 3;
+  // 保險業者分析結果（analysis_type = "insurer" 時返回）
+  InsurerHealthAnalysisResponse insurer_analysis = 4;
 }

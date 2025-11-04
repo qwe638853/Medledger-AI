@@ -211,6 +211,17 @@ func (s *server) ListMyAuthorizedTickets(ctx context.Context, in *emptypb.Empty)
 }
 
 /**
+ * @notice 前端請求健檢資料分析 API
+ * @dev 轉呼叫 service.HandleGetHealthAnalysis
+ * @param ctx 請求上下文
+ * @param req 分析請求
+ * @return *pb.HealthAnalysisResponse 分析結果, error 內部錯誤
+ */
+func (s *server) GetHealthAnalysis(ctx context.Context, req *pb.AnalyzeReportRequest) (*pb.HealthAnalysisResponse, error) {
+	return sc.HandleGetHealthAnalysis(ctx, req, s.Wallet, s.Builder)
+}
+
+/**
  * @notice 程式進入點：初始化 DB、Peer、Gateway 並啟動 gRPC/HTTP 服務
  * @dev 啟動前測試 Gateway 連線可用性
  * @return 無（阻塞直到服務結束）

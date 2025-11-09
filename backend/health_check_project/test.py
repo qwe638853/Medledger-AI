@@ -6,10 +6,8 @@ import re
 import os
 import socket
 from pydantic import BaseModel, ValidationError
-from typing import List, Optional
+from typing import List, Optional, Dict, Set
 from ollama import Client
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 import data_pb2, data_pb2_grpc
 import time
 
@@ -20,11 +18,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 環境配置
+# --- 環境配置 (使用 Llama 3) ---
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3:8b")
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3:8b") # 我們切換回 Llama 3
 
-# Pydantic 模型
+# --- Pydantic 模型 (RAG 4.1：包含列表) ---
 class DiseaseRisk(BaseModel):
     disease: str
     risk_percent: int
@@ -36,7 +34,7 @@ class HealthAnalysis(BaseModel):
     health_score: int
     summary: str
     personal_analysis: str
-    disease_risks: List[DiseaseRisk]
+    disease_risks: List[DiseaseRisk] # <-- 恢復列表
     insurance_recommendation: List[str]
     protection_plan: List[str]
     success: bool
@@ -53,55 +51,135 @@ class InsurerAnalysis(BaseModel):
     risk_level_label: str
     summary: str
     core_recommendation: List[str]
-    disease_risk_evaluation: List[DiseaseRiskForInsurer]
+    disease_risk_evaluation: List[DiseaseRiskForInsurer] # <-- 恢復列表
     success: bool
 
 class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
+    
+    def _load_health_rules(self) -> (str, Dict[str, str]):
+        """
+        在服務啟動時一次性載入規則，並將其切割為 RAG 4.0 所需的知識塊。
+        """
+        rules_file = "health_rules.txt"
+        if not os.path.exists(rules_file):
+            logger.error(f"關鍵錯誤：知識文件 '{rules_file}' 不存在！")
+            return "無可用的醫學參考資料。", {}
+            
+        try:
+            with open(rules_file, 'r', encoding='utf-8') as f:
+                full_text = f.read()
+            logger.info(f"成功載入 '{rules_file}' (大小: {len(full_text)} 字節)")
+            
+            chunks = re.split(r'(### .*\n)', full_text)
+            knowledge_chunks: Dict[str, str] = {}
+            
+            if not chunks[0].startswith("### "):
+                knowledge_chunks["General_Header"] = chunks[0].strip()
+                chunks = chunks[1:]
+
+            for i in range(0, len(chunks), 2):
+                if i + 1 < len(chunks):
+                    header = chunks[i].strip()
+                    content = chunks[i+1].strip()
+                    knowledge_chunks[header] = content
+                
+            logger.info(f"(RAG 4.0) 知識庫已切割為 {len(knowledge_chunks)} 個主題塊。")
+            return full_text, knowledge_chunks
+            
+        except Exception as e:
+            logger.error(f"載入 '{rules_file}' 失敗: {str(e)}")
+            return "讀取醫學參考資料失敗。", {}
+
+    def _get_key_to_topic_map(self) -> Dict[str, List[str]]:
+        """
+        定義健檢指標 (Key) 應觸發哪個知識主題 (Topic)。
+        """
+        return {
+            "血糖指標": ["Glu-AC", "HbA1c", "Glu-PC"],
+            "肝功能指標": ["Alb", "TP", "AST", "ALT", "D-Bil", "ALP", "T-Bil"],
+            "腎功能指標": ["UN", "CRE", "U.A", "Alb/CRE Ratio"],
+            "血脂指標": ["T-CHO", "LDL-C", "HDL-C", "TG"],
+            "全血球計數": ["Hb", "Hct", "PLT", "WBC", "RBC", "MCV", "MCH", "MCHC", "RDW-CV"],
+            "凝血功能": ["PT", "aPTT"],
+            "發炎指標": ["hsCRP", "ESR"],
+            "癌症指標": ["AFP", "CEA", "CA-125", "CA19-9"],
+            "尿液常規檢查": ["Specific Gravity", "PH", "Protein (Dipstick)", "Glucose (Dipstick)", 
+                         "Bilirubin (Dipstick)", "Urobilinogen (Dipstick)", "RBC (Urine)", 
+                         "WBC (Urine)", "Epithelial Cells", "Casts", "Ketone", 
+                         "Crystal", "Bacteria", "Albumin (Dipstick)", "Creatinine (Dipstick)", 
+                         "Nitrite", "Occult Blood", "WBC Esterase"],
+            "其他": ["BP"],
+            "核心評分準則": ["*ALWAYS_INCLUDE*"]
+        }
+
+    def _filter_context_for_rag(self, test_results: dict) -> str:
+        """
+        RAG 4.0 核心：根據輸入的指標，動態篩選相關的知識塊。
+        """
+        input_keys_raw = set(test_results.keys())
+        relevant_topics: Set[str] = set() 
+        topic_map = self._get_key_to_topic_map()
+        
+        for topic, indicators in topic_map.items():
+            if "*ALWAYS_INCLUDE*" in indicators:
+                relevant_topics.add(topic)
+                continue
+                
+            for key in input_keys_raw:
+                clean_key = key.split('(')[0].strip() 
+                if clean_key in indicators:
+                    relevant_topics.add(topic)
+                    break 
+
+        logger.info(f"(RAG 4.0) 偵測到相關主題: {relevant_topics}")
+
+        context_parts: List[str] = []
+        
+        for header, content in self.knowledge_chunks.items():
+            for topic in relevant_topics:
+                if topic in header: 
+                    context_parts.append(f"{header}\n{content}")
+                    break
+
+        if not context_parts:
+            logger.warning("(RAG 4.0) 警告：未篩選到任何相關規則！")
+            return "無相關醫學參考資料"
+            
+        final_context = "\n---\n".join(context_parts)
+        logger.info(f"(RAG 4.0) 篩選後的上下文 (大小: {len(final_context)} 字節)")
+        return final_context
+
+
     def __init__(self):
         try:
             logger.info("開始初始化服務器依賴")
-            chroma_dir = "D:/gg/chroma_db"
-            if not os.path.exists(chroma_dir):
-                os.makedirs(chroma_dir)
-                logger.info(f"創建 Chroma 資料夾: {chroma_dir}")
-            start_time = time.time()
-            self.embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-            logger.info(f"嵌入模型初始化完成，耗時 {time.time() - start_time:.2f} 秒")
-            start_time = time.time()
-            self.vectorstore = Chroma(
-                persist_directory=chroma_dir,
-                embedding_function=self.embedding,
-                collection_name="health_knowledge"
-            )
-            logger.info(f"向量資料庫加載完成，耗時 {time.time() - start_time:.2f} 秒")
-            self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 2})
-            logger.info("Retriever 配置完成")
+            self.full_health_rules, self.knowledge_chunks = self._load_health_rules()
+            
             if not self._check_ollama_connection():
                 raise RuntimeError(f"Ollama 服務不可用: {OLLAMA_HOST}")
+                
             self.ollama_client = Client(host=OLLAMA_HOST)
             logger.info(f"Ollama 客戶端初始化，目標地址: {OLLAMA_HOST}")
+            
         except Exception as e:
             logger.error(f"服務器初始化失敗: {str(e)}")
             raise
 
+    # ... ( _check_ollama_connection 和 _call_ollama_json 保持不變 ) ...
     def _check_ollama_connection(self, max_retries=3, delay=2) -> bool:
         try:
-            # 解析主機和端口
             host_port = OLLAMA_HOST.replace("http://", "").replace("https://", "")
             if ":" in host_port:
                 host, port = host_port.split(":")
             else:
                 host = host_port
                 port = 11434
-            
             logger.info(f"檢查 Ollama 連接: {host}:{port}")
-            
             for attempt in range(max_retries):
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(5)
                     result = s.connect_ex((host, int(port)))
                     if result == 0:
-                        # 進一步檢查 API 是否可用（可選，如果 requests 不可用則跳過）
                         try:
                             import requests
                             response = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=3)
@@ -109,64 +187,20 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
                                 logger.info(f"Ollama 連線檢查成功（API 可用），嘗試次數: {attempt + 1}")
                                 return True
                         except ImportError:
-                            # requests 未安裝，跳過 API 檢查
                             logger.info(f"Ollama 端口連接成功（跳過 API 檢查），嘗試次數: {attempt + 1}")
                             return True
                         except Exception as api_error:
                             logger.warning(f"Ollama API 檢查失敗: {str(api_error)}")
-                            # 即使 API 檢查失敗，如果端口可連接，也認為連接成功
                             logger.info(f"Ollama 端口連接成功，嘗試次數: {attempt + 1}")
                             return True
                     logger.warning(f"Ollama 連線檢查失敗，嘗試 {attempt + 1}/{max_retries}，代碼 {result}")
                     if attempt < max_retries - 1:
                         time.sleep(delay)
             logger.error("Ollama 連線檢查失敗，所有重試均失敗")
-            logger.error(f"請確保 Ollama 服務正在運行在 {OLLAMA_HOST}")
-            logger.error("提示: 可以運行 './start_ollama.sh' 來啟動 Ollama 服務")
             return False
         except Exception as e:
             logger.error(f"Ollama 連線檢查失敗: {str(e)}")
-            logger.error(f"請檢查 OLLAMA_HOST 環境變數設置: {OLLAMA_HOST}")
             return False
-
-    def _clean_doc_content(self, text: str) -> str:
-        return re.sub(r'問題:.*\n回答:', '', text, flags=re.DOTALL).strip()
-
-    def _fetch_context(self, test_results: dict) -> str:
-        query_categories = {
-            "blood_sugar": ["Glu-AC", "HbA1c", "Glu-PC"],
-            "lipid": ["LDL-C", "HDL-C", "TG", "T-CHO"],
-            "liver": ["ALT(GPT)", "AST(GOT)", "ALP", "T-Bil", "D-Bil"],
-            "kidney": ["CRE", "UN", "Alb/CRE Ratio"],
-            "general": ["Hb", "Hct", "PLT", "WBC", "RBC", "hsCRP"]
-        }
-        context_parts = []
-        for category, keys in query_categories.items():
-            query_items = [f"{k}: {test_results.get(k, 'N/A')}" for k in keys if k in test_results]
-            if query_items:
-                query_text = "\n".join(query_items)
-                docs = self.retriever.invoke(query_text)  # 改用 invoke
-                cleaned_docs = [self._clean_doc_content(doc.page_content) for doc in docs if hasattr(doc, 'page_content') and doc.page_content]
-                context_parts.extend(cleaned_docs)
-        context = "\n".join(context_parts) if context_parts else "無相關醫學參考資料"
-        logger.info(f"Multi-Query 上下文 (前 200 字): {context[:200]}...")
-        return context
-
-    def _generate_hypothetical_doc(self, query_text: str) -> str:
-        hyde_prompt = f"""根據以下健康數據生成假設性醫學摘要（繁體中文）：
-{query_text}
-摘要應包含關鍵指標分析與潛在風險，但不得包含具體數值。"""
-        try:
-            response = self.ollama_client.chat(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": hyde_prompt}]
-            )
-            hyde_doc = response['message']['content'].strip()
-            logger.info(f"HyDE 假設性文檔 (前 200 字): {hyde_doc[:200]}...")
-            return hyde_doc
-        except Exception as e:
-            logger.error(f"HyDE 生成失敗: {str(e)}")
-            return ""
 
     def _call_ollama_json(self, prompt: str, schema: BaseModel) -> Optional[BaseModel]:
         logger.info(f"發送 Ollama prompt (前 200 字): {prompt[:200]}...")
@@ -192,45 +226,43 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
             test_results = json.loads(request.test_results_json)
             available_keys = list(test_results.keys())
             query_text = "\n".join([f"{k}: {v}" for k, v in test_results.items()])
-            multi_query_context = self._fetch_context(test_results)
-            hypothetical_doc = self._generate_hypothetical_doc(query_text)
-            hyde_docs = self.retriever.invoke(hypothetical_doc)  # 改用 invoke
-            hyde_context = "\n".join([
-                self._clean_doc_content(doc.page_content)
-                for doc in hyde_docs
-                if hasattr(doc, 'page_content') and doc.page_content
-            ])
-            full_context = f"醫學參考資料:\n{multi_query_context}\n\n假設性分析:\n{hyde_context}"
-            logger.info(f"完整上下文 (前 200 字): {full_context[:200]}...")
+            
+            full_context = self._filter_context_for_rag(test_results)
 
+            # --- RAG 4.1：強化 Prompt 指令 (恢復列表) ---
             prompt = f"""
-你是一位AI健康分析專家，請根據以下資料生成 JSON 格式分析報告：
+你是一位AI健康分析專家。請嚴格根據以下提供的「健康檢查數據」和「相關醫學知識」生成 JSON 格式分析報告。
+
 === 健康檢查數據 ===
 {query_text}
 
 === 相關醫學知識 ===
 {full_context}
 
-=== 輸出格式（嚴格遵守）===
+=== 任務 ===
+你必須分析「健康檢查數據」中的**每一個**指標，並嚴格比對「相關醫學知識」中的**所有**規則（特別是「核心評分準則」和各項指標的風險定義）。
+你必須計算一個**最終的健康分數** (health_score)。
+你必須在 `disease_risks` 列表中條列出**所有**偵測到的風險。
+
+=== 輸出格式（嚴格遵守，僅輸出 JSON）===
 {{
-  "health_score": 70,
-  "summary": "您的健康狀況為中度健康，但存在一些異常指標需要注意。",
-  "personal_analysis": "血糖、腎功能與血脂偏高，建議進一步檢查。",
+  "health_score": <一个 0-100 之間的分數 (0分代表極度危險, 100分代表非常健康)>,
+  "summary": "<根據數據和知識生成的總結，必須提及所有高風險項>",
+  "personal_analysis": "<對所有異常指標的詳細文字分析>",
   "disease_risks": [
     {{
-      "disease": "糖尿病", "risk_percent": 60, "risk_level": "中風險",
-      "main_factors": ["HbA1c", "Glu-AC"], "advice": "控制飲食，定期追蹤血糖"
-    }},
-    {{
-      "disease": "腎病", "risk_percent": 50, "risk_level": "中風險",
-      "main_factors": ["CRE"], "advice": "腎臟科追蹤，減少蛋白質攝取"
+      "disease": "<偵測到的疾病名稱>", 
+      "risk_percent": <根據醫學知識計算出的風險百分比>, 
+      "risk_level": "<高/中/低風險>",
+      "main_factors": ["<必須填入觸發此風險的關鍵指標, 例如 'CRE: 6.0'>"], 
+      "advice": "<具體的醫療或生活建議>"
     }}
   ],
-  "insurance_recommendation": ["健康險", "重疾險"],
-  "protection_plan": ["每3個月回診", "低糖飲食", "規律運動"],
+  "insurance_recommendation": ["<推薦的保險類型>"],
+  "protection_plan": ["<具體的健康防護計畫>"],
   "success": true
 }}
-**僅輸出 JSON！main_factors 只能使用輸入數據中的項目！**
+**僅輸出 JSON！必須使用「相關醫學知識」區塊的規則來判斷風險和分數！不要幻想數據！**
 """
             result = self._call_ollama_json(prompt, HealthAnalysis)
             if not result:
@@ -241,7 +273,7 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
                     disease=dr.disease,
                     risk_percent=dr.risk_percent,
                     risk_level=dr.risk_level,
-                    main_factors=[f for f in dr.main_factors if f in available_keys],
+                    main_factors=[f for f in dr.main_factors if f in available_keys or ':' in f], # 允許 'CRE: 6.0' 這種格式
                     advice=dr.advice
                 ) for dr in result.disease_risks if dr.disease
             ]
@@ -250,7 +282,7 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
                 health_score=result.health_score,
                 summary=result.summary,
                 personal_analysis=result.personal_analysis,
-                disease_risks=disease_risks_proto,
+                disease_risks=disease_risks_proto, # <-- 恢復列表
                 insurance_recommendation=result.insurance_recommendation,
                 protection_plan=result.protection_plan,
                 success=result.success
@@ -265,52 +297,60 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
 
     def AnalyzeHealthReportForInsurer(self, request, context):
         logger.info(f"處理保險公司健康報告，報告 ID: {request.report_id}")
+        
+        disease_risk_proto_list = [] # (保持 Bug 修復)
+        
         try:
             test_results = json.loads(request.test_results_json)
             available_keys = list(test_results.keys())
             query_text = "\n".join([f"{k}: {v}" for k, v in test_results.items()])
-            multi_query_context = self._fetch_context(test_results)
-            hypothetical_doc = self._generate_hypothetical_doc(query_text)
-            hyde_docs = self.retriever.invoke(hypothetical_doc)
-            hyde_context = "\n".join([
-                self._clean_doc_content(doc.page_content)
-                for doc in hyde_docs
-                if hasattr(doc, 'page_content') and doc.page_content
-            ])
-            full_context = f"醫學參考資料:\n{multi_query_context}\n\n假設性分析:\n{hyde_context}"
+            
+            full_context = self._filter_context_for_rag(test_results)
 
+            # --- RAG 4.1：強化 Prompt 指令 (恢復列表) ---
             prompt = f"""
-你是一位保險核保分析師，請根據以下資料生成 JSON 格式分析報告：
+你是一位保險核保分析師。請嚴格根據以下提供的「健康檢查數據」和「相關醫學知識」生成 JSON 格式分析報告。
+
 === 健康檢查數據 ===
 {query_text}
 
 === 相關醫學知識 ===
 {full_context}
 
-=== 輸出格式（嚴格遵守）===
+=== 任務 ===
+你必須分析「健康檢查數據」中的**每一個**指標，並嚴格比對「相關醫學知識」中的**所有**規則（特別是「核心評分準則」）。
+你必須計算一個**最終的風險分數** (overall_risk_score)。
+你必須在 `disease_risk_evaluation` 列表中條列出**所有**偵測到的風險。
+
+=== 輸出格式（嚴格遵守，僅輸出 JSON）===
 {{
-  "overall_risk_score": 75,
-  "risk_level_label": "中風險",
-  "summary": "存在糖尿病與腎病風險，建議人工審核。",
-  "core_recommendation": ["人工審核", "要求近3個月報告"],
+  "overall_risk_score": <一个 0-100 之間的分數 (0分代表最低風險, 100分代表極高風險)>,
+  "risk_level_label": "<高/中/低風險>",
+  "summary": "<專業的核保摘要，必須提及所有高風險項>",
+  "core_recommendation": ["<具體的核保建議，例如 '拒保' 或 '加收保費'>"],
   "disease_risk_evaluation": [
-    {{"disease": "糖尿病", "risk_score": 65, "risk_level": "中風險", "main_factors": ["HbA1c"], "advice": "加收保費"}},
-    {{"disease": "腎病", "risk_score": 55, "risk_level": "中風險", "main_factors": ["CRE"], "advice": "排除腎臟相關理賠"}}
+    {{
+      "disease": "<偵測到的疾病名稱>", 
+      "risk_score": <根據醫學知識計算出的風險分數>, 
+      "risk_level": "<高/中/低風險>", 
+      "main_factors": ["<必須填入觸發此風險的關鍵指標, 例如 'LDL-C: 900'>"], 
+      "advice": "<核保建議，如 '排除腎臟相關理賠'>"
+    }}
   ],
   "success": true
 }}
-**僅輸出 JSON！main_factors 必須來自輸入數據！**
+**僅輸出 JSON！必須使用「相關醫學知識」區塊的規則來判斷風險和分數！不要幻想數據！**
 """
             result = self._call_ollama_json(prompt, InsurerAnalysis)
             if not result:
                 raise ValueError("LLM 回傳無效格式")
 
-            disease_risk_proto = [
+            disease_risk_proto_list = [
                 data_pb2.DiseaseRiskForInsurer(
                     disease=dr.disease,
                     risk_score=dr.risk_score,
                     risk_level=dr.risk_level,
-                    main_factors=[f for f in dr.main_factors if f in available_keys],
+                    main_factors=[f for f in dr.main_factors if f in available_keys or ':' in f], 
                     advice=dr.advice
                 ) for dr in result.disease_risk_evaluation if dr.disease
             ]
@@ -320,20 +360,19 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
                 risk_level_label=result.risk_level_label,
                 summary=result.summary,
                 core_recommendation=result.core_recommendation,
-                disease_risk_evaluation=disease_risk_proto,
+                disease_risk_evaluation=disease_risk_proto_list, # <-- 恢復列表並修復 Bug
                 success=result.success
             )
 
         except Exception as e:
             logger.error(f"保險分析失敗: {str(e)}")
             return data_pb2.InsurerHealthAnalysisResponse(
-                overall_risk_score=0, risk_level_label="", summary="分析失敗",
-                core_recommendation=[], disease_risk_evaluation=[], success=False
+                overall_risk_score=100, risk_level_label="分析失敗", summary=f"分析失敗: {str(e)}",
+                core_recommendation=[], disease_risk_evaluation=disease_risk_proto_list, success=False
             )
 
 def serve():
     try:
-        # 從環境變數獲取端口，默認使用 50052（避免與 Go Server 的 50051 衝突）
         grpc_port = os.getenv("PYTHON_BACKEND_GRPC_PORT", "50052")
         grpc_host = os.getenv("PYTHON_BACKEND_GRPC_HOST", "[::]")
         

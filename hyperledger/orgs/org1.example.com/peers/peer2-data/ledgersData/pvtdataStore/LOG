@@ -452,3 +452,36 @@
 13:04:39.186913 version@stat F·[3 1] S·1KiB[462B 1KiB] Sc·[0.75 0.00]
 13:04:39.205848 db@janitor F·6 G·0
 13:04:39.205904 db@open done T·20.569819ms
+=============== Nov 8, 2025 (UTC) ===============
+13:51:50.247613 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:51:50.249813 version@stat F·[3 1] S·1KiB[462B 1KiB] Sc·[0.75 0.00]
+13:51:50.249877 db@open opening
+13:51:50.249950 journal@recovery F·1
+13:51:50.250411 journal@recovery recovering @93
+13:51:50.259638 memdb@flush created L0@95 N·5 S·161B "cha..1\x00\x01,v58":"cha..1\x00\a,d54"
+13:51:50.264097 version@stat F·[4 1] S·1KiB[623B 1KiB] Sc·[1.00 0.00]
+13:51:50.305948 db@janitor F·7 G·0
+13:51:50.305987 db@open done T·56.099333ms
+13:51:50.306045 table@compaction L0·3 -> L1·1 S·1KiB Q·59
+13:51:50.307498 db@close closing
+13:51:50.314734 table@build created L1@98 N·15 S·1KiB "cha..1\x00\x01,v58":"cha..\x01\x01\x00,v9"
+13:51:50.314835 table@build exiting
+13:51:50.314855 table@build revert @98
+13:51:50.316775 db@close done T·9.268784ms
+=============== Nov 8, 2025 (UTC) ===============
+13:51:50.322469 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:51:50.322734 version@stat F·[4 1] S·1KiB[623B 1KiB] Sc·[1.00 0.00]
+13:51:50.322786 db@open opening
+13:51:50.322837 journal@recovery F·1
+13:51:50.323097 journal@recovery recovering @96
+13:51:50.323534 version@stat F·[4 1] S·1KiB[623B 1KiB] Sc·[1.00 0.00]
+13:51:50.344611 db@janitor F·7 G·0
+13:51:50.344696 db@open done T·21.897416ms
+13:51:50.344821 table@compaction L0·3 -> L1·1 S·1KiB Q·59
+13:51:50.349429 table@build created L1@100 N·15 S·1KiB "cha..1\x00\x01,v58":"cha..\x01\x01\x00,v9"
+13:51:50.349514 version@stat F·[1 1] S·1KiB[119B 1KiB] Sc·[0.25 0.00]
+13:51:50.357963 table@compaction committed F-3 S-504B Ke·0 D·18 T·12.893942ms
+13:51:50.358140 table@remove removed @95
+13:51:50.358828 table@remove removed @90
+13:51:50.358902 table@remove removed @85
+13:51:50.358938 table@remove removed @84

@@ -206,3 +206,20 @@
 13:04:39.056343 version@stat F·[3 1] S·4KiB[2KiB 2KiB] Sc·[0.75 0.00]
 13:04:39.093083 db@janitor F·6 G·0
 13:04:39.093114 db@open done T·55.890701ms
+=============== Nov 8, 2025 (UTC) ===============
+13:51:50.200578 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:51:50.201667 version@stat F·[3 1] S·4KiB[2KiB 2KiB] Sc·[0.75 0.00]
+13:51:50.201707 db@open opening
+13:51:50.201755 journal@recovery F·1
+13:51:50.201935 journal@recovery recovering @49
+13:51:50.204401 memdb@flush created L0@51 N·25 S·882B "cha..\x01\x1b\x00,v180":"cha..\x01\x1b\x00,v179"
+13:51:50.205018 version@stat F·[4 1] S·5KiB[3KiB 2KiB] Sc·[1.00 0.00]
+13:51:50.240074 db@janitor F·7 G·0
+13:51:50.240206 db@open done T·38.4917ms
+13:51:50.240323 table@compaction L0·3 -> L1·1 S·5KiB Q·200
+13:51:50.251041 table@build created L1@54 N·126 S·5KiB "cha..a\x00\x00,v8":"cha..\x01\x1b\x00,v179"
+13:51:50.251130 version@stat F·[1 1] S·5KiB[119B 5KiB] Sc·[0.25 0.00]
+13:51:50.265892 table@compaction committed F-3 S-659B Ke·0 D·33 T·25.50275ms
+13:51:50.266127 table@remove removed @48
+13:51:50.266175 table@remove removed @45
+13:51:50.266221 table@remove removed @44

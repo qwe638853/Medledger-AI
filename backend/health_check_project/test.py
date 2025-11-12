@@ -20,12 +20,11 @@ logger = logging.getLogger(__name__)
 
 # --- 環境配置 (使用 Llama 3) ---
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3:8b") # 我們切換回 Llama 3
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "qwen2.5:14b") # 我們切換回 Llama 3
 
 # --- Pydantic 模型 (RAG 4.1：包含列表) ---
 class DiseaseRisk(BaseModel):
     disease: str
-    risk_percent: int
     risk_level: str
     main_factors: List[str]
     advice: str
@@ -230,7 +229,14 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
             full_context = self._filter_context_for_rag(test_results)
 
             # --- RAG 4.1：強化 Prompt 指令 (恢復列表) ---
-            prompt = f"""
+            prompt = f""" 
+**重要提醒**：
+- 正常值（例如 Glu-AC: 89 mg/dL < 100，HbA1c: 4.1% < 5.7%）不應標記為風險
+- 所有文字欄位都必須有內容，不得為空字串
+- 除了欄位名稱外，其餘內容都必須使用繁體中文，特別是advice的內容確保是繁體中文
+- 必須嚴格按照「相關醫學知識」中的數值範圍進行判斷
+- 總結分析和個人詳細分析都必需嚴格執行字數要求
+
 你是一位AI健康分析專家。請嚴格根據以下提供的「健康檢查數據」和「相關醫學知識」生成 JSON 格式分析報告。
 
 === 健康檢查數據 ===
@@ -239,30 +245,72 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
 === 相關醫學知識 ===
 {full_context}
 
-=== 任務 ===
-你必須分析「健康檢查數據」中的**每一個**指標，並嚴格比對「相關醫學知識」中的**所有**規則（特別是「核心評分準則」和各項指標的風險定義）。
-你必須計算一個**最終的健康分數** (health_score)。
-你必須在 `disease_risks` 列表中條列出**所有**偵測到的風險。
+=== 核心判斷規則（嚴格遵守）===
+1. **數值範圍判斷（最重要）**：
+   - 必須將每個指標的**實際數值**與「相關醫學知識」中的**正常範圍**進行嚴格比對
+   - 例如：Glu-AC 正常 < 100 mg/dL，如果實際值是 89 mg/dL → **正常，不應標記風險**
+   - 例如：HbA1c 正常 < 5.7%，如果實際值是 4.1% → **正常，不應標記風險**
+   - 只有當數值**超出正常範圍**時，才標記為風險
 
-=== 輸出格式（嚴格遵守，僅輸出 JSON）===
+2. **disease_risks 列表規則**：
+   - **只包含異常指標**：只有當指標數值超出正常範圍時，才在 disease_risks 中列出
+   - **不包含正常值**：如果所有指標都在正常範圍內，disease_risks 應該是空列表 []
+   - **不包含空項目**：不要生成 disease 為空字串的項目
+
+3. **健康分數計算**：
+   - 如果所有指標正常 → health_score 應該在 80-100 分
+   - 如果有輕微異常 → health_score 在 60-80 分
+   - 如果有嚴重異常 → health_score 在 0-60 分
+   - 參考「核心評分準則」進行計算
+
+4. **內容完整性要求**：
+   - summary：必須提供完整的健康總結（至少 50 字），說明整體健康狀況
+   - personal_analysis：必須提供詳細的指標分析（至少 100 字），逐一分析異常指標
+   - disease_risks 中的每個項目：
+     * disease：必須是具體的疾病名稱（繁體中文）
+     * main_factors：必須列出觸發此風險的具體指標和數值（例如 ["CRE: 6.0 mg/dL"]）
+     * advice：必須提供具體的醫療或生活建議（至少 30 字）
+   - insurance_recommendation：必須提供至少 2-3 項具體的保險建議
+   - protection_plan：必須提供至少 3-5 項具體的健康防護計畫
+
+=== 語言要求（嚴格遵守）===
+- **JSON 欄位名稱**：必須使用英文（如 "summary", "personal_analysis", "disease", "advice" 等）
+- **所有內容值**：必須使用繁體中文（Traditional Chinese）
+  - 不得使用英文、簡體中文或其他語言
+  - 醫學名詞必須使用繁體中文
+
+=== 任務步驟 ===
+1. 逐一檢查每個指標的數值是否在正常範圍內
+2. 只將**超出正常範圍**的指標標記為風險
+3. 根據異常指標的嚴重程度計算 health_score
+4. 生成完整的 summary 和 personal_analysis（不得為空）
+5. 只列出真正異常的疾病風險（正常值不應出現在 disease_risks 中）
+6. 為每個風險提供具體的建議和防護計畫
+
+=== 輸出格式（嚴格遵守，僅輸出 JSON，所有欄位都必須有內容）===
 {{
-  "health_score": <一个 0-100 之間的分數 (0分代表極度危險, 100分代表非常健康)>,
-  "summary": "<根據數據和知識生成的總結，必須提及所有高風險項>",
-  "personal_analysis": "<對所有異常指標的詳細文字分析>",
+  "health_score": <0-100 分數>,
+  "summary": "<完整的健康總結，至少 50 字，繁體中文>",
+  "personal_analysis": "<詳細的指標分析，至少 100 字，繁體中文>",
   "disease_risks": [
     {{
-      "disease": "<偵測到的疾病名稱>", 
-      "risk_percent": <根據醫學知識計算出的風險百分比>, 
-      "risk_level": "<高/中/低風險>",
-      "main_factors": ["<必須填入觸發此風險的關鍵指標, 例如 'CRE: 6.0'>"], 
-      "advice": "<具體的醫療或生活建議>"
+      "disease": "<具體疾病名稱，繁體中文>",  
+      "risk_level": "<高/中/低風險，繁體中文>",
+      "main_factors": ["<例如 'CRE: 6.0 mg/dL' 等>"], 
+      "advice": "<具體建議，至少 30 字，繁體中文>"
     }}
   ],
-  "insurance_recommendation": ["<推薦的保險類型>"],
-  "protection_plan": ["<具體的健康防護計畫>"],
+  "insurance_recommendation": ["<至少 2-3 項具體建議，繁體中文>"],
+  "protection_plan": ["<至少 3-5 項具體計畫，繁體中文>"],
   "success": true
 }}
-**僅輸出 JSON！必須使用「相關醫學知識」區塊的規則來判斷風險和分數！不要幻想數據！**
+
+**重要提醒**：
+- 正常值（例如 Glu-AC: 89 mg/dL < 100，HbA1c: 4.1% < 5.7%）不應標記為風險
+- 所有文字欄位都必須有內容，不得為空字串
+- 除了欄位名稱外，其餘內容都必須使用繁體中文，特別是advice的內容確保是繁體中文
+- 必須嚴格按照「相關醫學知識」中的數值範圍進行判斷
+- 總結分析和個人詳細分析都必需嚴格執行字數要求
 """
             result = self._call_ollama_json(prompt, HealthAnalysis)
             if not result:
@@ -271,7 +319,6 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
             disease_risks_proto = [
                 data_pb2.DiseaseRisk(
                     disease=dr.disease,
-                    risk_percent=dr.risk_percent,
                     risk_level=dr.risk_level,
                     main_factors=[f for f in dr.main_factors if f in available_keys or ':' in f], # 允許 'CRE: 6.0' 這種格式
                     advice=dr.advice
@@ -317,29 +364,70 @@ class HealthAnalysisServicer(data_pb2_grpc.HealthServiceServicer):
 === 相關醫學知識 ===
 {full_context}
 
-=== 任務 ===
-你必須分析「健康檢查數據」中的**每一個**指標，並嚴格比對「相關醫學知識」中的**所有**規則（特別是「核心評分準則」）。
-你必須計算一個**最終的風險分數** (overall_risk_score)。
-你必須在 `disease_risk_evaluation` 列表中條列出**所有**偵測到的風險。
+=== 核心判斷規則（嚴格遵守）===
+1. **數值範圍判斷（最重要）**：
+   - 必須將每個指標的**實際數值**與「相關醫學知識」中的**正常範圍**進行嚴格比對
+   - 例如：Glu-AC 正常 < 100 mg/dL，如果實際值是 89 mg/dL → **正常，不應標記風險**
+   - 例如：HbA1c 正常 < 5.7%，如果實際值是 4.1% → **正常，不應標記風險**
+   - 只有當數值**超出正常範圍**時，才標記為風險
 
-=== 輸出格式（嚴格遵守，僅輸出 JSON）===
+2. **disease_risk_evaluation 列表規則**：
+   - **只包含異常指標**：只有當指標數值超出正常範圍時，才在 disease_risk_evaluation 中列出
+   - **不包含正常值**：如果所有指標都在正常範圍內，disease_risk_evaluation 應該是空列表 []
+   - **不包含空項目**：不要生成 disease 為空字串的項目
+
+3. **風險分數計算**：
+   - 如果所有指標正常 → overall_risk_score 應該在 0-20 分（低風險）
+   - 如果有輕微異常 → overall_risk_score 在 20-50 分（中風險）
+   - 如果有嚴重異常 → overall_risk_score 在 50-100 分（高風險）
+   - 參考「核心評分準則」進行計算
+
+4. **內容完整性要求**：
+   - summary：必須提供完整的核保摘要（至少 50 字），說明整體風險狀況
+   - risk_level_label：必須是「高風險」、「中風險」或「低風險」（繁體中文）
+   - core_recommendation：必須提供至少 2-3 項具體的核保建議（例如「標準承保」、「加收保費」、「部分排除」等）
+   - disease_risk_evaluation 中的每個項目：
+     * disease：必須是具體的疾病名稱（繁體中文）
+     * main_factors：必須列出觸發此風險的具體指標和數值（例如 ["LDL-C: 900 mg/dL"]）
+     * advice：必須提供具體的核保建議（至少 30 字，例如「排除腎臟相關理賠」）
+
+=== 語言要求（嚴格遵守）===
+- **JSON 欄位名稱**：必須使用英文（如 "summary", "risk_level_label", "disease", "advice" 等）
+- **所有內容值**：必須使用繁體中文（Traditional Chinese）
+  - 不得使用英文、簡體中文或其他語言
+  - 醫學名詞必須使用繁體中文
+
+=== 任務步驟 ===
+1. 逐一檢查每個指標的數值是否在正常範圍內
+2. 只將**超出正常範圍**的指標標記為風險
+3. 根據異常指標的嚴重程度計算 overall_risk_score
+4. 生成完整的 summary（不得為空）
+5. 只列出真正異常的疾病風險（正常值不應出現在 disease_risk_evaluation 中）
+6. 為每個風險提供具體的核保建議
+
+=== 輸出格式（嚴格遵守，僅輸出 JSON，所有欄位都必須有內容）===
 {{
-  "overall_risk_score": <一个 0-100 之間的分數 (0分代表最低風險, 100分代表極高風險)>,
-  "risk_level_label": "<高/中/低風險>",
-  "summary": "<專業的核保摘要，必須提及所有高風險項>",
-  "core_recommendation": ["<具體的核保建議，例如 '拒保' 或 '加收保費'>"],
+  "overall_risk_score": <0-100 分數>,
+  "risk_level_label": "<高/中/低風險，繁體中文>",
+  "summary": "<完整的核保摘要，至少 50 字，繁體中文>",
+  "core_recommendation": ["<至少 2-3 項具體核保建議，繁體中文>"],
   "disease_risk_evaluation": [
     {{
-      "disease": "<偵測到的疾病名稱>", 
-      "risk_score": <根據醫學知識計算出的風險分數>, 
-      "risk_level": "<高/中/低風險>", 
-      "main_factors": ["<必須填入觸發此風險的關鍵指標, 例如 'LDL-C: 900'>"], 
-      "advice": "<核保建議，如 '排除腎臟相關理賠'>"
+      "disease": "<具體疾病名稱，繁體中文>", 
+      "risk_score": <風險分數>, 
+      "risk_level": "<高/中/低風險，繁體中文>", 
+      "main_factors": ["<具體指標和數值，例如 'LDL-C: 900 mg/dL'>"], 
+      "advice": "<具體核保建議，至少 30 字，繁體中文>"
     }}
   ],
   "success": true
 }}
-**僅輸出 JSON！必須使用「相關醫學知識」區塊的規則來判斷風險和分數！不要幻想數據！**
+
+**重要提醒**：
+- 正常值（例如 Glu-AC: 89 mg/dL < 100，HbA1c: 4.1% < 5.7%）不應標記為風險
+- 所有文字欄位都必須有內容，不得為空字串
+- disease_risk_evaluation 中不應包含空項目
+- 必須嚴格按照「相關醫學知識」中的數值範圍進行判斷
 """
             result = self._call_ollama_json(prompt, InsurerAnalysis)
             if not result:

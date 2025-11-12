@@ -109,9 +109,12 @@ export const getHealthAnalysis = async (reportId, analysisType = 'user') => {
   try {
     console.log(`[getHealthAnalysis] 請求分析: reportId=${reportId}, analysisType=${analysisType}`);
     
+    // 為健康分析請求設置更長的超時時間（10 分鐘）
     const response = await apiClient.post('/v1/health/analyze', {
       report_id: reportId,
       analysis_type: analysisType
+    }, {
+      timeout: 600000 // 10 分鐘（600 秒）
     });
     
     console.log('[getHealthAnalysis] API 回應:', response.data);
@@ -122,6 +125,12 @@ export const getHealthAnalysis = async (reportId, analysisType = 'user') => {
       throw new Error(response.data.message || '分析失敗');
     }
   } catch (error) {
+    // 如果是超時錯誤，提供更友好的提示
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      const errorMsg = '分析時間過長，請稍後再試或檢查服務器狀態';
+      notifyError(errorMsg);
+      throw new Error(errorMsg);
+    }
     const errorMsg = handleApiError(error, '健檢資料分析');
     notifyError(errorMsg);
     throw error;

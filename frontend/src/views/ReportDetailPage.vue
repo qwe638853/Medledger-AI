@@ -354,41 +354,13 @@ const insuranceAnalysis = ref({
   ]
 });
 
-// AI 分析和保單推薦
+// AI 分析和保單推薦（適配新的資料結構）
 const aiAnalysis = ref({
-  summary: '根據您的健康檢查結果，整體健康狀況優良。血糖、肝功能、血脂等主要指標均在正常範圍內，僅尿素氮(UN)略微偏高，建議注意腎功能保養和適量飲水。血壓控制良好，腫瘤標記正常，顯示低癌症風險。',
-  healthScore: 92,
+  summary: '',
+  personalAnalysis: '',
+  healthScore: 0,
   riskLevel: 'low', // low, medium, high
-  diseaseRisks: [
-    {
-      name: '心血管疾病',
-      risk: 18,
-      level: 'low',
-      factors: ['血壓正常', '血脂控制良好', 'HDL-C達標'],
-      prevention: '維持現有生活習慣，定期監測血壓'
-    },
-    {
-      name: '糖尿病',
-      risk: 12,
-      level: 'low',
-      factors: ['空腹血糖正常', '糖化血色素4.1%', '飯後血糖正常'],
-      prevention: '繼續保持健康飲食和規律運動'
-    },
-    {
-      name: '腎功能異常',
-      risk: 28,
-      level: 'low',
-      factors: ['尿素氮略高(23)', '肌酸酐正常', '尿液檢查大致正常'],
-      prevention: '增加水分攝取，定期追蹤腎功能指標'
-    },
-    {
-      name: '肝功能異常',
-      risk: 8,
-      level: 'low',
-      factors: ['ALT正常(10)', 'AST正常(27)', '膽紅素正常'],
-      prevention: '維持健康生活習慣即可'
-    }
-  ],
+  diseaseRisks: [],
   healthTrends: [
     { metric: '血糖控制', trend: 'stable', change: 0 },
     { metric: '血脂狀況', trend: 'stable', change: 0 },
@@ -667,15 +639,15 @@ const loadHealthAnalysis = async () => {
         : response.insurer_analysis;
       
       if (analysisData) {
-        // 轉換用戶分析數據格式
+        // 轉換用戶分析數據格式（適配新的資料結構，已移除 risk_percent）
         if (analysisType === 'user') {
           aiAnalysis.value = {
-            summary: analysisData.summary || analysisData.personal_analysis || '',
+            summary: analysisData.summary || '',
+            personalAnalysis: analysisData.personal_analysis || '',
             healthScore: analysisData.health_score || 0,
             riskLevel: getRiskLevel(analysisData.health_score),
             diseaseRisks: (analysisData.disease_risks || []).map(risk => ({
               name: risk.disease || '',
-              risk: risk.risk_percent || 0,
               level: mapRiskLevel(risk.risk_level || ''),
               factors: risk.main_factors || [],
               prevention: risk.advice || ''
@@ -707,14 +679,14 @@ const loadHealthAnalysis = async () => {
             }))
           };
         } else {
-          // 轉換保險業者分析數據格式（簡化版）
+          // 轉換保險業者分析數據格式
           aiAnalysis.value = {
             summary: analysisData.summary || '',
             healthScore: 100 - (analysisData.overall_risk_score || 0), // 轉換為健康分數
             riskLevel: mapRiskLevel(analysisData.risk_level_label || ''),
             diseaseRisks: (analysisData.disease_risk_evaluation || []).map(risk => ({
               name: risk.disease || '',
-              risk: risk.risk_score || 0,
+              risk: risk.risk_score || 0, // 保險業者分析保留 risk_score
               level: mapRiskLevel(risk.risk_level || ''),
               factors: risk.main_factors || [],
               prevention: risk.advice || ''
@@ -988,7 +960,8 @@ onMounted(() => {
               size="64"
               width="6"
             />
-            <div class="loading-text">正在分析您的健康數據...</div>
+            <div class="loading-text">正在分析您的健康數據，這可能需要幾分鐘時間，請耐心等待...</div>
+            <div class="loading-subtext">AI 正在仔細分析您的健康指標，請勿關閉此視窗</div>
           </div>
 
           <!-- 分析內容 -->
@@ -1039,7 +1012,14 @@ onMounted(() => {
             </div>
             <div class="ai-summary-card">
               <div class="ai-summary-content">
-                {{ aiAnalysis.summary }}
+                <div v-if="aiAnalysis.summary" class="summary-section">
+                  <div class="summary-label">健康總結</div>
+                  <div class="summary-text">{{ aiAnalysis.summary }}</div>
+                </div>
+                <div v-if="aiAnalysis.personalAnalysis" class="summary-section" style="margin-top: 2rem;">
+                  <div class="summary-label">詳細分析</div>
+                  <div class="summary-text">{{ aiAnalysis.personalAnalysis }}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1061,10 +1041,6 @@ onMounted(() => {
                 <div class="disease-card-header">
                   <div class="disease-info">
                     <div class="disease-name-large">{{ disease.name }}</div>
-                    <div class="disease-risk-level">
-                      <span class="risk-percentage">{{ disease.risk }}%</span>
-                      <span class="risk-label">風險機率</span>
-                    </div>
                   </div>
                   <div class="risk-indicator">
                     <v-chip
@@ -1075,16 +1051,6 @@ onMounted(() => {
                       {{ disease.level === 'low' ? '低風險' : disease.level === 'medium' ? '中風險' : '高風險' }}
                     </v-chip>
                   </div>
-                </div>
-                
-                <div class="risk-progress-wrapper">
-                  <v-progress-linear
-                    :model-value="disease.risk"
-                    :color="disease.level === 'low' ? 'success' : disease.level === 'medium' ? 'warning' : 'error'"
-                    height="12"
-                    rounded
-                    class="risk-progress-bar"
-                  ></v-progress-linear>
                 </div>
 
                 <div class="disease-details-large">
@@ -2073,6 +2039,29 @@ onMounted(() => {
   background: #fafafa !important;
 }
 
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 2rem;
+}
+
+.loading-text {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.loading-subtext {
+  font-size: 1rem;
+  color: #666;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
 /* 健康評分區域重構 */
 .health-score-wrapper {
   display: flex;
@@ -2208,6 +2197,35 @@ onMounted(() => {
   background: linear-gradient(135deg, #f0faff 0%, #e6f7ff 100%);
 }
 
+.summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.summary-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #00B8D9;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-label::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: #00B8D9;
+  border-radius: 2px;
+}
+
+.summary-text {
+  font-size: 1.3rem;
+  line-height: 1.8;
+  color: #555;
+  font-weight: 400;
+}
+
 /* 疾病風險分析重構 */
 .disease-risk-wrapper {
   margin-bottom: 3rem;
@@ -2260,31 +2278,10 @@ onMounted(() => {
   gap: 0.25rem;
 }
 
-.risk-percentage {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #00B8D9;
-  line-height: 1;
-}
-
-.risk-label {
-  font-size: 1rem;
-  color: #888;
-  font-weight: 500;
-}
-
 .risk-indicator {
   flex-shrink: 0;
 }
 
-.risk-progress-wrapper {
-  margin: 1.5rem 0;
-}
-
-.risk-progress-bar {
-  border-radius: 6px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
 
 .disease-details-large {
   margin-top: 2rem;

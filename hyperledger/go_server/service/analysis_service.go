@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
+	"time"
 
 	"go_server/database"
 	fc "go_server/fabric"
@@ -176,7 +178,20 @@ func callPythonAnalysisService(
 		pythonBackendAddr = "localhost:50052" // 默認端口（Python Backend 應該運行在不同的端口）
 	}
 
-	log.Printf("[callPythonAnalysisService] 連接到 Python Backend: %s", pythonBackendAddr)
+	// 從環境變數獲取超時時間（秒），默認 5 分鐘（300 秒）
+	timeoutSeconds := 600
+	if timeoutStr := os.Getenv("PYTHON_BACKEND_TIMEOUT_SECONDS"); timeoutStr != "" {
+		if parsed, err := strconv.Atoi(timeoutStr); err == nil && parsed > 0 {
+			timeoutSeconds = parsed
+		}
+	}
+
+	log.Printf("[callPythonAnalysisService] 連接到 Python Backend: %s, 超時時間: %d 秒", pythonBackendAddr, timeoutSeconds)
+
+	// 創建一個帶有超時的 context（用於 Python Backend 調用）
+	// 這樣可以避免上層 context 的超時影響
+	pyCtx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
+	defer cancel()
 
 	// 建立 gRPC 連線
 	conn, err := grpc.NewClient(pythonBackendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -189,13 +204,16 @@ func callPythonAnalysisService(
 
 	// 根據分析類型調用對應的方法
 	if analysisType == "user" {
-		// 調用用戶分析
-		userResp, err := client.AnalyzeHealthReportForUser(ctx, &pb.AnalyzeHealthReportRequest{
+		// 調用用戶分析（使用新的 context）
+		userResp, err := client.AnalyzeHealthReportForUser(pyCtx, &pb.AnalyzeHealthReportRequest{
 			ReportId:        reportId,
 			PatientId:       patientId,
 			TestResultsJson: testResultsJson,
 		})
 		if err != nil {
+			if pyCtx.Err() == context.DeadlineExceeded {
+				return nil, status.Error(codes.DeadlineExceeded, "Python Backend 分析超時（超過 "+strconv.Itoa(timeoutSeconds)+" 秒）")
+			}
 			return nil, status.Error(codes.Internal, "用戶分析失敗: "+err.Error())
 		}
 
@@ -206,13 +224,16 @@ func callPythonAnalysisService(
 		}, nil
 
 	} else if analysisType == "insurer" {
-		// 調用保險業者分析
-		insurerResp, err := client.AnalyzeHealthReportForInsurer(ctx, &pb.AnalyzeHealthReportRequest{
+		// 調用保險業者分析（使用新的 context）
+		insurerResp, err := client.AnalyzeHealthReportForInsurer(pyCtx, &pb.AnalyzeHealthReportRequest{
 			ReportId:        reportId,
 			PatientId:       patientId,
 			TestResultsJson: testResultsJson,
 		})
 		if err != nil {
+			if pyCtx.Err() == context.DeadlineExceeded {
+				return nil, status.Error(codes.DeadlineExceeded, "Python Backend 分析超時（超過 "+strconv.Itoa(timeoutSeconds)+" 秒）")
+			}
 			return nil, status.Error(codes.Internal, "保險業者分析失敗: "+err.Error())
 		}
 

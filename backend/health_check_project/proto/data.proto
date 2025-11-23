@@ -19,6 +19,9 @@ service HealthService {
     // 這些方法在 Python backend 中實現
   }
 
+  // 解析文件（PDF/Word）並轉換為標準 JSON
+  rpc ParseDocument(ParseDocumentRequest) returns (ParseDocumentResponse) {}
+
   // 前端請求健檢資料分析（通過報告 ID）
   rpc GetHealthAnalysis(AnalyzeReportRequest) returns (HealthAnalysisResponse) {
     option (google.api.http) = {
@@ -400,4 +403,15 @@ message HealthAnalysisResponse {
   UserHealthAnalysisResponse user_analysis = 3;
   // 保險業者分析結果（analysis_type = "insurer" 時返回）
   InsurerHealthAnalysisResponse insurer_analysis = 4;
+}
+
+message ParseDocumentRequest {
+  bytes file_content = 1;
+  string file_type = 2;
+}
+
+message ParseDocumentResponse {
+  bool success = 1;
+  string result_json = 2;
+  string error_message = 3;
 }

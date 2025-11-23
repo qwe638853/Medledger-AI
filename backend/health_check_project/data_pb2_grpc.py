@@ -3,10 +3,10 @@
 import grpc
 import warnings
 
+import data_pb2 as data__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
-from proto import data_pb2 as proto_dot_data__pb2
 
-GRPC_GENERATED_VERSION = '1.66.0'
+GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -19,7 +19,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in proto/data_pb2_grpc.py depends on'
+        + ' but the generated code in data_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -37,88 +37,98 @@ class HealthServiceStub(object):
         """
         self.AnalyzeHealthReportForUser = channel.unary_unary(
                 '/health.HealthService/AnalyzeHealthReportForUser',
-                request_serializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.UserHealthAnalysisResponse.FromString,
+                request_serializer=data__pb2.AnalyzeHealthReportRequest.SerializeToString,
+                response_deserializer=data__pb2.UserHealthAnalysisResponse.FromString,
                 _registered_method=True)
         self.AnalyzeHealthReportForInsurer = channel.unary_unary(
                 '/health.HealthService/AnalyzeHealthReportForInsurer',
-                request_serializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.InsurerHealthAnalysisResponse.FromString,
+                request_serializer=data__pb2.AnalyzeHealthReportRequest.SerializeToString,
+                response_deserializer=data__pb2.InsurerHealthAnalysisResponse.FromString,
+                _registered_method=True)
+        self.ParseDocument = channel.unary_unary(
+                '/health.HealthService/ParseDocument',
+                request_serializer=data__pb2.ParseDocumentRequest.SerializeToString,
+                response_deserializer=data__pb2.ParseDocumentResponse.FromString,
+                _registered_method=True)
+        self.GetHealthAnalysis = channel.unary_unary(
+                '/health.HealthService/GetHealthAnalysis',
+                request_serializer=data__pb2.AnalyzeReportRequest.SerializeToString,
+                response_deserializer=data__pb2.HealthAnalysisResponse.FromString,
                 _registered_method=True)
         self.UploadReport = channel.unary_unary(
                 '/health.HealthService/UploadReport',
-                request_serializer=proto_dot_data__pb2.UploadReportRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.UploadReportResponse.FromString,
+                request_serializer=data__pb2.UploadReportRequest.SerializeToString,
+                response_deserializer=data__pb2.UploadReportResponse.FromString,
                 _registered_method=True)
         self.Login = channel.unary_unary(
                 '/health.HealthService/Login',
-                request_serializer=proto_dot_data__pb2.LoginRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.LoginResponse.FromString,
+                request_serializer=data__pb2.LoginRequest.SerializeToString,
+                response_deserializer=data__pb2.LoginResponse.FromString,
                 _registered_method=True)
         self.RegisterUser = channel.unary_unary(
                 '/health.HealthService/RegisterUser',
-                request_serializer=proto_dot_data__pb2.RegisterUserRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.RegisterResponse.FromString,
+                request_serializer=data__pb2.RegisterUserRequest.SerializeToString,
+                response_deserializer=data__pb2.RegisterResponse.FromString,
                 _registered_method=True)
         self.RegisterInsurer = channel.unary_unary(
                 '/health.HealthService/RegisterInsurer',
-                request_serializer=proto_dot_data__pb2.RegisterInsurerRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.RegisterResponse.FromString,
+                request_serializer=data__pb2.RegisterInsurerRequest.SerializeToString,
+                response_deserializer=data__pb2.RegisterResponse.FromString,
                 _registered_method=True)
         self.ListMyReportMeta = channel.unary_unary(
                 '/health.HealthService/ListMyReportMeta',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListMyReportMetaResponse.FromString,
+                response_deserializer=data__pb2.ListMyReportMetaResponse.FromString,
                 _registered_method=True)
         self.ReadMyReport = channel.unary_unary(
                 '/health.HealthService/ReadMyReport',
-                request_serializer=proto_dot_data__pb2.ReadMyReportRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ReadMyReportResponse.FromString,
+                request_serializer=data__pb2.ReadMyReportRequest.SerializeToString,
+                response_deserializer=data__pb2.ReadMyReportResponse.FromString,
                 _registered_method=True)
         self.ListMyAuthorizedTickets = channel.unary_unary(
                 '/health.HealthService/ListMyAuthorizedTickets',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListAuthorizedTicketsResponse.FromString,
+                response_deserializer=data__pb2.ListAuthorizedTicketsResponse.FromString,
                 _registered_method=True)
         self.RequestAccess = channel.unary_unary(
                 '/health.HealthService/RequestAccess',
-                request_serializer=proto_dot_data__pb2.RequestAccessRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.RequestAccessResponse.FromString,
+                request_serializer=data__pb2.RequestAccessRequest.SerializeToString,
+                response_deserializer=data__pb2.RequestAccessResponse.FromString,
                 _registered_method=True)
         self.ListAccessRequests = channel.unary_unary(
                 '/health.HealthService/ListAccessRequests',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListAccessRequestsResponse.FromString,
+                response_deserializer=data__pb2.ListAccessRequestsResponse.FromString,
                 _registered_method=True)
         self.ApproveAccessRequest = channel.unary_unary(
                 '/health.HealthService/ApproveAccessRequest',
-                request_serializer=proto_dot_data__pb2.ApproveAccessRequestRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ApproveAccessRequestResponse.FromString,
+                request_serializer=data__pb2.ApproveAccessRequestRequest.SerializeToString,
+                response_deserializer=data__pb2.ApproveAccessRequestResponse.FromString,
                 _registered_method=True)
         self.RejectAccessRequest = channel.unary_unary(
                 '/health.HealthService/RejectAccessRequest',
-                request_serializer=proto_dot_data__pb2.RejectAccessRequestRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.RejectAccessRequestResponse.FromString,
+                request_serializer=data__pb2.RejectAccessRequestRequest.SerializeToString,
+                response_deserializer=data__pb2.RejectAccessRequestResponse.FromString,
                 _registered_method=True)
         self.ListAuthorizedReports = channel.unary_unary(
                 '/health.HealthService/ListAuthorizedReports',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListAuthorizedReportsResponse.FromString,
+                response_deserializer=data__pb2.ListAuthorizedReportsResponse.FromString,
                 _registered_method=True)
         self.ListReportMetaByPatientID = channel.unary_unary(
                 '/health.HealthService/ListReportMetaByPatientID',
-                request_serializer=proto_dot_data__pb2.PatientIDRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListReportMetaResponse.FromString,
+                request_serializer=data__pb2.PatientIDRequest.SerializeToString,
+                response_deserializer=data__pb2.ListReportMetaResponse.FromString,
                 _registered_method=True)
         self.ViewAuthorizedReport = channel.unary_unary(
                 '/health.HealthService/ViewAuthorizedReport',
-                request_serializer=proto_dot_data__pb2.ViewAuthorizedReportRequest.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ViewAuthorizedReportResponse.FromString,
+                request_serializer=data__pb2.ViewAuthorizedReportRequest.SerializeToString,
+                response_deserializer=data__pb2.ViewAuthorizedReportResponse.FromString,
                 _registered_method=True)
         self.ListMyAccessRequests = channel.unary_unary(
                 '/health.HealthService/ListMyAccessRequests',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_data__pb2.ListMyAccessRequestsResponse.FromString,
+                response_deserializer=data__pb2.ListMyAccessRequestsResponse.FromString,
                 _registered_method=True)
 
 
@@ -137,6 +147,20 @@ class HealthServiceServicer(object):
 
     def AnalyzeHealthReportForInsurer(self, request, context):
         """這些方法在 Python backend 中實現
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ParseDocument(self, request, context):
+        """解析文件（PDF/Word）並轉換為標準 JSON
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetHealthAnalysis(self, request, context):
+        """前端請求健檢資料分析（通過報告 ID）
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -254,88 +278,98 @@ def add_HealthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'AnalyzeHealthReportForUser': grpc.unary_unary_rpc_method_handler(
                     servicer.AnalyzeHealthReportForUser,
-                    request_deserializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.UserHealthAnalysisResponse.SerializeToString,
+                    request_deserializer=data__pb2.AnalyzeHealthReportRequest.FromString,
+                    response_serializer=data__pb2.UserHealthAnalysisResponse.SerializeToString,
             ),
             'AnalyzeHealthReportForInsurer': grpc.unary_unary_rpc_method_handler(
                     servicer.AnalyzeHealthReportForInsurer,
-                    request_deserializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.InsurerHealthAnalysisResponse.SerializeToString,
+                    request_deserializer=data__pb2.AnalyzeHealthReportRequest.FromString,
+                    response_serializer=data__pb2.InsurerHealthAnalysisResponse.SerializeToString,
+            ),
+            'ParseDocument': grpc.unary_unary_rpc_method_handler(
+                    servicer.ParseDocument,
+                    request_deserializer=data__pb2.ParseDocumentRequest.FromString,
+                    response_serializer=data__pb2.ParseDocumentResponse.SerializeToString,
+            ),
+            'GetHealthAnalysis': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetHealthAnalysis,
+                    request_deserializer=data__pb2.AnalyzeReportRequest.FromString,
+                    response_serializer=data__pb2.HealthAnalysisResponse.SerializeToString,
             ),
             'UploadReport': grpc.unary_unary_rpc_method_handler(
                     servicer.UploadReport,
-                    request_deserializer=proto_dot_data__pb2.UploadReportRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.UploadReportResponse.SerializeToString,
+                    request_deserializer=data__pb2.UploadReportRequest.FromString,
+                    response_serializer=data__pb2.UploadReportResponse.SerializeToString,
             ),
             'Login': grpc.unary_unary_rpc_method_handler(
                     servicer.Login,
-                    request_deserializer=proto_dot_data__pb2.LoginRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.LoginResponse.SerializeToString,
+                    request_deserializer=data__pb2.LoginRequest.FromString,
+                    response_serializer=data__pb2.LoginResponse.SerializeToString,
             ),
             'RegisterUser': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterUser,
-                    request_deserializer=proto_dot_data__pb2.RegisterUserRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.RegisterResponse.SerializeToString,
+                    request_deserializer=data__pb2.RegisterUserRequest.FromString,
+                    response_serializer=data__pb2.RegisterResponse.SerializeToString,
             ),
             'RegisterInsurer': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterInsurer,
-                    request_deserializer=proto_dot_data__pb2.RegisterInsurerRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.RegisterResponse.SerializeToString,
+                    request_deserializer=data__pb2.RegisterInsurerRequest.FromString,
+                    response_serializer=data__pb2.RegisterResponse.SerializeToString,
             ),
             'ListMyReportMeta': grpc.unary_unary_rpc_method_handler(
                     servicer.ListMyReportMeta,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=proto_dot_data__pb2.ListMyReportMetaResponse.SerializeToString,
+                    response_serializer=data__pb2.ListMyReportMetaResponse.SerializeToString,
             ),
             'ReadMyReport': grpc.unary_unary_rpc_method_handler(
                     servicer.ReadMyReport,
-                    request_deserializer=proto_dot_data__pb2.ReadMyReportRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.ReadMyReportResponse.SerializeToString,
+                    request_deserializer=data__pb2.ReadMyReportRequest.FromString,
+                    response_serializer=data__pb2.ReadMyReportResponse.SerializeToString,
             ),
             'ListMyAuthorizedTickets': grpc.unary_unary_rpc_method_handler(
                     servicer.ListMyAuthorizedTickets,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=proto_dot_data__pb2.ListAuthorizedTicketsResponse.SerializeToString,
+                    response_serializer=data__pb2.ListAuthorizedTicketsResponse.SerializeToString,
             ),
             'RequestAccess': grpc.unary_unary_rpc_method_handler(
                     servicer.RequestAccess,
-                    request_deserializer=proto_dot_data__pb2.RequestAccessRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.RequestAccessResponse.SerializeToString,
+                    request_deserializer=data__pb2.RequestAccessRequest.FromString,
+                    response_serializer=data__pb2.RequestAccessResponse.SerializeToString,
             ),
             'ListAccessRequests': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAccessRequests,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=proto_dot_data__pb2.ListAccessRequestsResponse.SerializeToString,
+                    response_serializer=data__pb2.ListAccessRequestsResponse.SerializeToString,
             ),
             'ApproveAccessRequest': grpc.unary_unary_rpc_method_handler(
                     servicer.ApproveAccessRequest,
-                    request_deserializer=proto_dot_data__pb2.ApproveAccessRequestRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.ApproveAccessRequestResponse.SerializeToString,
+                    request_deserializer=data__pb2.ApproveAccessRequestRequest.FromString,
+                    response_serializer=data__pb2.ApproveAccessRequestResponse.SerializeToString,
             ),
             'RejectAccessRequest': grpc.unary_unary_rpc_method_handler(
                     servicer.RejectAccessRequest,
-                    request_deserializer=proto_dot_data__pb2.RejectAccessRequestRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.RejectAccessRequestResponse.SerializeToString,
+                    request_deserializer=data__pb2.RejectAccessRequestRequest.FromString,
+                    response_serializer=data__pb2.RejectAccessRequestResponse.SerializeToString,
             ),
             'ListAuthorizedReports': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAuthorizedReports,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=proto_dot_data__pb2.ListAuthorizedReportsResponse.SerializeToString,
+                    response_serializer=data__pb2.ListAuthorizedReportsResponse.SerializeToString,
             ),
             'ListReportMetaByPatientID': grpc.unary_unary_rpc_method_handler(
                     servicer.ListReportMetaByPatientID,
-                    request_deserializer=proto_dot_data__pb2.PatientIDRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.ListReportMetaResponse.SerializeToString,
+                    request_deserializer=data__pb2.PatientIDRequest.FromString,
+                    response_serializer=data__pb2.ListReportMetaResponse.SerializeToString,
             ),
             'ViewAuthorizedReport': grpc.unary_unary_rpc_method_handler(
                     servicer.ViewAuthorizedReport,
-                    request_deserializer=proto_dot_data__pb2.ViewAuthorizedReportRequest.FromString,
-                    response_serializer=proto_dot_data__pb2.ViewAuthorizedReportResponse.SerializeToString,
+                    request_deserializer=data__pb2.ViewAuthorizedReportRequest.FromString,
+                    response_serializer=data__pb2.ViewAuthorizedReportResponse.SerializeToString,
             ),
             'ListMyAccessRequests': grpc.unary_unary_rpc_method_handler(
                     servicer.ListMyAccessRequests,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=proto_dot_data__pb2.ListMyAccessRequestsResponse.SerializeToString,
+                    response_serializer=data__pb2.ListMyAccessRequestsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -363,8 +397,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/AnalyzeHealthReportForUser',
-            proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
-            proto_dot_data__pb2.UserHealthAnalysisResponse.FromString,
+            data__pb2.AnalyzeHealthReportRequest.SerializeToString,
+            data__pb2.UserHealthAnalysisResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -390,8 +424,62 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/AnalyzeHealthReportForInsurer',
-            proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
-            proto_dot_data__pb2.InsurerHealthAnalysisResponse.FromString,
+            data__pb2.AnalyzeHealthReportRequest.SerializeToString,
+            data__pb2.InsurerHealthAnalysisResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ParseDocument(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/health.HealthService/ParseDocument',
+            data__pb2.ParseDocumentRequest.SerializeToString,
+            data__pb2.ParseDocumentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetHealthAnalysis(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/health.HealthService/GetHealthAnalysis',
+            data__pb2.AnalyzeReportRequest.SerializeToString,
+            data__pb2.HealthAnalysisResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -417,8 +505,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/UploadReport',
-            proto_dot_data__pb2.UploadReportRequest.SerializeToString,
-            proto_dot_data__pb2.UploadReportResponse.FromString,
+            data__pb2.UploadReportRequest.SerializeToString,
+            data__pb2.UploadReportResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -444,8 +532,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/Login',
-            proto_dot_data__pb2.LoginRequest.SerializeToString,
-            proto_dot_data__pb2.LoginResponse.FromString,
+            data__pb2.LoginRequest.SerializeToString,
+            data__pb2.LoginResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -471,8 +559,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/RegisterUser',
-            proto_dot_data__pb2.RegisterUserRequest.SerializeToString,
-            proto_dot_data__pb2.RegisterResponse.FromString,
+            data__pb2.RegisterUserRequest.SerializeToString,
+            data__pb2.RegisterResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -498,8 +586,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/RegisterInsurer',
-            proto_dot_data__pb2.RegisterInsurerRequest.SerializeToString,
-            proto_dot_data__pb2.RegisterResponse.FromString,
+            data__pb2.RegisterInsurerRequest.SerializeToString,
+            data__pb2.RegisterResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -526,7 +614,7 @@ class HealthService(object):
             target,
             '/health.HealthService/ListMyReportMeta',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            proto_dot_data__pb2.ListMyReportMetaResponse.FromString,
+            data__pb2.ListMyReportMetaResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -552,8 +640,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/ReadMyReport',
-            proto_dot_data__pb2.ReadMyReportRequest.SerializeToString,
-            proto_dot_data__pb2.ReadMyReportResponse.FromString,
+            data__pb2.ReadMyReportRequest.SerializeToString,
+            data__pb2.ReadMyReportResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -580,7 +668,7 @@ class HealthService(object):
             target,
             '/health.HealthService/ListMyAuthorizedTickets',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            proto_dot_data__pb2.ListAuthorizedTicketsResponse.FromString,
+            data__pb2.ListAuthorizedTicketsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -606,8 +694,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/RequestAccess',
-            proto_dot_data__pb2.RequestAccessRequest.SerializeToString,
-            proto_dot_data__pb2.RequestAccessResponse.FromString,
+            data__pb2.RequestAccessRequest.SerializeToString,
+            data__pb2.RequestAccessResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -634,7 +722,7 @@ class HealthService(object):
             target,
             '/health.HealthService/ListAccessRequests',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            proto_dot_data__pb2.ListAccessRequestsResponse.FromString,
+            data__pb2.ListAccessRequestsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -660,8 +748,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/ApproveAccessRequest',
-            proto_dot_data__pb2.ApproveAccessRequestRequest.SerializeToString,
-            proto_dot_data__pb2.ApproveAccessRequestResponse.FromString,
+            data__pb2.ApproveAccessRequestRequest.SerializeToString,
+            data__pb2.ApproveAccessRequestResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -687,8 +775,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/RejectAccessRequest',
-            proto_dot_data__pb2.RejectAccessRequestRequest.SerializeToString,
-            proto_dot_data__pb2.RejectAccessRequestResponse.FromString,
+            data__pb2.RejectAccessRequestRequest.SerializeToString,
+            data__pb2.RejectAccessRequestResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -715,7 +803,7 @@ class HealthService(object):
             target,
             '/health.HealthService/ListAuthorizedReports',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            proto_dot_data__pb2.ListAuthorizedReportsResponse.FromString,
+            data__pb2.ListAuthorizedReportsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -741,8 +829,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/ListReportMetaByPatientID',
-            proto_dot_data__pb2.PatientIDRequest.SerializeToString,
-            proto_dot_data__pb2.ListReportMetaResponse.FromString,
+            data__pb2.PatientIDRequest.SerializeToString,
+            data__pb2.ListReportMetaResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -768,8 +856,8 @@ class HealthService(object):
             request,
             target,
             '/health.HealthService/ViewAuthorizedReport',
-            proto_dot_data__pb2.ViewAuthorizedReportRequest.SerializeToString,
-            proto_dot_data__pb2.ViewAuthorizedReportResponse.FromString,
+            data__pb2.ViewAuthorizedReportRequest.SerializeToString,
+            data__pb2.ViewAuthorizedReportResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -796,7 +884,7 @@ class HealthService(object):
             target,
             '/health.HealthService/ListMyAccessRequests',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            proto_dot_data__pb2.ListMyAccessRequestsResponse.FromString,
+            data__pb2.ListMyAccessRequestsResponse.FromString,
             options,
             channel_credentials,
             insecure,

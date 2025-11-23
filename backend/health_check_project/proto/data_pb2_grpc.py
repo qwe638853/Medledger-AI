@@ -6,7 +6,7 @@ import warnings
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from proto import data_pb2 as proto_dot_data__pb2
 
-GRPC_GENERATED_VERSION = '1.66.0'
+GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -19,7 +19,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in proto/data_pb2_grpc.py depends on'
+        + ' but the generated code in proto/data_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -44,6 +44,16 @@ class HealthServiceStub(object):
                 '/health.HealthService/AnalyzeHealthReportForInsurer',
                 request_serializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
                 response_deserializer=proto_dot_data__pb2.InsurerHealthAnalysisResponse.FromString,
+                _registered_method=True)
+        self.ParseDocument = channel.unary_unary(
+                '/health.HealthService/ParseDocument',
+                request_serializer=proto_dot_data__pb2.ParseDocumentRequest.SerializeToString,
+                response_deserializer=proto_dot_data__pb2.ParseDocumentResponse.FromString,
+                _registered_method=True)
+        self.GetHealthAnalysis = channel.unary_unary(
+                '/health.HealthService/GetHealthAnalysis',
+                request_serializer=proto_dot_data__pb2.AnalyzeReportRequest.SerializeToString,
+                response_deserializer=proto_dot_data__pb2.HealthAnalysisResponse.FromString,
                 _registered_method=True)
         self.UploadReport = channel.unary_unary(
                 '/health.HealthService/UploadReport',
@@ -137,6 +147,20 @@ class HealthServiceServicer(object):
 
     def AnalyzeHealthReportForInsurer(self, request, context):
         """這些方法在 Python backend 中實現
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ParseDocument(self, request, context):
+        """解析文件（PDF/Word）並轉換為標準 JSON
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetHealthAnalysis(self, request, context):
+        """前端請求健檢資料分析（通過報告 ID）
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -261,6 +285,16 @@ def add_HealthServiceServicer_to_server(servicer, server):
                     servicer.AnalyzeHealthReportForInsurer,
                     request_deserializer=proto_dot_data__pb2.AnalyzeHealthReportRequest.FromString,
                     response_serializer=proto_dot_data__pb2.InsurerHealthAnalysisResponse.SerializeToString,
+            ),
+            'ParseDocument': grpc.unary_unary_rpc_method_handler(
+                    servicer.ParseDocument,
+                    request_deserializer=proto_dot_data__pb2.ParseDocumentRequest.FromString,
+                    response_serializer=proto_dot_data__pb2.ParseDocumentResponse.SerializeToString,
+            ),
+            'GetHealthAnalysis': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetHealthAnalysis,
+                    request_deserializer=proto_dot_data__pb2.AnalyzeReportRequest.FromString,
+                    response_serializer=proto_dot_data__pb2.HealthAnalysisResponse.SerializeToString,
             ),
             'UploadReport': grpc.unary_unary_rpc_method_handler(
                     servicer.UploadReport,
@@ -392,6 +426,60 @@ class HealthService(object):
             '/health.HealthService/AnalyzeHealthReportForInsurer',
             proto_dot_data__pb2.AnalyzeHealthReportRequest.SerializeToString,
             proto_dot_data__pb2.InsurerHealthAnalysisResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ParseDocument(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/health.HealthService/ParseDocument',
+            proto_dot_data__pb2.ParseDocumentRequest.SerializeToString,
+            proto_dot_data__pb2.ParseDocumentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetHealthAnalysis(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/health.HealthService/GetHealthAnalysis',
+            proto_dot_data__pb2.AnalyzeReportRequest.SerializeToString,
+            proto_dot_data__pb2.HealthAnalysisResponse.FromString,
             options,
             channel_credentials,
             insecure,

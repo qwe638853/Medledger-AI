@@ -209,7 +209,7 @@ function getMetricColor(key, value) {
   return 'green';
 }
 
-import { ref, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { healthCheckService } from '../services';
 import { useAuthStore } from '../stores';
@@ -234,6 +234,7 @@ const aiSummary = ref('這是 AI 分析摘要的假資料。');
 const riskLevel = ref('低風險');
 const riskAdvice = ref('您的主要指標均在正常範圍，請持續保持健康生活。');
 const aiAnalysisLoading = ref(false);
+const insurerAnalysisLoading = ref(false);
 
 // 風險評估簡單規則
 function evaluateRisk(metrics = {}) {
@@ -358,49 +359,21 @@ const insuranceAnalysis = ref({
 const aiAnalysis = ref({
   summary: '',
   personalAnalysis: '',
-  healthScore: 0,
-  riskLevel: 'low', // low, medium, high
+  riskSummary: '',
+  riskLevel: 'low', // low, medium, monitor, high
   diseaseRisks: [],
-  healthTrends: [
-    { metric: '血糖控制', trend: 'stable', change: 0 },
-    { metric: '血脂狀況', trend: 'stable', change: 0 },
-    { metric: '腎功能', trend: 'monitoring', change: 5 },
-    { metric: '血壓控制', trend: 'stable', change: 0 }
-  ],
-  recommendations: [
-    {
-      type: 'diet',
-      title: '飲食建議',
-      items: ['每日飲水量2000-2500毫升', '適量減少蛋白質攝取', '多食用新鮮蔬果', '控制鈉鹽攝入量']
-    },
-    {
-      type: 'exercise',
-      title: '運動建議',
-      items: ['維持每週150分鐘中等強度運動', '適度有氧運動如快走、游泳', '避免過度劇烈運動', '運動後適當補充水分']
-    },
-    {
-      type: 'lifestyle',
-      title: '生活習慣',
-      items: ['保持充足睡眠7-8小時', '定期監測血壓', '每3個月追蹤腎功能', '避免熬夜和過度疲勞']
-    }
-  ],
-  insuranceRecommendations: [
-    {
-      name: '標準健康保障計劃',
-      coverage: '住院醫療、手術、門診',
-      features: ['標準費率承保', '無額外體檢要求', '全面醫療保障'],
-      monthlyPremium: 2200,
-      suitability: 95
-    },
-    {
-      name: '優質健康防護計劃',
-      coverage: '重大疾病、住院醫療、預防保健',
-      features: ['健康優惠費率', '預防保健給付', '家族保障方案'],
-      monthlyPremium: 2800,
-      suitability: 88
-    }
-  ]
+  protectionPlan: [],
+  insuranceRecommendations: []
 });
+const aiAnalysisCache = reactive({
+  user: null,
+  insurer: null
+});
+const aiAnalysisUpdatedAt = reactive({
+  user: null,
+  insurer: null
+});
+const currentAnalysisType = computed(() => (userRole.value === 'insurer' ? 'insurer' : 'user'));
 
 // 根據不同角色使用不同的 API endpoint
 const fetchReportData = async () => {
@@ -601,7 +574,6 @@ function getMetricNumber(value) {
 
 const aiBtnHover = ref(false);
 const riskBtnHover = ref(false);
-const activeTab = ref('diet');
 const insuranceActiveTab = ref('immediate');
 
 // 競爭對手分析表格標題
@@ -613,95 +585,104 @@ const competitorHeaders = [
   { title: '競爭力評分', key: 'score', align: 'center' }
 ];
 
-// 載入健康分析數據
-const loadHealthAnalysis = async () => {
+// 載入健康分析數據（含快取）
+const loadHealthAnalysis = async (forceRefresh = false) => {
   if (!reportId) {
     console.error('報告 ID 不存在，無法載入分析');
     return;
   }
 
+  const analysisType = currentAnalysisType.value;
+
+  // 若已有快取且未指定強制更新，直接載入快取內容
+  if (!forceRefresh && aiAnalysisCache[analysisType]) {
+    aiAnalysis.value = JSON.parse(JSON.stringify(aiAnalysisCache[analysisType]));
+    showAISummary.value = true;
+    aiAnalysisLoading.value = false;
+    return;
+  }
+
   aiAnalysisLoading.value = true;
-  showAISummary.value = true; // 先打開彈窗顯示載入狀態
+  showAISummary.value = true; // 顯示彈窗並呈現載入狀態
 
   try {
     console.log(`[loadHealthAnalysis] 開始載入分析: reportId=${reportId}`);
     
-    // 根據用戶角色選擇分析類型
-    const analysisType = userRole.value === 'insurer' ? 'insurer' : 'user';
-    const response = await healthCheckService.getHealthAnalysis(reportId, analysisType);
+    const targetPatientId = patientId || userStore.user?.id || authStore.currentUser;
+    if (analysisType === 'insurer' && !targetPatientId) {
+      throw new Error('缺少病患身份，無法進行保險分析');
+    }
+    const response = await healthCheckService.getHealthAnalysis(reportId, analysisType, targetPatientId);
     
     console.log('[loadHealthAnalysis] API 回應:', response);
     
     if (response.success) {
-      // 根據分析類型選擇對應的數據
       const analysisData = analysisType === 'user' 
-        ? response.user_analysis 
-        : response.insurer_analysis;
+        ? (response.user_analysis || response.userAnalysis || {})
+        : (response.insurer_analysis || response.insurerAnalysis || {});
       
       if (analysisData) {
-        // 轉換用戶分析數據格式（適配新的資料結構，已移除 risk_percent）
         if (analysisType === 'user') {
+          const protectionPlanRaw = analysisData.protection_plan || analysisData.protectionPlan || [];
+          const protectionPlan = Array.isArray(protectionPlanRaw)
+            ? protectionPlanRaw
+            : (protectionPlanRaw ? [protectionPlanRaw] : []);
+          const insuranceRecommendationRaw = analysisData.insurance_recommendation || analysisData.insuranceRecommendation || [];
+          const insuranceRecommendation = Array.isArray(insuranceRecommendationRaw)
+            ? insuranceRecommendationRaw
+            : (insuranceRecommendationRaw ? [insuranceRecommendationRaw] : []);
+          const riskSummary = analysisData.risk_level_summary || analysisData.riskLevelSummary || analysisData.risk_level || analysisData.riskLevel || '';
+          const riskLevelRaw = analysisData.risk_level || analysisData.riskLevel || riskSummary;
           aiAnalysis.value = {
             summary: analysisData.summary || '',
-            personalAnalysis: analysisData.personal_analysis || '',
-            healthScore: analysisData.health_score || 0,
-            riskLevel: getRiskLevel(analysisData.health_score),
-            diseaseRisks: (analysisData.disease_risks || []).map(risk => ({
+            personalAnalysis: analysisData.personal_analysis || analysisData.personalAnalysis || '',
+            riskSummary,
+            riskLevel: mapRiskLevel(riskLevelRaw),
+            diseaseRisks: (analysisData.disease_risks || analysisData.diseaseRisks || []).map(risk => {
+              const rawLevelText = (risk.risk_level || risk.riskLevel || risk.risk_level_summary || risk.riskLevelSummary || risk.risk_level_label || risk.riskLevelLabel || '').trim();
+              const normalizedLevel = mapRiskLevel(rawLevelText);
+              return {
               name: risk.disease || '',
-              level: mapRiskLevel(risk.risk_level || ''),
-              factors: risk.main_factors || [],
+                levelLabel: rawLevelText || '未提供風險等級',
+                level: normalizedLevel,
+                factors: Array.isArray(risk.main_factors || risk.mainFactors)
+                  ? (risk.main_factors || risk.mainFactors)
+                  : ((risk.main_factors || risk.mainFactors) ? [risk.main_factors || risk.mainFactors] : []),
               prevention: risk.advice || ''
-            })),
-            healthTrends: [], // API 目前沒有提供此數據
-            recommendations: [
-              {
-                type: 'diet',
-                title: '飲食建議',
-                items: analysisData.protection_plan || []
-              },
-              {
-                type: 'exercise',
-                title: '運動建議',
-                items: []
-              },
-              {
-                type: 'lifestyle',
-                title: '生活習慣',
-                items: []
-              }
-            ],
-            insuranceRecommendations: (analysisData.insurance_recommendation || []).map(rec => ({
-              name: rec,
-              coverage: '',
-              features: [],
-              monthlyPremium: 0,
-              suitability: 0
-            }))
+              };
+            }),
+            protectionPlan,
+            insuranceRecommendations: Array.isArray(insuranceRecommendation) ? insuranceRecommendation : []
           };
         } else {
-          // 轉換保險業者分析數據格式
+          const riskSummary = analysisData.risk_level_label || analysisData.riskLevelLabel || '';
+          const coreRecommendations = analysisData.core_recommendation || analysisData.coreRecommendation || [];
           aiAnalysis.value = {
             summary: analysisData.summary || '',
-            healthScore: 100 - (analysisData.overall_risk_score || 0), // 轉換為健康分數
-            riskLevel: mapRiskLevel(analysisData.risk_level_label || ''),
-            diseaseRisks: (analysisData.disease_risk_evaluation || []).map(risk => ({
+            personalAnalysis: '',
+            riskSummary,
+            riskLevel: mapRiskLevel(riskSummary),
+            diseaseRisks: (analysisData.disease_risk_evaluation || analysisData.diseaseRiskEvaluation || []).map(risk => {
+              const rawLevelText = (risk.risk_level || risk.riskLevel || risk.risk_level_summary || risk.riskLevelSummary || risk.risk_level_label || risk.riskLevelLabel || '').trim();
+              const normalizedLevel = mapRiskLevel(rawLevelText);
+              return {
               name: risk.disease || '',
-              risk: risk.risk_score || 0, // 保險業者分析保留 risk_score
-              level: mapRiskLevel(risk.risk_level || ''),
-              factors: risk.main_factors || [],
+                levelLabel: rawLevelText || '未提供風險等級',
+                level: normalizedLevel,
+                factors: Array.isArray(risk.main_factors || risk.mainFactors)
+                  ? (risk.main_factors || risk.mainFactors)
+                  : ((risk.main_factors || risk.mainFactors) ? [risk.main_factors || risk.mainFactors] : []),
               prevention: risk.advice || ''
-            })),
-            healthTrends: [],
-            recommendations: [
-              {
-                type: 'diet',
-                title: '核保建議',
-                items: analysisData.core_recommendation || []
-              }
-            ],
+              };
+            }),
+            protectionPlan: Array.isArray(coreRecommendations) ? coreRecommendations : [],
             insuranceRecommendations: []
           };
         }
+
+        // 更新快取與最後更新時間
+        aiAnalysisCache[analysisType] = JSON.parse(JSON.stringify(aiAnalysis.value));
+        aiAnalysisUpdatedAt[analysisType] = new Date();
       }
     } else {
       throw new Error(response.message || '分析失敗');
@@ -714,20 +695,346 @@ const loadHealthAnalysis = async () => {
   }
 };
 
-// 輔助函數：根據健康分數獲取風險等級
-const getRiskLevel = (score) => {
-  if (score >= 80) return 'low';
-  if (score >= 60) return 'medium';
-  return 'high';
+// 載入保險業者專業風險評估
+const loadInsurerRiskAnalysis = async (forceRefresh = false) => {
+  if (!reportId) {
+    console.error('報告 ID 不存在，無法載入風險評估');
+    return;
+  }
+
+  if (!patientId) {
+    console.error('病患 ID 不存在，無法載入風險評估');
+    errorMsg.value = '缺少病患身份，無法進行風險評估';
+    return;
+  }
+
+  // 若已有快取且未指定強制更新，直接載入快取內容
+  if (!forceRefresh && aiAnalysisCache.insurer) {
+    // 從快取的 aiAnalysis 轉換為 insuranceAnalysis
+    updateInsuranceAnalysisFromCache();
+    showRisk.value = true;
+    insurerAnalysisLoading.value = false;
+    return;
+  }
+
+  insurerAnalysisLoading.value = true;
+  // 先顯示彈窗，但不顯示內容（會顯示載入狀態）
+  if (!showRisk.value) {
+    showRisk.value = true;
+  }
+  
+  // 清空舊數據，避免顯示假資料
+  insuranceAnalysis.value = {
+    riskScore: 0,
+    overallRiskLevel: 'low',
+    riskCategories: {},
+    healthMetrics: [],
+    ageRiskFactors: {},
+    riskMitigation: [],
+    recommendations: []
+  };
+
+  try {
+    console.log(`[loadInsurerRiskAnalysis] 開始載入風險評估: reportId=${reportId}, patientId=${patientId}`);
+    
+    const response = await healthCheckService.getHealthAnalysis(reportId, 'insurer', patientId);
+    
+    console.log('[loadInsurerRiskAnalysis] API 回應:', response);
+    
+    if (response.success) {
+      const analysisData = response.insurer_analysis || response.insurerAnalysis || {};
+      
+      if (analysisData) {
+        // 將後端數據映射到 insuranceAnalysis 結構（先更新，確保顯示真實數據）
+        updateInsuranceAnalysisFromBackend(analysisData);
+        
+        // 更新 aiAnalysis（用於快取）
+        const riskSummary = analysisData.risk_level_label || analysisData.riskLevelLabel || '';
+        const coreRecommendations = analysisData.core_recommendation || analysisData.coreRecommendation || [];
+        aiAnalysis.value = {
+          summary: analysisData.summary || '',
+          personalAnalysis: '',
+          riskSummary,
+          riskLevel: mapRiskLevel(riskSummary),
+          diseaseRisks: (analysisData.disease_risk_evaluation || analysisData.diseaseRiskEvaluation || []).map(risk => {
+            const rawLevelText = (risk.risk_level || risk.riskLevel || '').trim();
+            const normalizedLevel = mapRiskLevel(rawLevelText);
+            return {
+              name: risk.disease || '',
+              levelLabel: rawLevelText || '未提供風險等級',
+              level: normalizedLevel,
+              factors: Array.isArray(risk.main_factors || risk.mainFactors)
+                ? (risk.main_factors || risk.mainFactors)
+                : ((risk.main_factors || risk.mainFactors) ? [risk.main_factors || risk.mainFactors] : []),
+              prevention: risk.advice || ''
+            };
+          }),
+          protectionPlan: Array.isArray(coreRecommendations) ? coreRecommendations : [],
+          insuranceRecommendations: []
+        };
+
+        // 更新快取
+        aiAnalysisCache.insurer = JSON.parse(JSON.stringify(aiAnalysis.value));
+        aiAnalysisUpdatedAt.insurer = new Date();
+      } else {
+        throw new Error('未獲取到分析數據');
+      }
+    } else {
+      throw new Error(response.message || '風險評估失敗');
+    }
+  } catch (error) {
+    console.error('[loadInsurerRiskAnalysis] 載入風險評估失敗:', error);
+    errorMsg.value = error.message || '載入風險評估失敗，請稍後再試';
+    // 保持原有的假數據，不更新
+  } finally {
+    insurerAnalysisLoading.value = false;
+  }
 };
 
-// 輔助函數：映射風險等級
+// 從後端數據更新 insuranceAnalysis
+const updateInsuranceAnalysisFromBackend = (analysisData) => {
+  const riskLevelLabel = analysisData.risk_level_label || analysisData.riskLevelLabel || '';
+  const overallRiskScore = analysisData.overall_risk_score || analysisData.overallRiskScore || 0;
+  const diseaseRisks = analysisData.disease_risk_evaluation || analysisData.diseaseRiskEvaluation || [];
+  const coreRecommendations = analysisData.core_recommendation || analysisData.coreRecommendation || [];
+  
+  // 根據風險等級標籤判斷風險等級
+  let overallRiskLevel = 'low';
+  let riskScore = overallRiskScore;
+  
+  if (riskLevelLabel.includes('高') || riskLevelLabel.toLowerCase().includes('high')) {
+    overallRiskLevel = 'high';
+    if (riskScore === 0) riskScore = 75; // 如果後端沒有提供分數，根據等級設定預設值
+  } else if (riskLevelLabel.includes('中') || riskLevelLabel.toLowerCase().includes('medium')) {
+    overallRiskLevel = 'medium';
+    if (riskScore === 0) riskScore = 55;
+  } else {
+    overallRiskLevel = 'low';
+    if (riskScore === 0) riskScore = 35;
+  }
+
+  // 將疾病風險評估轉換為 riskCategories
+  const riskCategories = {};
+  const categoryMapping = {
+    '心血管': 'cardiovascular',
+    '心臟': 'cardiovascular',
+    '糖尿病': 'diabetes',
+    '血糖': 'diabetes',
+    '腎臟': 'kidney',
+    '腎': 'kidney',
+    '肝臟': 'liver',
+    '肝': 'liver',
+    '癌症': 'cancer',
+    '腫瘤': 'cancer'
+  };
+
+  diseaseRisks.forEach(risk => {
+    const diseaseName = risk.disease || '';
+    let categoryKey = null;
+    
+    // 根據疾病名稱匹配分類
+    for (const [chineseName, key] of Object.entries(categoryMapping)) {
+      if (diseaseName.includes(chineseName)) {
+        categoryKey = key;
+        break;
+      }
+    }
+    
+    // 如果沒有匹配到，使用第一個單詞作為 key
+    if (!categoryKey) {
+      categoryKey = diseaseName.toLowerCase().replace(/\s+/g, '_');
+    }
+
+    const riskLevelText = risk.risk_level || risk.riskLevel || '';
+    let level = 'low';
+    let score = 30;
+    
+    if (riskLevelText.includes('高') || riskLevelText.toLowerCase().includes('high')) {
+      level = 'high';
+      score = 75;
+    } else if (riskLevelText.includes('中') || riskLevelText.toLowerCase().includes('medium')) {
+      level = 'medium';
+      score = 55;
+    }
+
+    riskCategories[categoryKey] = {
+      score,
+      level,
+      factors: Array.isArray(risk.main_factors || risk.mainFactors)
+        ? (risk.main_factors || risk.mainFactors)
+        : ((risk.main_factors || risk.mainFactors) ? [risk.main_factors || risk.mainFactors] : []),
+      impact: level === 'high' ? 'high' : level === 'medium' ? 'medium' : 'low',
+      description: risk.advice || '無詳細說明'
+    };
+  });
+
+  // 更新 insuranceAnalysis（完全替換假資料）
+  insuranceAnalysis.value = {
+    riskScore,
+    overallRiskLevel,
+    riskCategories: riskCategories, // 只使用後端返回的數據
+    healthMetrics: insuranceAnalysis.value.healthMetrics || [], // 保留健康指標（如果有的話）
+    ageRiskFactors: insuranceAnalysis.value.ageRiskFactors || {}, // 保留年齡風險因素（如果有的話）
+    riskMitigation: insuranceAnalysis.value.riskMitigation || [], // 保留風險緩解措施（如果有的話）
+    recommendations: [
+      {
+        type: 'immediate',
+        title: '立即建議',
+        items: coreRecommendations.length > 0 
+          ? coreRecommendations.slice(0, 4)
+          : ['標準費率承保', '無需額外體檢', '建議定期追蹤', '整體健康狀況評估中']
+      },
+      {
+        type: 'monitoring',
+        title: '持續監控',
+        items: coreRecommendations.length > 4
+          ? coreRecommendations.slice(4)
+          : ['每3個月追蹤健康指標', '年度健康檢查', '維持健康生活習慣', '定期風險評估']
+      },
+      {
+        type: 'assessment',
+        title: '風險評估',
+        items: [
+          `整體風險評級：${riskLevelLabel}`,
+          overallRiskLevel === 'low' ? '可提供健康優惠費率' : overallRiskLevel === 'medium' ? '建議加費承保' : '需特殊核保',
+          '適合標準保險產品',
+          '長期風險展望需持續觀察'
+        ]
+      }
+    ]
+  };
+};
+
+// 從快取更新 insuranceAnalysis
+const updateInsuranceAnalysisFromCache = () => {
+  if (!aiAnalysisCache.insurer) return;
+  
+  const cached = aiAnalysisCache.insurer;
+  const riskSummary = cached.riskSummary || '';
+  
+  let overallRiskLevel = 'low';
+  let riskScore = 35;
+  
+  if (riskSummary.includes('高') || riskSummary.toLowerCase().includes('high')) {
+    overallRiskLevel = 'high';
+    riskScore = 75;
+  } else if (riskSummary.includes('中') || riskSummary.toLowerCase().includes('medium')) {
+    overallRiskLevel = 'medium';
+    riskScore = 55;
+  }
+
+  // 將 diseaseRisks 轉換為 riskCategories
+  const riskCategories = {};
+  const categoryMapping = {
+    '心血管': 'cardiovascular',
+    '心臟': 'cardiovascular',
+    '糖尿病': 'diabetes',
+    '血糖': 'diabetes',
+    '腎臟': 'kidney',
+    '腎': 'kidney',
+    '肝臟': 'liver',
+    '肝': 'liver',
+    '癌症': 'cancer',
+    '腫瘤': 'cancer'
+  };
+
+  (cached.diseaseRisks || []).forEach(risk => {
+    const diseaseName = risk.name || '';
+    let categoryKey = null;
+    
+    for (const [chineseName, key] of Object.entries(categoryMapping)) {
+      if (diseaseName.includes(chineseName)) {
+        categoryKey = key;
+        break;
+      }
+    }
+    
+    if (!categoryKey) {
+      categoryKey = diseaseName.toLowerCase().replace(/\s+/g, '_');
+    }
+
+    riskCategories[categoryKey] = {
+      score: risk.level === 'high' ? 75 : risk.level === 'medium' ? 55 : 30,
+      level: risk.level || 'low',
+      factors: risk.factors || [],
+      impact: risk.level === 'high' ? 'high' : risk.level === 'medium' ? 'medium' : 'low',
+      description: risk.prevention || '無詳細說明'
+    };
+  });
+
+  insuranceAnalysis.value = {
+    ...insuranceAnalysis.value,
+    riskScore,
+    overallRiskLevel,
+    riskCategories: {
+      ...insuranceAnalysis.value.riskCategories,
+      ...riskCategories
+    }
+  };
+};
+
+// 輔助函數：根據健康分數獲取風險等級
 const mapRiskLevel = (level) => {
+  if (!level) return 'medium';
   const levelLower = (level || '').toLowerCase();
+  // 處理 "需注意"、"邊緣偏高" 等特殊情況
+  if (levelLower.includes('需注意') || levelLower.includes('monitor') || levelLower.includes('邊緣')) return 'monitor';
   if (levelLower.includes('低') || levelLower.includes('low')) return 'low';
-  if (levelLower.includes('中') || levelLower.includes('medium') || levelLower.includes('中風險')) return 'medium';
+  if (levelLower.includes('中') || levelLower.includes('medium') || levelLower.includes('中風險') || levelLower.includes('中低')) return 'medium';
   if (levelLower.includes('高') || levelLower.includes('high')) return 'high';
   return 'medium'; // 默認
+};
+
+const formatDateTime = (value) => {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getDiseaseCardClass = (level) => {
+  switch (level) {
+    case 'low':
+      return 'disease-card--low';
+    case 'monitor':
+      return 'disease-card--monitor';
+    case 'high':
+      return 'disease-card--high';
+    default:
+      return 'disease-card--medium';
+  }
+};
+
+const getRiskLabelClass = (level) => {
+  switch (level) {
+    case 'low':
+      return 'risk-label--low';
+    case 'monitor':
+      return 'risk-label--monitor';
+    case 'high':
+      return 'risk-label--high';
+    default:
+      return 'risk-label--medium';
+  }
+};
+
+const getRiskIcon = (level) => {
+  switch (level) {
+    case 'low':
+      return 'mdi-shield-check';
+    case 'monitor':
+      return 'mdi-eye-alert-outline';
+    case 'high':
+      return 'mdi-shield-alert';
+    default:
+      return 'mdi-alert-circle';
+  }
 };
 
 onMounted(() => {
@@ -778,7 +1085,8 @@ onMounted(() => {
             class="action-btn risk-btn"
             elevation="0"
             color="#00B8D9"
-            @click="() => { if (!showRisk) evaluateRisk(numericMetrics); showRisk = true; }"
+            :loading="insurerAnalysisLoading"
+            @click="loadInsurerRiskAnalysis"
           >
             <v-icon start size="20">mdi-shield-outline</v-icon>
             專業風險評估
@@ -939,6 +1247,24 @@ onMounted(() => {
                 <div class="ai-dialog-subtitle">基於您的健康數據進行專業分析與建議</div>
               </div>
             </div>
+            <div class="ai-header-right">
+              <div
+                v-if="aiAnalysisUpdatedAt[currentAnalysisType] && !aiAnalysisLoading"
+                class="ai-last-updated"
+              >
+                上次更新：{{ formatDateTime(aiAnalysisUpdatedAt[currentAnalysisType]) }}
+            </div>
+              <v-btn
+                class="ai-refresh-btn"
+                variant="flat"
+                color="white"
+                :disabled="aiAnalysisLoading"
+                :loading="aiAnalysisLoading"
+                @click.stop="loadHealthAnalysis(true)"
+              >
+                <v-icon start size="18">mdi-refresh</v-icon>
+                重新分析
+              </v-btn>
             <v-btn
               icon
               variant="text"
@@ -948,6 +1274,7 @@ onMounted(() => {
             >
               <v-icon size="24">mdi-close</v-icon>
             </v-btn>
+            </div>
           </div>
         </v-card-title>
 
@@ -966,265 +1293,215 @@ onMounted(() => {
 
           <!-- 分析內容 -->
           <template v-else>
-          <!-- 健康評分區域 -->
-          <div class="health-score-wrapper">
-            <div class="health-score-main">
-              <v-progress-circular
-                :model-value="aiAnalysis.healthScore"
-                :color="aiAnalysis.healthScore > 80 ? '#4CAF50' : aiAnalysis.healthScore > 60 ? '#FF9800' : '#F44336'"
-                size="140"
-                width="14"
-                class="health-score-circle"
-              >
-                <div class="health-score-content">
-                  <div class="health-score-number">{{ aiAnalysis.healthScore }}</div>
+            <section
+              v-if="aiAnalysis.summary || aiAnalysis.riskSummary"
+              class="analysis-summary-card"
+            >
+              <div class="analysis-summary-card__icon">
+                <v-icon size="24" color="#0f766e">mdi-heart-pulse</v-icon>
                 </div>
-              </v-progress-circular>
-            </div>
-            <div class="health-score-info">
-              <div class="health-score-title">整體健康評分</div>
-              <v-chip
-                :color="aiAnalysis.riskLevel === 'low' ? 'success' : aiAnalysis.riskLevel === 'medium' ? 'warning' : 'error'"
-                size="large"
-                class="health-level-chip"
-                variant="flat"
-              >
-                <v-icon start size="18">
-                  {{ aiAnalysis.riskLevel === 'low' ? 'mdi-check-circle' : aiAnalysis.riskLevel === 'medium' ? 'mdi-alert-circle' : 'mdi-close-circle' }}
-                </v-icon>
-                {{ aiAnalysis.riskLevel === 'low' ? '健康狀況良好' : aiAnalysis.riskLevel === 'medium' ? '需要注意' : '需要關注' }}
-              </v-chip>
-              <div class="health-score-description">
-                您的健康指標整體表現
-                {{ aiAnalysis.healthScore > 80 ? '優秀' : aiAnalysis.healthScore > 60 ? '良好' : '需要改善' }}，
-                建議持續關注並改善生活習慣。
+              <div class="analysis-summary-card__content">
+                <div class="analysis-summary-card__title">健康總結</div>
+                <p v-if="aiAnalysis.summary" class="analysis-summary-card__text">
+                  {{ aiAnalysis.summary }}
+                </p>
+                <div
+                  v-if="aiAnalysis.riskSummary"
+                  class="analysis-summary-card__badge"
+                >
+                  <v-icon size="16" color="#006c7d">mdi-alert-decagram-outline</v-icon>
+                  <span>{{ aiAnalysis.riskSummary }}</span>
               </div>
             </div>
-          </div>
+            </section>
 
-          <!-- AI 分析摘要 -->
-          <div class="ai-summary-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large">
-                <v-icon size="32" color="white">mdi-brain</v-icon>
+            <div class="analysis-grid">
+              <div class="analysis-column analysis-column--main">
+                <section class="analysis-card">
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--brain">
+                      <v-icon size="22" color="#4338ca">mdi-brain</v-icon>
               </div>
-              <div class="section-title-large">AI 專業分析</div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">AI 專業分析</div>
+                      <div class="analysis-card__subtitle">
+                        深度解析您的檢查結果，提供可理解的專業洞察。
             </div>
-            <div class="ai-summary-card">
-              <div class="ai-summary-content">
-                <div v-if="aiAnalysis.summary" class="summary-section">
-                  <div class="summary-label">健康總結</div>
-                  <div class="summary-text">{{ aiAnalysis.summary }}</div>
                 </div>
-                <div v-if="aiAnalysis.personalAnalysis" class="summary-section" style="margin-top: 2rem;">
-                  <div class="summary-label">詳細分析</div>
-                  <div class="summary-text">{{ aiAnalysis.personalAnalysis }}</div>
+                  </header>
+                  <div class="analysis-card__body">
+                    <p v-if="aiAnalysis.personalAnalysis" class="analysis-text">
+                      {{ aiAnalysis.personalAnalysis }}
+                    </p>
+                    <div v-else class="analysis-empty">
+                      暫無詳細分析內容，請稍後再試。
                 </div>
               </div>
-            </div>
-          </div>
+                </section>
 
-          <!-- 疾病風險分析 -->
-          <div class="disease-risk-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large risk-icon">
-                <v-icon size="32" color="white">mdi-shield-alert</v-icon>
+                <section
+                  v-if="aiAnalysis.diseaseRisks && aiAnalysis.diseaseRisks.length"
+                  class="analysis-card"
+                >
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--risk">
+                      <v-icon size="22" color="#b91c1c">mdi-shield-alert</v-icon>
               </div>
-              <div class="section-title-large">疾病風險評估</div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">疾病風險評估</div>
+                      <div class="analysis-card__subtitle">
+                        彙整重要疾病的風險程度與主要觀察指標。
             </div>
-            <div class="disease-risk-cards">
+                    </div>
+                  </header>
+                  <div class="risk-list">
               <div
                 v-for="(disease, index) in aiAnalysis.diseaseRisks"
                 :key="index"
-                class="disease-card"
-              >
-                <div class="disease-card-header">
-                  <div class="disease-info">
-                    <div class="disease-name-large">{{ disease.name }}</div>
-                  </div>
-                  <div class="risk-indicator">
-                    <v-chip
-                      :color="disease.level === 'low' ? 'success' : disease.level === 'medium' ? 'warning' : 'error'"
-                      size="large"
-                      variant="flat"
+                      class="risk-item"
                     >
-                      {{ disease.level === 'low' ? '低風險' : disease.level === 'medium' ? '中風險' : '高風險' }}
-                    </v-chip>
+                      <div class="risk-item__header">
+                        <div class="risk-item__title">{{ disease.name }}</div>
+                        <span
+                          class="risk-item__badge"
+                          :class="'risk-item__badge--' + (disease.level || 'medium')"
+                        >
+                          {{ disease.levelLabel }}
+                        </span>
                   </div>
-                </div>
-
-                <div class="disease-details-large">
-                  <div class="factors-section">
-                    <div class="detail-label-large">主要影響因子</div>
-                    <div class="factor-chips">
-                      <v-chip
+                      <div
+                        v-if="disease.factors && disease.factors.length"
+                        class="risk-item__chips"
+                      >
+                        <span
                         v-for="factor in disease.factors"
                         :key="factor"
-                        size="default"
-                        color="blue"
-                        variant="tonal"
-                        class="factor-chip"
+                          class="analysis-chip"
                       >
                         {{ factor }}
-                      </v-chip>
+                        </span>
                     </div>
+                      <p v-if="disease.prevention" class="risk-item__text">
+                        {{ disease.prevention }}
+                      </p>
                   </div>
-                  <div class="prevention-section">
-                    <div class="detail-label-large">預防建議</div>
-                    <div class="prevention-text-large">{{ disease.prevention }}</div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                </section>
 
-          <!-- 健康趨勢 -->
-          <div class="health-trends-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large trends-icon">
-                <v-icon size="32" color="white">mdi-trending-up</v-icon>
+                <section
+                  v-if="aiAnalysis.healthTrends && aiAnalysis.healthTrends.length"
+                  class="analysis-card"
+                >
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--trend">
+                      <v-icon size="22" color="#0ea5e9">mdi-trending-up</v-icon>
               </div>
-              <div class="section-title-large">健康趨勢分析</div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">健康趨勢分析</div>
+                      <div class="analysis-card__subtitle">
+                        檢視近期指標變化，掌握改善與需關注的方向。
             </div>
-            <div class="trends-cards">
+                    </div>
+                  </header>
+                  <div class="trend-list">
               <div
                 v-for="trend in aiAnalysis.healthTrends"
                 :key="trend.metric"
-                class="trend-card"
-              >
-                <div class="trend-indicator-icon">
-                  <v-icon
-                    :color="trend.trend === 'improving' ? '#4CAF50' : trend.trend === 'concern' ? '#F44336' : '#9E9E9E'"
-                    size="32"
-                  >
-                    {{ trend.trend === 'improving' ? 'mdi-trending-up' : trend.trend === 'concern' ? 'mdi-trending-down' : 'mdi-trending-neutral' }}
+                      class="trend-item"
+                    >
+                      <div
+                        class="trend-item__icon"
+                        :class="{
+                          'trend-item__icon--good': trend.trend === 'improving',
+                          'trend-item__icon--warn': trend.trend === 'concern'
+                        }"
+                      >
+                        <v-icon size="20" color="white">
+                          {{ trend.trend === 'improving'
+                            ? 'mdi-trending-up'
+                            : trend.trend === 'concern'
+                              ? 'mdi-trending-down'
+                              : 'mdi-trending-neutral' }}
                   </v-icon>
                 </div>
-                <div class="trend-content">
-                  <div class="trend-metric-large">{{ trend.metric }}</div>
-                  <div class="trend-status">
-                    <span class="trend-text-large">
-                      {{ trend.trend === 'improving' ? '持續改善' : trend.trend === 'concern' ? '需要關注' : '保持穩定' }}
+                      <div class="trend-item__content">
+                        <div class="trend-item__title">{{ trend.metric }}</div>
+                        <div class="trend-item__meta">
+                          <span>
+                            {{ trend.trend === 'improving'
+                              ? '持續改善'
+                              : trend.trend === 'concern'
+                                ? '需要關注'
+                                : '保持穩定' }}
                     </span>
-                    <span class="trend-change" v-if="trend.change !== 0">
+                          <span
+                            v-if="typeof trend.change === 'number' && trend.change !== 0"
+                            class="trend-item__change"
+                            :class="{ 'trend-item__change--up': trend.change > 0 }"
+                          >
                       {{ trend.change > 0 ? '+' : '' }}{{ trend.change }}%
                     </span>
                   </div>
                 </div>
               </div>
             </div>
+                </section>
           </div>
 
-          <!-- 健康建議 -->
-          <div class="recommendations-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large recommendations-icon">
-                <v-icon size="32" color="white">mdi-lightbulb</v-icon>
-              </div>
-              <div class="section-title-large">個人化健康建議</div>
-            </div>
-            
-            <div class="recommendations-tabs-wrapper">
-              <v-tabs v-model="activeTab" color="#00B8D9" align-tabs="center" class="custom-tabs">
-                <v-tab
-                  v-for="rec in aiAnalysis.recommendations"
-                  :key="rec.type"
-                  :value="rec.type"
-                  class="recommendation-tab"
+              <div class="analysis-column analysis-column--side">
+                <section
+                  v-if="aiAnalysis.protectionPlan && aiAnalysis.protectionPlan.length"
+                  class="analysis-card"
                 >
-                  <v-icon start size="24">
-                    {{ rec.type === 'diet' ? 'mdi-food-apple' : rec.type === 'exercise' ? 'mdi-run' : 'mdi-heart' }}
-                  </v-icon>
-                  {{ rec.title }}
-                </v-tab>
-              </v-tabs>
-              
-              <v-window v-model="activeTab" class="recommendations-window">
-                <v-window-item
-                  v-for="rec in aiAnalysis.recommendations"
-                  :key="rec.type"
-                  :value="rec.type"
-                >
-                  <div class="recommendation-content">
-                    <div
-                      v-for="(item, index) in rec.items"
-                      :key="index"
-                      class="recommendation-item-large"
-                    >
-                      <div class="recommendation-icon">
-                        <v-icon color="#00B8D9" size="20">mdi-check-circle</v-icon>
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--plan">
+                      <v-icon size="22" color="#0f766e">mdi-clipboard-check-outline</v-icon>
                       </div>
-                      <div class="recommendation-text">{{ item }}</div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">健康行動計畫</div>
+                      <div class="analysis-card__subtitle">
+                        依據分析提供可立即執行的步驟。
                     </div>
                   </div>
-                </v-window-item>
-              </v-window>
-            </div>
-          </div>
-
-          <!-- 保險推薦 -->
-          <div v-if="aiAnalysis.insuranceRecommendations && aiAnalysis.insuranceRecommendations.length > 0" class="insurance-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large insurance-icon">
-                <v-icon size="32" color="white">mdi-shield-account</v-icon>
-              </div>
-              <div class="section-title-large">智能保險推薦</div>
-            </div>
-            <div class="insurance-cards">
-              <div
-                v-for="(plan, index) in aiAnalysis.insuranceRecommendations"
+                  </header>
+                  <ul class="action-list">
+                    <li
+                      v-for="(item, index) in aiAnalysis.protectionPlan"
                 :key="index"
-                class="insurance-plan-card"
-              >
-                <div class="insurance-card-header">
-                  <div class="plan-info">
-                    <div class="plan-name-large">{{ plan.name }}</div>
-                    <div class="plan-coverage-large">{{ plan.coverage }}</div>
-                  </div>
-                  <div class="plan-pricing">
-                    <div class="premium-amount-large">NT$ {{ plan.monthlyPremium.toLocaleString() }}</div>
-                    <div class="premium-period-large">/月</div>
-                  </div>
-                </div>
-                
-                <div class="suitability-wrapper">
-                  <div class="suitability-header">
-                    <span class="suitability-label-large">適合度評分</span>
-                    <span class="suitability-score">{{ plan.suitability }}%</span>
-                  </div>
-                  <v-progress-linear
-                    :model-value="plan.suitability"
-                    color="#00B8D9"
-                    height="8"
-                    rounded
-                    class="suitability-progress"
-                  ></v-progress-linear>
-                </div>
-
-                <div class="plan-features-large">
-                  <div class="feature-tags-title">方案特色</div>
-                  <div class="feature-tags-container">
-                    <v-chip
-                      v-for="feature in plan.features"
-                      :key="feature"
-                      size="large"
-                      color="primary"
-                      variant="flat"
-                      class="feature-chip-prominent"
+                      class="action-item"
                     >
-                      <v-icon start size="18" color="white">
-                        {{ feature.includes('免等待期') ? 'mdi-clock-fast' : 
-                           feature.includes('一年一約') ? 'mdi-calendar-check' : 
-                           feature.includes('可選擇醫院') ? 'mdi-hospital-building' : 
-                           feature.includes('保額') ? 'mdi-shield-check' : 
-                           feature.includes('理賠') ? 'mdi-lightning-bolt' : 
-                           feature.includes('豁免') ? 'mdi-hand-heart' : 'mdi-check-circle' }}
-                      </v-icon>
-                      {{ feature }}
-                    </v-chip>
+                      <v-icon size="18" color="#0f766e">mdi-check-circle</v-icon>
+                      <span>{{ item }}</span>
+                    </li>
+                  </ul>
+                </section>
+
+                <section
+                  v-if="aiAnalysis.insuranceRecommendations && aiAnalysis.insuranceRecommendations.length"
+                  class="analysis-card"
+                >
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--insurance">
+                      <v-icon size="22" color="#ea580c">mdi-shield-check</v-icon>
                   </div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">保險建議</div>
+                      <div class="analysis-card__subtitle">
+                        對應風險的保障建議與挑選重點。
                 </div>
               </div>
+                  </header>
+                  <ul class="action-list action-list--highlight">
+                    <li
+                      v-for="(item, index) in aiAnalysis.insuranceRecommendations"
+                      :key="index"
+                      class="action-item"
+                    >
+                      <v-icon size="18" color="#f59e0b">mdi-lightbulb-on</v-icon>
+                      <span>{{ item }}</span>
+                    </li>
+                  </ul>
+                </section>
             </div>
           </div>
           </template>
@@ -1234,293 +1511,172 @@ onMounted(() => {
 
     <!-- 保險風險分析彈窗 -->
     <v-dialog v-model="showRisk" max-width="1200" scrollable>
-      <v-card class="insurance-dialog-card">
+      <v-card class="ai-dialog-card">
         <!-- 對話框標題 -->
-        <v-card-title class="insurance-dialog-header">
-          <div class="insurance-header-content">
-            <div class="insurance-header-left">
-              <v-avatar class="insurance-avatar mr-4" size="56" color="gradient">
+        <v-card-title class="ai-dialog-header">
+          <div class="ai-header-content">
+            <div class="ai-header-left">
+              <v-avatar class="ai-avatar mr-4" size="56" color="#00B8D9">
                 <v-icon color="white" size="28">mdi-shield-check</v-icon>
               </v-avatar>
-              <div class="insurance-header-text">
-                <div class="insurance-dialog-title">專業保險風險評估</div>
-                <div class="insurance-dialog-subtitle">基於健康數據的精準風險分析與保費定價</div>
+              <div class="ai-header-text">
+                <div class="ai-dialog-title">專業保險風險評估</div>
+                <div class="ai-dialog-subtitle">基於健康數據的精準風險分析與核保建議</div>
               </div>
             </div>
-            <v-btn
-              icon
-              variant="text"
-              @click="showRisk = false"
-              class="insurance-close-btn"
-              size="large"
-            >
-              <v-icon size="24">mdi-close</v-icon>
-            </v-btn>
+            <div class="ai-header-right">
+              <div
+                v-if="aiAnalysisUpdatedAt.insurer && !insurerAnalysisLoading"
+                class="ai-last-updated"
+              >
+                上次更新：{{ formatDateTime(aiAnalysisUpdatedAt.insurer) }}
+              </div>
+              <v-btn
+                class="ai-refresh-btn"
+                variant="flat"
+                color="white"
+                :disabled="insurerAnalysisLoading"
+                :loading="insurerAnalysisLoading"
+                @click.stop="loadInsurerRiskAnalysis(true)"
+              >
+                <v-icon start size="18">mdi-refresh</v-icon>
+                重新分析
+              </v-btn>
+              <v-btn
+                icon
+                variant="text"
+                @click="showRisk = false"
+                class="ai-close-btn"
+                size="large"
+              >
+                <v-icon size="24">mdi-close</v-icon>
+              </v-btn>
+            </div>
           </div>
         </v-card-title>
 
-        <v-card-text class="insurance-dialog-content">
-          <!-- 風險評分總覽 -->
-          <div class="risk-overview-wrapper">
-            <div class="risk-score-main">
-              <v-progress-circular
-                :model-value="insuranceAnalysis.riskScore"
-                :color="insuranceAnalysis.riskScore > 80 ? '#F44336' : insuranceAnalysis.riskScore > 60 ? '#FF9800' : '#4CAF50'"
-                size="160"
-                width="16"
-                class="risk-score-circle"
-              >
-                <div class="risk-score-content">
-                  <div class="risk-score-number">{{ insuranceAnalysis.riskScore }}</div>
-                </div>
-              </v-progress-circular>
-            </div>
-            <div class="risk-score-info">
-              <div class="risk-score-title">整體風險評分</div>
-              <v-chip
-                :color="insuranceAnalysis.overallRiskLevel === 'low' ? 'success' : insuranceAnalysis.overallRiskLevel === 'medium' ? 'warning' : 'error'"
-                size="large"
-                class="risk-level-chip"
-                variant="flat"
-              >
-                <v-icon start size="18">
-                  {{ insuranceAnalysis.overallRiskLevel === 'low' ? 'mdi-shield-check' : insuranceAnalysis.overallRiskLevel === 'medium' ? 'mdi-shield-alert' : 'mdi-shield-remove' }}
-                </v-icon>
-                {{ insuranceAnalysis.overallRiskLevel === 'low' ? '低風險客戶' : insuranceAnalysis.overallRiskLevel === 'medium' ? '中等風險客戶' : '高風險客戶' }}
-              </v-chip>
-              <div class="risk-score-description">
-                根據健康指標分析，該客戶屬於
-                {{ insuranceAnalysis.overallRiskLevel === 'low' ? '標準承保' : insuranceAnalysis.overallRiskLevel === 'medium' ? '加費承保' : '特殊核保' }}
-                類別，建議相應調整保費策略。
-              </div>
-              <div class="risk-metrics-summary">
-                <div class="summary-item">
-                  <div class="summary-label">建議保費調整</div>
-                  <div class="summary-value premium-adjustment">
-                    {{ insuranceAnalysis.riskScore > 80 ? '+35%' : insuranceAnalysis.riskScore > 60 ? '+15%' : '標準費率' }}
-                  </div>
-                </div>
-                <div class="summary-item">
-                  <div class="summary-label">核保建議</div>
-                  <div class="summary-value underwriting-advice">
-                    {{ insuranceAnalysis.riskScore > 80 ? '需體檢' : insuranceAnalysis.riskScore > 60 ? '加強審核' : '標準承保' }}
-                  </div>
-                </div>
-              </div>
-            </div>
+        <v-card-text class="ai-dialog-content">
+          <!-- 載入狀態 -->
+          <div v-if="insurerAnalysisLoading" class="loading-wrapper">
+            <v-progress-circular
+              indeterminate
+              color="#00B8D9"
+              size="64"
+              width="6"
+            />
+            <div class="loading-text">正在進行專業風險評估分析，這可能需要幾分鐘時間，請耐心等待...</div>
+            <div class="loading-subtext">AI 正在仔細分析健康指標與風險因素，請勿關閉此視窗</div>
           </div>
 
-          <!-- 疾病風險分類評估 -->
-          <div class="risk-categories-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large risk-category-icon">
-                <v-icon size="32" color="white">mdi-chart-donut</v-icon>
+          <!-- 分析內容 -->
+          <template v-else>
+            <section
+              v-if="aiAnalysis.summary || aiAnalysis.riskSummary"
+              class="analysis-summary-card"
+            >
+              <div class="analysis-summary-card__icon">
+                <v-icon size="24" color="#0f766e">mdi-shield-check</v-icon>
               </div>
-              <div class="section-title-large">疾病風險分類評估</div>
-            </div>
-            <div class="risk-category-cards">
-              <div
-                v-for="(category, key) in insuranceAnalysis.riskCategories"
-                :key="key"
-                class="category-card"
-              >
-                <div class="category-header-large">
-                  <div class="category-info">
-                    <div class="category-name-large">
-                      {{ key === 'cardiovascular' ? '心血管疾病' : 
-                         key === 'diabetes' ? '糖尿病' : 
-                         key === 'kidney' ? '腎臟疾病' :
-                         key === 'liver' ? '肝臟疾病' : 
-                         key === 'cancer' ? '癌症' : key }}
-                    </div>
-                    <div class="category-risk-score">
-                      <span class="score-number">{{ category.score }}</span>
-                      <span class="score-label">風險分</span>
-                    </div>
-                  </div>
-                  <div class="category-level">
-                    <v-chip
-                      :color="category.level === 'low' ? 'success' : category.level === 'medium' ? 'warning' : 'error'"
-                      size="large"
-                      variant="flat"
-                    >
-                      {{ category.level === 'low' ? '低風險' : category.level === 'medium' ? '中風險' : '高風險' }}
-                    </v-chip>
-                  </div>
-                </div>
-                
-                <div class="category-progress-wrapper">
-                  <v-progress-linear
-                    :model-value="category.score"
-                    :color="category.level === 'low' ? 'success' : category.level === 'medium' ? 'warning' : 'error'"
-                    height="14"
-                    rounded
-                    class="category-progress-bar"
-                  ></v-progress-linear>
-                </div>
-
-                <div class="category-details-large">
-                  <div class="category-description-large">{{ category.description }}</div>
-                  <div class="category-factors-section">
-                    <div class="factors-label-large">關鍵風險因素</div>
-                    <div class="factors-chips-large">
-                      <v-chip
-                        v-for="factor in category.factors"
-                        :key="factor"
-                        size="default"
-                        color="orange"
-                        variant="tonal"
-                        class="factor-chip-large"
-                      >
-                        {{ factor }}
-                      </v-chip>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 健康指標影響分析 -->
-          <div class="health-metrics-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large metrics-icon">
-                <v-icon size="32" color="white">mdi-heart-pulse</v-icon>
-              </div>
-              <div class="section-title-large">健康指標風險權重</div>
-            </div>
-            <div class="metrics-cards">
-              <div
-                v-for="metric in insuranceAnalysis.healthMetrics"
-                :key="metric.name"
-                class="metric-card-large"
-              >
-                <div class="metric-header-large">
-                  <div class="metric-info">
-                    <div class="metric-name-large">{{ metric.name }}</div>
-                    <div class="metric-value-display">
-                      <span class="metric-number">{{ metric.value }}</span>
-                      <span class="metric-unit-text">{{ metric.unit }}</span>
-                    </div>
-                  </div>
-                  <div class="metric-status-icon">
-                    <v-icon
-                      :color="metric.status === 'normal' ? '#4CAF50' : '#FF9800'"
-                      size="32"
-                    >
-                      {{ metric.status === 'normal' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
-                    </v-icon>
-                  </div>
-                </div>
-                
-                <div class="metric-weight-section">
-                  <div class="weight-info">
-                    <span class="weight-label-large">風險權重</span>
-                    <span class="weight-value-large">{{ (metric.weight * 100).toFixed(0) }}%</span>
-                  </div>
-                  <v-progress-linear
-                    :model-value="metric.weight * 100"
-                    color="#1976D2"
-                    height="10"
-                    rounded
-                    class="weight-progress"
-                  ></v-progress-linear>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          
-
-          <!-- 風險緩解策略 -->
-          <div class="mitigation-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large mitigation-icon">
-                <v-icon size="32" color="white">mdi-shield-plus</v-icon>
-              </div>
-              <div class="section-title-large">風險緩解策略建議</div>
-            </div>
-            <div class="mitigation-cards">
-              <div
-                v-for="strategy in insuranceAnalysis.riskMitigation"
-                :key="strategy.category"
-                class="mitigation-card-large"
-              >
-                <div class="mitigation-header-large">
-                  <div class="mitigation-info">
-                    <div class="mitigation-category-large">{{ strategy.category }}</div>
-                    <div class="mitigation-timeframe-large">
-                      <v-icon size="18" class="mr-1">mdi-clock-outline</v-icon>
-                      {{ strategy.timeframe }}
-                    </div>
-                  </div>
-                  <div class="mitigation-reduction">
-                    <v-chip color="success" size="large" variant="flat">
-                      <v-icon start size="16">mdi-trending-down</v-icon>
-                      -{{ strategy.riskReduction }}% 風險
-                    </v-chip>
-                  </div>
-                </div>
-                <div class="mitigation-actions-large">
-                  <div
-                    v-for="action in strategy.actions"
-                    :key="action"
-                    class="mitigation-action-large"
-                  >
-                    <v-icon color="success" size="20" class="mr-3">mdi-check-bold</v-icon>
-                    <span class="action-text">{{ action }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 專業核保建議 -->
-          <div class="professional-recommendations-wrapper">
-            <div class="section-header-large">
-              <div class="section-icon-large recommendations-icon">
-                <v-icon size="32" color="white">mdi-lightbulb-on</v-icon>
-              </div>
-              <div class="section-title-large">專業核保建議</div>
-            </div>
-            
-            <div class="recommendations-tabs-wrapper">
-              <v-tabs v-model="insuranceActiveTab" color="#1976D2" align-tabs="center" class="insurance-custom-tabs">
-                <v-tab
-                  v-for="rec in insuranceAnalysis.recommendations"
-                  :key="rec.type"
-                  :value="rec.type"
-                  class="insurance-recommendation-tab"
+              <div class="analysis-summary-card__content">
+                <div class="analysis-summary-card__title">風險評估總結</div>
+                <p v-if="aiAnalysis.summary" class="analysis-summary-card__text">
+                  {{ aiAnalysis.summary }}
+                </p>
+                <div
+                  v-if="aiAnalysis.riskSummary"
+                  class="analysis-summary-card__badge"
                 >
-                  <v-icon start size="24">
-                    {{ rec.type === 'immediate' ? 'mdi-lightning-bolt' : rec.type === 'monitoring' ? 'mdi-monitor-eye' : 'mdi-clipboard-check' }}
-                  </v-icon>
-                  {{ rec.title }}
-                </v-tab>
-              </v-tabs>
-              
-              <v-window v-model="insuranceActiveTab" class="insurance-recommendations-window">
-                <v-window-item
-                  v-for="rec in insuranceAnalysis.recommendations"
-                  :key="rec.type"
-                  :value="rec.type"
+                  <v-icon size="16" color="#006c7d">mdi-alert-decagram-outline</v-icon>
+                  <span>{{ aiAnalysis.riskSummary }}</span>
+                </div>
+              </div>
+            </section>
+
+            <div class="analysis-grid">
+              <div class="analysis-column analysis-column--main">
+                <section
+                  v-if="aiAnalysis.diseaseRisks && aiAnalysis.diseaseRisks.length"
+                  class="analysis-card"
                 >
-                  <div class="insurance-recommendation-content">
-                    <div
-                      v-for="(item, index) in rec.items"
-                      :key="index"
-                      class="insurance-recommendation-item-large"
-                    >
-                      <div class="insurance-recommendation-icon">
-                        <v-icon color="#1976D2" size="20">mdi-arrow-right-circle</v-icon>
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--risk">
+                      <v-icon size="22" color="#b91c1c">mdi-shield-alert</v-icon>
+                    </div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">疾病風險評估</div>
+                      <div class="analysis-card__subtitle">
+                        彙整重要疾病的風險程度與主要觀察指標。
                       </div>
-                      <div class="insurance-recommendation-text">{{ item }}</div>
+                    </div>
+                  </header>
+                  <div class="risk-list">
+                    <div
+                      v-for="(disease, index) in aiAnalysis.diseaseRisks"
+                      :key="index"
+                      class="risk-item"
+                    >
+                      <div class="risk-item__header">
+                        <div class="risk-item__title">{{ disease.name }}</div>
+                        <span
+                          class="risk-item__badge"
+                          :class="'risk-item__badge--' + (disease.level || 'medium')"
+                        >
+                          {{ disease.levelLabel }}
+                        </span>
+                      </div>
+                      <div
+                        v-if="disease.factors && disease.factors.length"
+                        class="risk-item__chips"
+                      >
+                        <span
+                          v-for="factor in disease.factors"
+                          :key="factor"
+                          class="analysis-chip"
+                        >
+                          {{ factor }}
+                        </span>
+                      </div>
+                      <p v-if="disease.prevention" class="risk-item__text">
+                        {{ disease.prevention }}
+                      </p>
                     </div>
                   </div>
-                </v-window-item>
-              </v-window>
+                </section>
+                <div v-else class="analysis-empty">
+                  暫無疾病風險評估數據，請稍後再試。
+                </div>
+              </div>
+
+              <div class="analysis-column analysis-column--side">
+                <section
+                  v-if="aiAnalysis.protectionPlan && aiAnalysis.protectionPlan.length"
+                  class="analysis-card"
+                >
+                  <header class="analysis-card__header">
+                    <div class="analysis-card__icon analysis-card__icon--plan">
+                      <v-icon size="22" color="#0f766e">mdi-clipboard-check-outline</v-icon>
+                    </div>
+                    <div class="analysis-card__titles">
+                      <div class="analysis-card__title">專業核保建議</div>
+                      <div class="analysis-card__subtitle">
+                        依據風險分析提供核保建議與監控重點。
+                      </div>
+                    </div>
+                  </header>
+                  <ul class="action-list">
+                    <li
+                      v-for="(item, index) in aiAnalysis.protectionPlan"
+                      :key="index"
+                      class="action-item"
+                    >
+                      <v-icon size="18" color="#0f766e">mdi-check-circle</v-icon>
+                      <span>{{ item }}</span>
+                    </li>
+                  </ul>
+                </section>
+              </div>
             </div>
-          </div>
+          </template>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -1996,6 +2152,31 @@ onMounted(() => {
   align-items: center;
 }
 
+.ai-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ai-last-updated {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.ai-refresh-btn {
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px;
+  text-transform: none !important;
+}
+
+.ai-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
 .ai-avatar {
   background: rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
@@ -2062,79 +2243,76 @@ onMounted(() => {
   margin-top: 0.5rem;
 }
 
-/* 健康評分區域重構 */
-.health-score-wrapper {
+/* 健康總結區域 */
+.health-overview-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(0, 184, 217, 0.18) 0%, rgba(0, 147, 166, 0.08) 100%);
+  border-radius: 24px;
+  padding: 2.25rem 2.8rem;
+  margin-bottom: 2.5rem;
+  border: 1px solid rgba(0, 184, 217, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 147, 166, 0.18);
+}
+
+.overview-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
-  gap: 3rem;
-  background: white;
-  padding: 3rem;
-  border-radius: 24px;
-  margin-bottom: 3rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  justify-content: center;
+  background: linear-gradient(135deg, #0093A6 0%, #00B8D9 100%);
+  box-shadow: 0 10px 28px rgba(0, 147, 166, 0.35);
 }
 
-.health-score-main {
-  flex-shrink: 0;
-}
-
-.health-score-circle {
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.1));
-}
-
-.health-score-content {
+.overview-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 1rem;
+  color: #0f172a;
 }
 
-.health-score-number {
-  font-size: 3rem;
-  font-weight: 800;
-  line-height: 1;
-  color: inherit;
-}
-
-.health-score-unit {
-  font-size: 1.2rem;
-  font-weight: 500;
-  opacity: 0.8;
-  margin-top: 0.25rem;
-}
-
-.health-score-info {
-  flex: 1;
-}
-
-.health-score-title {
-  font-size: 2rem;
+.overview-title {
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.6px;
 }
 
-.health-level-chip {
-  font-size: 1.2rem !important;
-  font-weight: 600 !important;
-  padding: 1rem 1.5rem !important;
-  height: auto !important;
-  margin-bottom: 1.5rem;
+.overview-text {
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #1f2937;
+  font-weight: 500;
 }
 
-.health-score-description {
-  font-size: 1.3rem;
+.overview-subtext {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
   line-height: 1.6;
-  color: #666;
-  font-weight: 400;
+  padding: 0.75rem 1.25rem;
+  border-radius: 16px;
+  background: rgba(0, 147, 166, 0.12);
+  color: #006c7d;
+  font-weight: 600;
+  width: fit-content;
 }
 
 /* 大型區塊標題樣式 - 統一主色調 */
+.ai-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
 .section-header-large {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  gap: 1.25rem;
 }
 
 .section-icon-large {
@@ -2168,18 +2346,355 @@ onMounted(() => {
   box-shadow: 0 8px 24px rgba(150, 206, 180, 0.3);
 }
 
+.section-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
 .section-title-large {
-  font-size: 2.2rem;
+  font-size: 2.05rem;
   font-weight: 700;
   color: #333;
   letter-spacing: -0.5px;
 }
 
-/* AI 分析摘要重構 */
-.ai-summary-wrapper {
-  margin-bottom: 3rem;
+.section-subtitle {
+  font-size: 1rem;
+  color: #5f6b7a;
+  line-height: 1.55;
 }
 
+/* AI 分析新版卡片樣式 */
+.analysis-summary-card {
+  display: flex;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(0, 184, 217, 0.16) 0%, rgba(0, 147, 166, 0.05) 100%);
+  border-radius: 24px;
+  padding: 2.4rem 2.8rem;
+  border: 1px solid rgba(0, 184, 217, 0.18);
+  box-shadow: 0 12px 34px rgba(0, 147, 166, 0.18);
+  margin-bottom: 2.5rem;
+}
+
+.analysis-summary-card__icon {
+  min-width: 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d1fae5;
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.12);
+}
+
+.analysis-summary-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  color: #0f172a;
+}
+
+.analysis-summary-card__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.analysis-summary-card__text {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.analysis-summary-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  background: rgba(0, 147, 166, 0.12);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #006c7d;
+  width: fit-content;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 1.75rem;
+}
+
+.analysis-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.analysis-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem 2.3rem;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.analysis-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.analysis-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.analysis-card__icon--brain {
+  background: #e0e7ff;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.25);
+}
+
+.analysis-card__icon--risk {
+  background: #fee2e2;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.25);
+}
+
+.analysis-card__icon--trend {
+  background: #e0f2fe;
+  box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.25);
+}
+
+.analysis-card__icon--plan {
+  background: #dcfce7;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.25);
+}
+
+.analysis-card__icon--insurance {
+  background: #ffedd5;
+  box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.25);
+}
+
+.analysis-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.analysis-card__title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.3px;
+}
+
+.analysis-card__subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.analysis-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.analysis-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #374151;
+}
+
+.analysis-empty {
+  padding: 1.2rem;
+  border: 1px dashed rgba(148, 163, 184, 0.7);
+  border-radius: 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.analysis-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  background: #e8f4ff;
+  color: #0c4a6e;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.risk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.risk-item {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.risk-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.risk-item__title {
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #111827;
+}
+
+.risk-item__badge {
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.risk-item__badge--low {
+  background: #22c55e;
+}
+
+.risk-item__badge--medium {
+  background: #f59e0b;
+}
+
+.risk-item__badge--monitor {
+  background: #3b82f6;
+}
+
+.risk-item__badge--high {
+  background: #f97316;
+}
+
+.risk-item__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.risk-item__text {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 0.98rem;
+}
+
+.trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trend-item {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.trend-item__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #94a3b8;
+}
+
+.trend-item__icon--good {
+  background: #34d399;
+}
+
+.trend-item__icon--warn {
+  background: #f97316;
+}
+
+.trend-item__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trend-item__title {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1.05rem;
+}
+
+.trend-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.trend-item__change {
+  font-weight: 600;
+  color: #0ea5e9;
+}
+
+.trend-item__change--up {
+  color: #f97316;
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.85rem 1.1rem;
+  background: #f0fdf4;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 14px;
+  color: #0f172a;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.action-list--highlight .action-item {
+  background: #fff7ed;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+
+
+/* AI 分析摘要重構 */
 .ai-summary-card {
   background: white;
   border-radius: 20px;
@@ -2226,6 +2741,15 @@ onMounted(() => {
   font-weight: 400;
 }
 
+.summary-empty {
+  font-size: 1.15rem;
+  color: #9ca3af;
+  padding: 1.5rem;
+  background: #f4f6f8;
+  border-radius: 16px;
+  text-align: center;
+}
+
 /* 疾病風險分析重構 */
 .disease-risk-wrapper {
   margin-bottom: 3rem;
@@ -2252,16 +2776,39 @@ onMounted(() => {
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
 }
 
+.disease-card--low {
+  border-color: rgba(76, 175, 80, 0.25);
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(76, 175, 80, 0.02) 100%);
+}
+
+.disease-card--medium {
+  border-color: rgba(255, 152, 0, 0.25);
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(255, 152, 0, 0.02) 100%);
+}
+
+.disease-card--monitor {
+  border-color: rgba(33, 150, 243, 0.25);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.03) 100%);
+}
+
+.disease-card--high {
+  border-color: rgba(244, 67, 54, 0.25);
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.03) 100%);
+}
+
 .disease-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 2rem;
   gap: 1.5rem;
 }
 
-.disease-info {
+.disease-name-group {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .disease-name-large {
@@ -2272,14 +2819,41 @@ onMounted(() => {
   letter-spacing: -0.5px;
 }
 
-.disease-risk-level {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.risk-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.45rem 1.35rem;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease;
 }
 
-.risk-indicator {
-  flex-shrink: 0;
+.risk-label .v-icon {
+  color: inherit !important;
+}
+
+.risk-label--low {
+  background: rgba(76, 175, 80, 0.18);
+  color: #2e7d32;
+}
+
+.risk-label--medium {
+  background: rgba(255, 152, 0, 0.2);
+  color: #e65100;
+}
+
+.risk-label--monitor {
+  background: rgba(33, 150, 243, 0.2);
+  color: #1565c0;
+}
+
+.risk-label--high {
+  background: rgba(244, 67, 54, 0.22);
+  color: #b71c1c;
 }
 
 
@@ -2323,10 +2897,6 @@ onMounted(() => {
 }
 
 /* 健康趨勢重構 */
-.health-trends-wrapper {
-  margin-bottom: 3rem;
-}
-
 .trends-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -2422,190 +2992,85 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-.recommendations-window {
-  padding: 2.5rem;
+
+.plan-icon {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
 }
 
-.recommendation-content {
+.plan-list {
+  margin-top: 1.5rem;
+  padding: 2rem 2.5rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
-.recommendation-item-large {
+.plan-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
-  padding: 1.5rem;
-  background: #f0faff;
+  padding: 1rem 1.25rem;
   border-radius: 16px;
-  border-left: 4px solid #00B8D9;
+  background: #f0fdf4;
+  border: 1px solid rgba(52, 211, 153, 0.25);
   transition: all 0.3s ease;
-}
-
-.recommendation-item-large:hover {
-  background: #e6f7ff;
-  transform: translateX(8px);
-}
-
-.recommendation-icon {
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-}
-
-.recommendation-text {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  color: #555;
-  font-weight: 400;
-}
-
-/* 保險推薦重構 */
-.insurance-wrapper {
-  margin-bottom: 2rem;
-}
-
-.insurance-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 2rem;
-}
-
-.insurance-plan-card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 2px solid transparent;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.insurance-plan-card:hover {
-  transform: translateY(-8px);
-  border-color: #00B8D9;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-}
-
-.insurance-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 2rem;
-}
-
-.plan-info {
-  flex: 1;
-}
-
-.plan-name-large {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.5px;
-}
-
-.plan-coverage-large {
-  font-size: 1.2rem;
-  color: #666;
+  color: #14532d;
+  font-size: 1.05rem;
   line-height: 1.5;
 }
 
-.plan-pricing {
-  text-align: right;
-  flex-shrink: 0;
+.plan-item:hover {
+  transform: translateX(6px);
+  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.15);
 }
 
-.premium-amount-large {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #00B8D9;
-  line-height: 1;
+.plan-text {
+  flex: 1;
 }
 
-.premium-period-large {
-  font-size: 1.1rem;
-  color: #888;
-  font-weight: 500;
+.insurance-icon {
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
 }
 
-.suitability-wrapper {
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: #f0faff;
-  border-radius: 16px;
-}
-
-.suitability-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.suitability-label-large {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #444;
-}
-
-.suitability-score {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #00B8D9;
-}
-
-.suitability-progress {
-  border-radius: 4px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.plan-features-large {
+.insurance-list {
   margin-top: 1.5rem;
-}
-
-.feature-tags-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #f0faff;
-}
-
-.feature-tags-container {
+  padding: 2rem 2.5rem;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.insurance-item {
+  display: flex;
+  align-items: flex-start;
   gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  background: #fff7eb;
+  border: 1px solid rgba(253, 186, 116, 0.35);
+  color: #92400e;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  transition: all 0.3s ease;
 }
 
-.feature-chip-prominent {
-  font-size: 1.1rem !important;
-  font-weight: 600 !important;
-  padding: 0.75rem 1.25rem !important;
-  height: auto !important;
-  min-height: 48px !important;
-  background: linear-gradient(135deg, #00B8D9 0%, #0093A6 100%) !important;
-  color: white !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 16px rgba(0, 184, 217, 0.25) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  border: none !important;
+.insurance-item:hover {
+  transform: translateX(6px);
+  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.15);
 }
 
-.feature-chip-prominent:hover {
-  transform: translateY(-2px) scale(1.02) !important;
-  box-shadow: 0 8px 24px rgba(0, 184, 217, 0.35) !important;
+.insurance-text {
+  flex: 1;
 }
 
-.feature-chip-prominent .v-icon {
-  margin-right: 0.5rem !important;
-}
-
-/* 舊的樣式移除 */
-.feature-chip {
-  display: none;
+.insurance-item .v-icon {
+  margin-top: 0.2rem;
 }
 
 /* 響應式設計 */
@@ -2613,26 +3078,105 @@ onMounted(() => {
   .ai-dialog-content {
     padding: 1.5rem !important;
   }
-  
-  .health-score-wrapper {
+
+  .ai-header-content {
     flex-direction: column;
-    text-align: center;
-    gap: 2rem;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .ai-header-right {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .health-overview-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    padding: 1.75rem;
+    gap: 1rem;
+  }
+
+  .overview-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .overview-text {
+    font-size: 1.1rem;
+  }
+  
+  .analysis-summary-card {
+    flex-direction: column;
+    padding: 1.8rem;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-column--side {
+    position: static;
+  }
+
+  .analysis-card {
+    padding: 1.6rem 1.8rem;
+  }
+
+  .analysis-card__icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .analysis-card__title {
+    font-size: 1.35rem;
+  }
+
+  .analysis-summary-card__icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .analysis-summary-card__title {
+    font-size: 1.5rem;
+  }
+
+  .analysis-summary-card__text {
+    font-size: 1.05rem;
+  }
+
+  .trend-item {
+    align-items: flex-start;
+  }
+
+  .trend-item__meta {
+    flex-wrap: wrap;
   }
   
   .section-header-large {
     flex-direction: column;
-    text-align: center;
     gap: 1rem;
+  }
+
+  .section-title-group {
+    width: 100%;
+    text-align: left;
   }
   
   .section-title-large {
     font-size: 1.8rem;
   }
   
-  .disease-risk-cards,
-  .insurance-cards {
+  .disease-risk-cards {
     grid-template-columns: 1fr;
+  }
+  
+  .plan-list,
+  .insurance-list {
+    padding: 1.5rem 1.75rem;
   }
   
   .trends-cards {
@@ -2660,14 +3204,6 @@ onMounted(() => {
   
   .recommendation-text {
     font-size: 1.1rem;
-  }
-  
-  .health-score-title {
-    font-size: 1.6rem;
-  }
-  
-  .health-score-number {
-    font-size: 2.5rem;
   }
   
   /* 保險特色標籤響應式 */
@@ -2857,10 +3393,6 @@ onMounted(() => {
 }
 
 /* 疾病風險分類重構 */
-.risk-categories-wrapper {
-  margin-bottom: 3rem;
-}
-
 .risk-category-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
@@ -2971,10 +3503,6 @@ onMounted(() => {
 }
 
 /* 健康指標權重重構 */
-.health-metrics-wrapper {
-  margin-bottom: 3rem;
-}
-
 .metrics-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -3157,10 +3685,6 @@ onMounted(() => {
 }
 
 /* 風險緩解策略重構 */
-.mitigation-wrapper {
-  margin-bottom: 3rem;
-}
-
 .mitigation-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -3237,7 +3761,7 @@ onMounted(() => {
 
 /* 專業核保建議重構 */
 .professional-recommendations-wrapper {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .insurance-custom-tabs {

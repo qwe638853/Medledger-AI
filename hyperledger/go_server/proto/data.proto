@@ -20,7 +20,12 @@ service HealthService {
   }
 
   // 解析文件（PDF/Word）並轉換為標準 JSON
-  rpc ParseDocument(ParseDocumentRequest) returns (ParseDocumentResponse) {}
+  rpc ParseDocument(ParseDocumentRequest) returns (ParseDocumentResponse) {
+    option (google.api.http) = {
+      post: "/v1/documents/parse"
+      body: "*"
+    };
+  }
 
   // 前端請求健檢資料分析（通過報告 ID）
   rpc GetHealthAnalysis(AnalyzeReportRequest) returns (HealthAnalysisResponse) {

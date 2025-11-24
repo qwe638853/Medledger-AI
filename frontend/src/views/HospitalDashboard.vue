@@ -13,6 +13,7 @@ const uploadMessage = ref('');
 const isDragging = ref(false);
 const uploadProgress = ref(0);
 const isUploading = ref(false);
+const isParsing = ref(false);
 const snackbar = ref({
   show: false,
   message: '',
@@ -98,11 +99,13 @@ const handleFileDrop = (e) => {
   });
   
   if (supportedFiles.length === 0) {
-    showSnackbar('請上傳支持的檔案格式（Excel、CSV、PDF或JSON）', 'error');
+    showSnackbar('請上傳支持的檔案格式（PDF或JSON）', 'error');
     return;
   }
   
   files.value = supportedFiles;
+  parsedData.value = null;
+  parseError.value = null;
 };
 
 const handleFileSelect = (e) => {
@@ -110,11 +113,15 @@ const handleFileSelect = (e) => {
   if (selectedFiles.length === 0) return;
   
   files.value = selectedFiles;
+  parsedData.value = null;
+  parseError.value = null;
 };
 
 const clearFiles = () => {
   files.value = [];
+  parsedData.value = null;
   parseError.value = null;
+  previewDialog.value = false;
 };
 
 // 讀取 JSON 文件內容
@@ -152,44 +159,53 @@ const previewFiles = async () => {
   }
   
   parseError.value = null;
-  
+  isParsing.value = true;
+
   try {
-    // 解析文件內容
     parsedData.value = await Promise.all(
       files.value.map(async (file) => {
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        const fileType = (file.type || '').toLowerCase();
+        let parsed;
+        let uploadAsJson = false;
+
         try {
-          const fileExt = file.name.split('.').pop().toLowerCase();
-          let parsed;
-          
-          // 針對不同文件格式進行處理
-          if (fileExt === 'json' || file.type.includes('json')) {
-            // 實際讀取 JSON 文件內容
+          if (fileExt === 'json' || fileType.includes('json')) {
             parsed = await readJSONFile(file);
-            console.log('已解析 JSON 檔案:', file.name, parsed);
+            uploadAsJson = true;
+          } else if (fileExt === 'pdf' || fileType.includes('pdf')) {
+            parsed = await healthCheckService.parseDocument(file);
+            uploadAsJson = true;
           } else {
-            // 其他格式暫時仍使用模擬數據
             parsed = await parseHealthReportFile(file);
+            uploadAsJson = false;
           }
-          
-          return {
-            fileName: file.name,
-            fileSize: formatFileSize(file.size),
-            fileType: fileExt,
-            patientId: patientId.value,
-            reportData: parsed,
-            isJson: fileExt === 'json' || file.type.includes('json')
-          };
         } catch (err) {
           console.error(`解析文件 ${file.name} 失敗:`, err);
           throw err;
         }
+
+        if (!parsed) {
+          throw new Error(`無法解析檔案 ${file.name}`);
+        }
+
+        return {
+          fileName: file.name,
+          fileSize: formatFileSize(file.size),
+          fileType: fileExt,
+          patientId: patientId.value,
+          reportData: parsed,
+          uploadAsJson
+        };
       })
     );
-    
+
     previewDialog.value = true;
   } catch (error) {
     parseError.value = error.message;
     showSnackbar(`解析檔案失敗：${error.message}`, 'error');
+  } finally {
+    isParsing.value = false;
   }
 };
 
@@ -234,14 +250,17 @@ const handleFileUpload = async () => {
       updateProgress(Math.floor((i / files.value.length) * 90));
       
       // 針對 JSON 文件特殊處理
-      if (fileData.isJson) {
+      if (fileData.uploadAsJson) {
         try {
-          console.log(`上傳 JSON 數據給病人 ${patientId.value}:`, fileData.reportData);
+          const jsonPayload = typeof fileData.reportData === 'string'
+            ? JSON.parse(fileData.reportData)
+            : fileData.reportData;
+          console.log(`上傳 JSON 數據給病人 ${patientId.value}:`, jsonPayload);
           
           // 直接使用解析好的 JSON 數據
           const result = await healthCheckService.uploadJsonHealthData(
             patientId.value,
-            fileData.reportData,
+            jsonPayload,
             file.name,
             (progress) => {
               const baseProgress = Math.floor((i / files.value.length) * 90);
@@ -253,7 +272,7 @@ const handleFileUpload = async () => {
           uploadResults.push({
             ...result,
             fileName: file.name,
-            fileType: 'json',
+            fileType: fileData.fileType,
             uploadTime: new Date().toISOString()
           });
         } catch (error) {
@@ -508,11 +527,20 @@ const formatJSONDisplay = (data) => {
                   {{ parseError }}
                 </v-alert>
 
+                <v-progress-linear
+                  v-if="isParsing"
+                  indeterminate
+                  color="#111827"
+                  class="mx-4 mb-2"
+                  height="4"
+                ></v-progress-linear>
+
                 <v-card-actions class="pa-4">
                   <v-spacer></v-spacer>
                   <v-btn
                     class="preview-btn"
-                    :disabled="!files.length || !patientId"
+                    :disabled="!files.length || !patientId || isParsing"
+                    :loading="isParsing"
                     @click="previewFiles"
                   >
                     <v-icon start size="24">mdi-eye-outline</v-icon>

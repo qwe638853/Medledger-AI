@@ -6,7 +6,7 @@ const API_BASE_URL = 'http://localhost:8080'; // 使用本地 gRPC-Gateway 伺�
 // 創建一個 axios 實例
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 600000, // 10 分鐘（600 秒），確保可以等待 Python Backend 分析完成
+  timeout: 1200000, // 20 分鐘（1200 秒），確保可以等待 Python Backend 分析完成
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'

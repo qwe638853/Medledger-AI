@@ -1,6 +1,23 @@
 import apiClient, { handleApiError, notifyError, notifySuccess } from './apiService';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
+
+/**
+ * 將檔案內容轉成 base64
+ * @param {File} file
+ * @returns {Promise<string>}
+ */
+const readFileAsBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result || '';
+      const base64 = result.split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('讀取檔案失敗'));
+    reader.readAsDataURL(file);
+  });
+};
 
 /**
  * 獲取用戶已上傳的健康檢查數據元數據
@@ -105,22 +122,43 @@ export const authorizeHealthData = async (targetId, healthData) => {
  * @param {string} analysisType - 分析類型：'user' 或 'insurer'（默認 'user'）
  * @returns {Promise<Object>} - 分析結果的Promise
  */
-export const getHealthAnalysis = async (reportId, analysisType = 'user') => {
+export const getHealthAnalysis = async (reportId, analysisType = 'user', patientId) => {
   try {
-    console.log(`[getHealthAnalysis] 請求分析: reportId=${reportId}, analysisType=${analysisType}`);
+    console.log(`[getHealthAnalysis] 請求分析: reportId=${reportId}, analysisType=${analysisType}, patientId=${patientId}`);
+    if (!reportId) {
+      throw new Error('缺少報告 ID');
+    }
+    if (analysisType === 'insurer' && !patientId) {
+      throw new Error('保險分析需要提供病患身分證');
+    }
     
-    // 為健康分析請求設置更長的超時時間（10 分鐘）
-    const response = await apiClient.post('/v1/health/analyze', {
+    const requestBody = {
       report_id: reportId,
       analysis_type: analysisType
-    }, {
-      timeout: 600000 // 10 分鐘（600 秒）
+    };
+    if (patientId) {
+      requestBody.user_id = patientId;
+    }
+
+    // 為健康分析請求設置更長的超時時間（20 分鐘）
+    const response = await apiClient.post('/v1/health/analyze', requestBody, {
+      timeout: 1200000 // 20 分鐘（1200 秒），保險業者分析可能需要更長時間
     });
     
     console.log('[getHealthAnalysis] API 回應:', response.data);
     
-    if (response.data.success) {
-      return response.data;
+    if (response.data && response.data.success) {
+      const data = response.data;
+      const userAnalysis = data.user_analysis || data.userAnalysis;
+      const insurerAnalysis = data.insurer_analysis || data.insurerAnalysis;
+      return {
+        success: data.success,
+        message: data.message,
+        user_analysis: userAnalysis,
+        userAnalysis,
+        insurer_analysis: insurerAnalysis,
+        insurerAnalysis
+      };
     } else {
       throw new Error(response.data.message || '分析失敗');
     }
@@ -394,6 +432,33 @@ export const uploadJsonHealthData = async (patientId, jsonData, fileName, progre
     const errorMsg = handleApiError(error, '上傳健康報告');
     notifyError(errorMsg);
     throw error;
+  }
+};
+
+/**
+ * 呼叫後端 ParseDocument API 解析檔案
+ * @param {File} file
+ * @returns {Promise<Object>}
+ */
+export const parseDocument = async (file) => {
+  try {
+    const fileType = file.type?.toLowerCase() || '';
+    const base64 = await readFileAsBase64(file);
+    const response = await apiClient.post('/v1/documents/parse', {
+      file_content: base64,
+      file_type: fileType.includes('pdf') ? 'pdf' : fileType || file.name.split('.').pop()
+    });
+
+    if (response.data?.success) {
+      const result = response.data.result_json || response.data.resultJson;
+      return typeof result === 'string' ? JSON.parse(result) : result;
+    }
+
+    throw new Error(response.data?.error_message || '解析失敗');
+  } catch (error) {
+    const errorMsg = handleApiError(error, '解析檔案');
+    notifyError(errorMsg);
+    throw new Error(errorMsg);
   }
 };
 
@@ -787,5 +852,6 @@ export default {
   rejectAccessRequest,
   fetchGrantedTickets,
   fetchReportContent,
-  listMyAccessRequests
+  listMyAccessRequests,
+  parseDocument
 }; 

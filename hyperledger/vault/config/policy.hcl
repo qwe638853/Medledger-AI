@@ -22,6 +22,7 @@ path "transit/decrypt/clinic-*-wrap"    { capabilities = ["update"] }
 path "transit/keys/*"                   { capabilities = ["read"] }
 
 # KV v2 憑證存取（users/clinics/insurers/platform）
+# 支援 kv 和 kv-v2 兩種 mount 名稱
 path "kv/data/users/*"                  { capabilities = ["create","update","read","delete","list"] }
 path "kv/metadata/users/*"              { capabilities = ["read","list"] }
 path "kv/data/clinics/*"                { capabilities = ["create","update","read","delete","list"] }
@@ -30,3 +31,13 @@ path "kv/data/insurers/*"               { capabilities = ["create","update","rea
 path "kv/metadata/insurers/*"           { capabilities = ["read","list"] }
 path "kv/data/platform"                 { capabilities = ["create","update","read","delete","list"] }
 path "kv/metadata/platform"             { capabilities = ["read","list"] }
+
+# 支援 kv-v2 mount 名稱（如果 Vault 使用此名稱）
+path "kv-v2/data/users/*"               { capabilities = ["create","update","read","delete","list"] }
+path "kv-v2/metadata/users/*"           { capabilities = ["read","list"] }
+path "kv-v2/data/clinics/*"             { capabilities = ["create","update","read","delete","list"] }
+path "kv-v2/metadata/clinics/*"         { capabilities = ["read","list"] }
+path "kv-v2/data/insurers/*"            { capabilities = ["create","update","read","delete","list"] }
+path "kv-v2/metadata/insurers/*"        { capabilities = ["read","list"] }
+path "kv-v2/data/platform"              { capabilities = ["create","update","read","delete","list"] }
+path "kv-v2/metadata/platform"          { capabilities = ["read","list"] }

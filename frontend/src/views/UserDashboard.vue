@@ -514,13 +514,22 @@ const pendingRequestsCount = computed(() => {
   return accessRequests.value.filter(req => req.status === 'PENDING').length;
 });
 
-// 根據篩選條件顯示請求列表
+// 根據篩選條件顯示請求列表，並按申請日期降序排序（最新的在上面）
 const filteredAccessRequests = computed(() => {
+  let result = [];
   if (showPendingOnly.value) {
-    return accessRequests.value.filter(req => req.status === 'PENDING');
+    result = accessRequests.value.filter(req => req.status === 'PENDING');
+  } else {
+    // 當顯示已授權時，返回已授權票據
+    result = authorizedTickets.value;
   }
-  // 當顯示已授權時，返回已授權票據
-  return authorizedTickets.value;
+  
+  // 按申請日期降序排序（最新的在上面）
+  return result.sort((a, b) => {
+    const timeA = a.requestTime || a.grantTime || 0;
+    const timeB = b.requestTime || b.grantTime || 0;
+    return timeB - timeA; // 降序：較大的時間（較新的）排在前面
+  });
 });
 
 // 新增計算剩餘天數的函數

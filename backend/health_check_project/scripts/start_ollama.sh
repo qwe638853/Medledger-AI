@@ -31,16 +31,25 @@ if pgrep -f ollama > /dev/null; then
 else
     echo "⚠️  Ollama 服務未運行，正在啟動..."
     
+    # 設置環境變數以限制 GPU 使用（避免 CUDA 內存錯誤）
+    # OLLAMA_NUM_GPU=0 表示完全使用 CPU
+    # 或者可以設置較少的 GPU 層數，例如 OLLAMA_GPU_LAYERS=10
+    export OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU:-0}  # 默認使用 CPU
+    export OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS:-0}  # 默認不使用 GPU 層
+    
+    echo "   GPU 配置: OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU}, OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS}"
+    
     # 嘗試啟動 Ollama
     if command -v systemctl &> /dev/null; then
         echo "   使用 systemctl 啟動..."
+        # 注意：systemctl 需要通過環境文件設置環境變數
         sudo systemctl start ollama 2>/dev/null || {
             echo "   systemctl 啟動失敗，嘗試直接啟動..."
-            ollama serve &
+            OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU} OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS} ollama serve &
         }
     else
         echo "   直接啟動 Ollama 服務..."
-        nohup ollama serve > /tmp/ollama.log 2>&1 &
+        OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU} OLLAMA_GPU_LAYERS=${OLLAMA_GPU_LAYERS} nohup ollama serve > /tmp/ollama.log 2>&1 &
         sleep 2
     fi
     

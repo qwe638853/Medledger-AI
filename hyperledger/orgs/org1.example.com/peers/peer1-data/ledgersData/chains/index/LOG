@@ -254,3 +254,36 @@
 06:06:28.658676 version@stat F·[3 1] S·5KiB[393B 5KiB] Sc·[0.75 0.00]
 06:06:28.675141 db@janitor F·6 G·0
 06:06:28.675157 db@open done T·22.676355ms
+=============== Nov 27, 2025 (UTC) ===============
+17:25:38.874811 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+17:25:38.877034 version@stat F·[3 1] S·5KiB[393B 5KiB] Sc·[0.75 0.00]
+17:25:38.877127 db@open opening
+17:25:38.877227 journal@recovery F·1
+17:25:38.878500 journal@recovery recovering @61
+17:25:38.886254 memdb@flush created L0@63 N·31 S·1KiB "cha..\x01\x1f\x00,v210":"cha..\x01\x1f\x00,v209"
+17:25:38.886644 version@stat F·[4 1] S·6KiB[1KiB 5KiB] Sc·[1.00 0.00]
+17:25:38.902402 db@janitor F·7 G·0
+17:25:38.902438 db@open done T·25.299891ms
+17:25:38.902488 table@compaction L0·3 -> L1·1 S·6KiB Q·236
+17:25:38.908839 table@build created L1@66 N·146 S·5KiB "cha..a\x00\x00,v8":"cha..\x01\x1f\x00,v209"
+17:25:38.909320 version@stat F·[1 1] S·6KiB[119B 5KiB] Sc·[0.25 0.00]
+17:25:38.920132 table@compaction committed F-3 S-452B Ke·0 D·13 T·17.191088ms
+17:25:38.920284 table@remove removed @60
+17:25:38.920600 table@remove removed @57
+17:25:38.921181 table@remove removed @56
+=============== Nov 28, 2025 (UTC) ===============
+14:20:52.065027 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+14:20:52.065614 version@stat F·[1 1] S·6KiB[119B 5KiB] Sc·[0.25 0.00]
+14:20:52.065661 db@open opening
+14:20:52.065708 journal@recovery F·1
+14:20:52.065915 journal@recovery recovering @64
+14:20:52.069315 memdb@flush created L0@67 N·25 S·878B "cha..\x01$\x00,v242":"cha..\x01&\x00,v253"
+14:20:52.070957 version@stat F·[2 1] S·6KiB[997B 5KiB] Sc·[0.50 0.00]
+14:20:52.087861 db@janitor F·6 G·1
+14:20:52.087910 db@janitor removing table-63
+14:20:52.087979 db@open done T·22.308644ms
+15:06:43.819318 table@compaction L0·1 -> L1·1 S·6KiB Q·263
+15:06:43.842020 table@build created L1@70 N·162 S·6KiB "cha..a\x00\x00,v8":"cha..\x01\x1f\x00,v209"
+15:06:43.846256 version@stat F·[1 1] S·6KiB[119B 6KiB] Sc·[0.25 0.00]
+15:06:43.877757 table@compaction committed F-1 S-252B Ke·0 D·9 T·57.14159ms
+15:06:43.884902 table@remove removed @66

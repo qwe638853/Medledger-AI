@@ -37,8 +37,7 @@ Before running this project, ensure you have:
 
 ## 🛠️ Installation & Setup
 
-
-###  Start Hyperledger Fabric Network
+### Start Hyperledger Fabric Network
 
 Navigate to the hyperledger directory and start the network:
 
@@ -53,80 +52,26 @@ This will start:
 - Orderer service (orderer1-org1)
 - CouchDB instances for state database
 
-###  Deploy Smart Contracts
+### Deploy Smart Contracts
 
-部署健康記錄鏈碼的完整步驟：
+Deploy the health record chaincode using Hyperledger Fabric lifecycle commands:
 
-#### 前置準備
-
-確保你已經啟動 Hyperledger Fabric 網路（見上方「Start Hyperledger Fabric Network」）。
-
-假設你在 `fabric-samples` 目錄下，設定環境變數：
-
+1. **Package the chaincode**:
 ```bash
-# 在 fabric-samples 目錄執行
-export PATH=$PATH:$PWD/bin
-export FABRIC_CFG_PATH=$PWD/config
-
-# 設定組織環境變數（假設使用 test-network）
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-export CORE_PEER_ADDRESS=localhost:7051
-```
-
-#### 步驟 1: 打包鏈碼
-
-```bash
-# 從 fabric-samples 目錄，打包鏈碼
 peer lifecycle chaincode package health.tar.gz \
-  --path ../Medledger-AI/hyperledger/chaincode-go \
+  --path ./hyperledger/chaincode-go \
   --lang golang \
   --label health_1.0
 ```
 
-**說明**：
-- `health.tar.gz`：打包後的檔案名稱
-- `--path`：指向你的鏈碼目錄（相對於 fabric-samples 的路徑）
-- `--lang golang`：指定使用 Go 語言
-- `--label health_1.0`：鏈碼標籤，用於識別版本
-
-#### 步驟 2: 安裝鏈碼到所有 Peer
-
-**安裝到 Peer1-Org1：**
-
+2. **Install chaincode on peers**:
 ```bash
-# 設定 Peer1 環境變數
 export CORE_PEER_ADDRESS=localhost:7051
-
-# 安裝鏈碼
 peer lifecycle chaincode install health.tar.gz
 ```
 
-**安裝到 Peer2-Org1（如果需要）：**
-
+3. **Approve chaincode definition**:
 ```bash
-# 設定 Peer2 環境變數
-export CORE_PEER_ADDRESS=localhost:7053
-
-# 安裝鏈碼
-peer lifecycle chaincode install health.tar.gz
-```
-
-**確認安裝成功：**
-
-```bash
-peer lifecycle chaincode queryinstalled
-```
-
-這會顯示已安裝的鏈碼及其 package ID（記下這個 ID，後續會用到）。
-
-#### 步驟 3: 批准鏈碼定義
-
-```bash
-# 設定 Peer1 環境變數
-export CORE_PEER_ADDRESS=localhost:7051
-
-# 批准鏈碼定義（使用步驟 2 獲取的 package ID）
 peer lifecycle chaincode approveformyorg \
   -o localhost:7050 \
   --ordererTLSHostnameOverride orderer.example.com \
@@ -136,20 +81,11 @@ peer lifecycle chaincode approveformyorg \
   --package-id <PACKAGE_ID> \
   --sequence 1 \
   --tls \
-  --cafile $PWD/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  --cafile <CA_CERT_PATH>
 ```
 
-**說明**：
-- `<PACKAGE_ID>`：替換為步驟 2 獲取的 package ID
-- `--name health`：鏈碼名稱
-- `--version 1.0`：鏈碼版本
-- `--sequence 1`：升級序列號（首次部署為 1）
-- `--channelID mychannel`：目標頻道名稱
-
-#### 步驟 4: 提交鏈碼定義
-
+4. **Commit chaincode definition**:
 ```bash
-# 提交鏈碼定義（提交後鏈碼即可使用）
 peer lifecycle chaincode commit \
   -o localhost:7050 \
   --ordererTLSHostnameOverride orderer.example.com \
@@ -158,103 +94,22 @@ peer lifecycle chaincode commit \
   --version 1.0 \
   --sequence 1 \
   --tls \
-  --cafile $PWD/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+  --cafile <CA_CERT_PATH>
 ```
 
-#### 步驟 5: 驗證部署
+**Note**: Replace `<PACKAGE_ID>` with the package ID obtained from `peer lifecycle chaincode queryinstalled`, and `<CA_CERT_PATH>` with the appropriate CA certificate path.
 
-**查詢鏈碼資訊：**
-
-```bash
-peer lifecycle chaincode querycommitted --channelID mychannel --name health
-```
-
-**測試調用鏈碼方法：**
-
-```bash
-# 設定 Peer1 環境變數
-export CORE_PEER_ADDRESS=localhost:7051
-
-# 測試調用（例如查詢病患的報告 meta）
-peer chaincode query \
-  -C mychannel \
-  -n health \
-  -c '{"function":"ListMyReportMeta","Args":[]}'
-```
-
-#### 完整部署腳本範例
-
-```bash
-#!/bin/bash
-# deploy_chaincode.sh
-
-# 設定環境
-export PATH=$PATH:$PWD/bin
-export FABRIC_CFG_PATH=$PWD/config
-export CORE_PEER_LOCALMSPID=Org1MSP
-export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
-
-# 步驟 1: 打包
-echo "打包鏈碼..."
-peer lifecycle chaincode package health.tar.gz \
-  --path ../Medledger-AI/hyperledger/chaincode-go \
-  --lang golang \
-  --label health_1.0
-
-# 步驟 2: 安裝（Peer1）
-echo "安裝鏈碼到 Peer1..."
-export CORE_PEER_ADDRESS=localhost:7051
-peer lifecycle chaincode install health.tar.gz
-
-# 獲取 Package ID
-PACKAGE_ID=$(peer lifecycle chaincode queryinstalled | grep "health_1.0" | cut -d' ' -f3 | cut -d',' -f1)
-echo "Package ID: $PACKAGE_ID"
-
-# 步驟 3: 批准
-echo "批准鏈碼定義..."
-peer lifecycle chaincode approveformyorg \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --channelID mychannel \
-  --name health \
-  --version 1.0 \
-  --package-id $PACKAGE_ID \
-  --sequence 1 \
-  --tls \
-  --cafile $PWD/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
-
-# 步驟 4: 提交
-echo "提交鏈碼定義..."
-peer lifecycle chaincode commit \
-  -o localhost:7050 \
-  --ordererTLSHostnameOverride orderer.example.com \
-  --channelID mychannel \
-  --name health \
-  --version 1.0 \
-  --sequence 1 \
-  --tls \
-  --cafile $PWD/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
-
-echo "鏈碼部署完成！"
-```
-
-#### 注意事項
-
-- 確保網路已啟動且所有服務運行正常
-- 路徑需根據實際專案位置調整
-- 頻道名稱需與實際建立的頻道一致
-- 升級鏈碼時，需增加 `--sequence` 號碼
-- 如使用 TLS，需提供正確的 CA 證書路徑
-
-###  Setup AI Backend Services
+### Setup AI Backend Services
 
 #### Install Python Dependencies
+
 ```bash
 cd backend/health_check_project
-pip install -r requirements.txt  # Create requirements.txt with necessary packages
+pip install -r requirements.txt
 ```
 
 #### Install Required Python Packages
+
 ```bash
 pip install grpcio grpcio-tools
 pip install langchain langchain-chroma langchain-huggingface langchain-ollama
@@ -263,6 +118,7 @@ pip install protobuf
 ```
 
 #### Setup Ollama (for AI Analysis)
+
 ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
@@ -275,21 +131,23 @@ ollama serve
 ```
 
 #### Setup ChromaDB Vector Database
+
 ```bash
 cd backend/health_check_project
-python create_collection.py
-python add_data.py
+python scripts/create_collection.py
+python scripts/add_data.py
 ```
 
 #### Start Backend gRPC Server
+
 ```bash
 cd backend/health_check_project
-python test.py
+python server.py
 ```
 
-The backend server will start on `localhost:50051`
+The backend server will start on `localhost:50052` (gRPC service).
 
-###  Start Frontend Application
+### Start Frontend Application
 
 ```bash
 cd frontend
@@ -351,7 +209,7 @@ The frontend will be available at `http://localhost:5173` (or the port specified
 - Access control policies are defined in the chaincode
 
 ### Backend Configuration
-- **gRPC Service Configuration**: Modify `backend/health_check_project/test.py`
+- **gRPC Service Configuration**: Modify `backend/health_check_project/server.py`
 - **AI Model Settings**: Configure Ollama model parameters and ChromaDB paths
 - **Medical Translations**: Update translation dictionaries for different languages
 - **Analysis Prompts**: Customize LangChain prompts for different analysis scenarios
@@ -372,5 +230,3 @@ The system runs the following Docker containers:
 | peer2-org1 | Secondary peer node | 7053 |
 | orderer1-org1 | Ordering service | 7050 |
 | couchdb1/couchdb2 | State databases | 5984 |
-
-

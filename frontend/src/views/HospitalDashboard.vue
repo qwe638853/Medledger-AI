@@ -280,6 +280,7 @@ const handleFileUpload = async () => {
           uploadResults.push({
             success: false,
             error: true,
+            patientId: patientId.value, // 保存身份證字號
             fileName: file.name,
             message: `JSON 上傳失敗: ${error.message}`
           });
@@ -303,6 +304,7 @@ const handleFileUpload = async () => {
           uploadResults.push({
             success: false,
             error: true,
+            patientId: patientId.value, // 保存身份證字號
             fileName: file.name,
             message: `上傳失敗: ${error.message}`
           });
@@ -577,7 +579,7 @@ const formatJSONDisplay = (data) => {
                       <v-icon size="24">mdi-file-check-outline</v-icon>
                     </template>
                     <v-list-item-title class="report-patient">
-                      病人：{{ item.userId || item.patient_hash || '未知' }}
+                      病人：{{ item.patientId || item.userId || item.patient_hash || '未知' }}
                     </v-list-item-title>
                     <v-list-item-subtitle class="report-info">
                       {{ item.fileName || '未命名' }} · {{ item.uploadTime || new Date().toLocaleString() }}

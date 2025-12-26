@@ -305,7 +305,8 @@ export const uploadHealthReport = async (file, userId, progressCallback) => {
       // 結合API響應和解析的數據
       return {
         reportId: reportId,
-        userId: userId,
+        patientId: userId, // 使用 patientId 作為身份證字號
+        userId: userId, // 保留 userId 以向後兼容
         fileName: file.name,
         fileSize: file.size,
         uploadTime: new Date().toISOString(),
